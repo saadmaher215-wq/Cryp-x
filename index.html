@@ -79,138 +79,94 @@ p.sub{color:#94a3b8;font-size:13px;margin-bottom:24px}
 
 </div>
 
-<script>
-const DB = ["https://googleapis.com", "/v1/projects/cryptx-app/databases/(default)/documents"].join("");
+<script type="module">
+import { initializeApp } from "https://gstatic.com";
+import { getFirestore, doc, getDoc, setDoc, collection, addDoc, onSnapshot, query, orderBy } from "https://gstatic.com";
+
+const app = initializeApp({ projectId: "cryptx-app" });
+const db = getFirestore(app);
 let prof = JSON.parse(localStorage.getItem("cx_prof") || "null");
-let peer = null, tmr = null;
+let peer = null, unsub = null;
 
-function go(id) {
-  document.querySelectorAll(".scr").forEach(e => e.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-}
-
-function note(id, t) {
-  const e = document.getElementById(id);
-  e.style.display = "block";
-  e.innerText = t;
-}
-
-function openHome() {
-  document.getElementById("myTag").innerText = "@" + prof.user;
-  go("s-home");
-}
+const go = id => { document.querySelectorAll(".scr").forEach(e => e.classList.remove("active")); document.getElementById(id).classList.add("active"); };
+const note = (id, t) => { const e = document.getElementById(id); e.style.display = "block"; e.innerText = t; };
+const openHome = () => { document.getElementById("myTag").innerText = "@" + prof.user; go("s-home"); };
 
 if (prof) openHome();
 
 document.getElementById("btnToSignup").onclick = () => go("s-signup");
 document.getElementById("btnToLogin").onclick = () => go("s-login");
-document.getElementById("nav1").onclick = () => {
-  document.getElementById("t-chat").style.display = "flex";
-  document.getElementById("t-tool").style.display = "none";
-};
-document.getElementById("nav2").onclick = () => {
-  document.getElementById("t-chat").style.display = "none";
-  document.getElementById("t-tool").style.display = "flex";
-};
-document.getElementById("btnOut").onclick = () => {
-  localStorage.clear();
-  location.reload();
-};
+document.getElementById("nav1").onclick = () => { document.getElementById("t-chat").style.display = "flex"; document.getElementById("t-tool").style.display = "none"; };
+document.getElementById("nav2").onclick = () => { document.getElementById("t-chat").style.display = "none"; document.getElementById("t-tool").style.display = "flex"; };
+document.getElementById("btnOut").onclick = () => { localStorage.clear(); location.reload(); };
 
 document.getElementById("btnSignup").onclick = async () => {
   const name = document.getElementById("sName").value.trim();
   const user = document.getElementById("sUser").value.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
   const pass = document.getElementById("sPass").value;
-  if (!name || user.length < 3 || pass.length < 4) {
-    note("fb2", "⚠️ املأ جميع الخانات (اسم المستخدم 3 أحرف+ وكلمة المرور 4+)");
-    return;
-  }
+  if (!name || user.length < 3 || pass.length < 4) { note("fb2", "⚠️ املأ جميع الخانات (اسم المستخدم 3 أحرف+ وكلمة المرور 4+)"); return; }
   note("fb2", "⏳ جاري إنشاء الحساب...");
   try {
-    const chk = await fetch(DB + "/accounts/" + user);
-    if (chk.ok) {
-      note("fb2", "❌ اسم المستخدم محجوز! اختر غيره.");
-      return;
-    }
-    const res = await fetch(DB + "/accounts?documentId=" + user, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fields: { name: { stringValue: name }, user: { stringValue: user }, pass: { stringValue: pass } } })
-    });
-    if (!res.ok) {
-      note("fb2", "❌ تعذر الحفظ في الخادم");
-      return;
-    }
-    prof = { name, user };
-    localStorage.setItem("cx_prof", JSON.stringify(prof));
-    openHome();
-  } catch (e) {
-    note("fb2", "❌ خطأ: " + e.message);
-  }
+    const ref = doc(db, "accounts", user);
+    const snap = await getDoc(ref);
+    if (snap.exists()) { note("fb2", "❌ اسم المستخدم محجوز! اختر غيره."); return; }
+    await setDoc(ref, { name, user, pass });
+    prof = { name, user }; localStorage.setItem("cx_prof", JSON.stringify(prof)); openHome();
+  } catch (e) { note("fb2", "❌ خطأ: " + e.message); }
 };
 
 document.getElementById("btnLogin").onclick = async () => {
   const user = document.getElementById("lUser").value.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
   const pass = document.getElementById("lPass").value;
-  if (user.length < 3 || !pass) {
-    note("fb1", "⚠️ أدخل اسم المستخدم وكلمة المرور");
-    return;
-  }
+  if (user.length < 3 || !pass) { note("fb1", "⚠️ أدخل اسم المستخدم وكلمة المرور"); return; }
   note("fb1", "⏳ جاري تسجيل الدخول...");
   try {
-    const res = await fetch(DB + "/accounts/" + user);
-    if (!res.ok) {
-      note("fb1", "❌ الحساب غير موجود! اضغط على (إنشاء حساب جديد ✨)");
-      return;
-    }
-    const d = await res.json();
-    if (d.fields.pass.stringValue !== pass) {
-      note("fb1", "❌ كلمة المرور غير صحيحة!");
-      return;
-    }
-    prof = { name: d.fields.name.stringValue, user };
-    localStorage.setItem("cx_prof", JSON.stringify(prof));
-    openHome();
-  } catch (e) {
-    note("fb1", "❌ خطأ: " + e.message);
-  }
+    const snap = await getDoc(doc(db, "accounts", user));
+    if (!snap.exists()) { note("fb1", "❌ الحساب غير موجود! اضغط على (إنشاء حساب جديد ✨)"); return; }
+    const d = snap.data();
+    if (d.pass !== pass) { note("fb1", "❌ كلمة المرور غير صحيحة!"); return; }
+    prof = { name: d.name, user }; localStorage.setItem("cx_prof", JSON.stringify(prof)); openHome();
+  } catch (e) { note("fb1", "❌ خطأ: " + e.message); }
 };
 
 document.getElementById("btnSearch").onclick = async () => {
-  const u = document.getElementById("qInput").value.trim().toLowerCase().replace("@", "");
-  const out = document.getElementById("qRes");
+  const u = document.getElementById("qInput").value.trim().toLowerCase().replace("@", ""), out = document.getElementById("qRes");
   if (!u || u === prof.user) return;
   out.innerHTML = "<div class='msg' style='display:block'>⏳ جاري البحث...</div>";
-  const r = await fetch(DB + "/accounts/" + u);
-  if (!r.ok) {
-    out.innerHTML = "<div class='msg' style='display:block;color:#f43f5e'>❌ غير موجود</div>";
-    return;
-  }
-  const d = await r.json();
-  peer = { user: u, name: d.fields.name.stringValue };
-  out.innerHTML = "";
-  document.getElementById("roomBox").style.display = "flex";
-  document.getElementById("peerTitle").innerText = peer.name + " (@" + peer.user + ")";
-  loadMsgs();
-  if (tmr) clearInterval(tmr);
-  tmr = setInterval(loadMsgs, 3000);
+  try {
+    const snap = await getDoc(doc(db, "accounts", u));
+    if (!snap.exists()) { out.innerHTML = "<div class='msg' style='display:block;color:#f43f5e'>❌ غير موجود</div>"; return; }
+    const d = snap.data(); peer = { user: u, name: d.name }; out.innerHTML = "";
+    document.getElementById("roomBox").style.display = "flex"; document.getElementById("peerTitle").innerText = peer.name + " (@" + peer.user + ")";
+    const rid = [prof.user, peer.user].sort().join("_");
+    if (unsub) unsub();
+    unsub = onSnapshot(query(collection(db, "chats", rid, "messages"), orderBy("ts")), qs => {
+      const st = document.getElementById("stream"); st.innerHTML = "";
+      qs.forEach(m => {
+        const msg = m.data(), div = document.createElement("div");
+        div.className = "bbl" + (msg.s === prof.user ? " me" : "");
+        div.innerHTML = "<div style='font-size:10px;color:#94a3b8'>@" + msg.s + "</div><div>" + msg.c + "</div>";
+        const btn = document.createElement("button"); btn.innerText = "فك التشفير 🔓";
+        btn.style.cssText = "margin-top:6px;padding:4px 10px;border-radius:6px;border:1px solid #38bdf8;background:#050811;color:#38bdf8;font-size:11px";
+        btn.onclick = async () => {
+          const k = document.getElementById("roomKey").value; if (!k) { alert("أدخل الرمز السري أولاً!"); return; }
+          try { btn.previousElementSibling.innerText = await dec(msg.c, k); btn.remove(); } catch { alert("❌ الرمز السري خطأ!"); }
+        };
+        div.appendChild(btn); st.appendChild(div);
+      });
+      st.scrollTop = st.scrollHeight;
+    });
+  } catch (e) { out.innerHTML = "<div class='msg' style='display:block;color:#f43f5e'>❌ " + e.message + "</div>"; }
 };
 
-document.getElementById("btnClose").onclick = () => {
-  clearInterval(tmr);
-  document.getElementById("roomBox").style.display = "none";
-};
+document.getElementById("btnClose").onclick = () => { if (unsub) unsub(); document.getElementById("roomBox").style.display = "none"; };
 
 async function enc(t, p) {
-  const s = crypto.getRandomValues(new Uint8Array(16));
-  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const s = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
   const km = await crypto.subtle.importKey("raw", new TextEncoder().encode(p), "PBKDF2", false, ["deriveKey"]);
   const k = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: s, iterations: 100000, hash: "SHA-256" }, km, { name: "AES-GCM", length: 256 }, false, ["encrypt"]);
   const c = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, k, new TextEncoder().encode(t)));
-  const b = new Uint8Array(28 + c.length);
-  b.set(s);
-  b.set(iv, 16);
-  b.set(c, 28);
+  const b = new Uint8Array(28 + c.length); b.set(s); b.set(iv, 16); b.set(c, 28);
   return btoa(String.fromCharCode(...b));
 }
 
@@ -222,61 +178,15 @@ async function dec(b64, p) {
 }
 
 document.getElementById("btnSend").onclick = async () => {
-  const t = document.getElementById("draft").value.trim();
-  const k = document.getElementById("roomKey").value;
+  const t = document.getElementById("draft").value.trim(), k = document.getElementById("roomKey").value;
   if (!t || !k) { alert("اكتب الرسالة والرمز السري!"); return; }
-  const rid = [prof.user, peer.user].sort().join("_");
-  const c = await enc(t, k);
+  const rid = [prof.user, peer.user].sort().join("_"), c = await enc(t, k);
   document.getElementById("draft").value = "";
-  await fetch(DB + "/chats/" + rid + "/messages", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ fields: { s: { stringValue: prof.user }, c: { stringValue: c }, ts: { integerValue: String(Date.now()) } } })
-  });
-  loadMsgs();
+  await addDoc(collection(db, "chats", rid, "messages"), { s: prof.user, c, ts: Date.now() });
 };
 
-async function loadMsgs() {
-  if (!peer) return;
-  const rid = [prof.user, peer.user].sort().join("_");
-  const st = document.getElementById("stream");
-  const r = await fetch(DB + "/chats/" + rid + "/messages?pageSize=50");
-  if (!r.ok) return;
-  const d = await r.json();
-  if (!d.documents) { st.innerHTML = ""; return; }
-  const docs = d.documents.sort((a, b) => Number(a.fields.ts.integerValue) - Number(b.fields.ts.integerValue));
-  st.innerHTML = "";
-  docs.forEach(m => {
-    const sender = m.fields.s.stringValue;
-    const cipher = m.fields.c.stringValue;
-    const div = document.createElement("div");
-    div.className = "bbl" + (sender === prof.user ? " me" : "");
-    div.innerHTML = "<div style='font-size:10px;color:#94a3b8'>@" + sender + "</div><div>" + cipher + "</div>";
-    const btn = document.createElement("button");
-    btn.innerText = "فك التشفير 🔓";
-    btn.style.cssText = "margin-top:6px;padding:4px 10px;border-radius:6px;border:1px solid #38bdf8;background:#050811;color:#38bdf8;font-size:11px";
-    btn.onclick = async () => {
-      const k = document.getElementById("roomKey").value;
-      if (!k) { alert("أدخل الرمز السري أولاً!"); return; }
-      try { btn.previousElementSibling.innerText = await dec(cipher, k); btn.remove(); } catch { alert("❌ الرمز السري خطأ!"); }
-    };
-    div.appendChild(btn);
-    st.appendChild(div);
-  });
-}
-
-document.getElementById("btnEnc").onclick = async () => {
-  const t = document.getElementById("tIn").value.trim();
-  const k = document.getElementById("tKey").value;
-  if (t && k) document.getElementById("tOut").value = await enc(t, k);
-};
-
-document.getElementById("btnDec").onclick = async () => {
-  const t = document.getElementById("tIn").value.trim();
-  const k = document.getElementById("tKey").value;
-  if (!t || !k) return;
-  try { document.getElementById("tOut").value = await dec(t, k); } catch { alert("❌ خطأ في البيانات أو كلمة السر"); }
-};
+document.getElementById("btnEnc").onclick = async () => { const t = document.getElementById("tIn").value.trim(), k = document.getElementById("tKey").value; if (t && k) document.getElementById("tOut").value = await enc(t, k); };
+document.getElementById("btnDec").onclick = async () => { const t = document.getElementById("tIn").value.trim(), k = document.getElementById("tKey").value; if (!t || !k) return; try { document.getElementById("tOut").value = await dec(t, k); } catch { alert("❌ خطأ في البيانات أو كلمة السر"); } };
 </script>
 </body>
 </html>
