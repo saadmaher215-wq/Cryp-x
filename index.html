@@ -28,8 +28,9 @@ p.sub{color:#94a3b8;font-size:13px;margin-bottom:22px}
 .bbl{background:#1e293b;padding:10px 12px;border-radius:14px;font-size:13px;word-break:break-all;align-self:flex-start;max-width:85%}
 .bbl.me{background:#0c4a6e;align-self:flex-end}
 .pin-bar{background:#0f172a;border:1px solid #38bdf8;border-radius:12px;padding:10px;margin-bottom:8px;display:none;justify-content:space-between;align-items:center;font-size:13px}
-.modal{position:fixed;inset:0;background:rgba(2,4,10,.85);display:none;align-items:center;justify-content:center;padding:20px;z-index:900}
+.modal{position:fixed;inset:0;background:rgba(2,4,10,.9);display:none;align-items:center;justify-content:center;padding:20px;z-index:900}
 .m-card{background:#0f172a;border:1px solid #1e293b;border-radius:20px;padding:22px;width:100%;max-width:340px;text-align:center}
+.crop-box{width:240px;height:240px;margin:12px auto;border-radius:50%;overflow:hidden;border:3px solid #38bdf8;position:relative;background:#02040a;touch-action:none;cursor:grab}
 .nav{display:flex;gap:6px;margin-top:auto;padding-top:12px}
 .nav .btn{font-size:13px;padding:12px 6px}
 </style>
@@ -43,6 +44,16 @@ p.sub{color:#94a3b8;font-size:13px;margin-bottom:22px}
 <p style="font-size:12px;color:#94a3b8;margin-bottom:14px">أدخل الرمز السري المكون من 4 أرقام الذي أرسله لك صديقك</p>
 <input type="tel" id="pinInp" maxlength="4" placeholder="• • • •" style="text-align:center;font-size:24px;letter-spacing:8px;font-weight:900">
 <div style="display:flex;gap:8px"><button type="button" class="btn b1" onclick="confirmPin()">فتح الرسالة 🔓</button><button type="button" class="btn b2" onclick="closePin()">إلغاء</button></div>
+</div>
+</div>
+
+<div id="cropModal" class="modal">
+<div class="m-card">
+<h3 style="margin-bottom:4px;color:#38bdf8">ضبط الصورة الشخصية ✂️</h3>
+<p style="font-size:11px;color:#94a3b8">اسحب الصورة بإصبعك واستخدم الشريط للتكبير</p>
+<div class="crop-box" id="cropBox"><canvas id="cropCvs" width="240" height="240"></canvas></div>
+<input type="range" id="zoomRng" min="1" max="3" step="0.05" value="1" style="margin:8px 0;padding:0;accent-color:#38bdf8" oninput="drawCrop()">
+<div style="display:flex;gap:8px"><button type="button" class="btn b1" onclick="applyCrop()">اعتماد وقص ✅</button><button type="button" class="btn b2" onclick="document.getElementById('cropModal').style.display='none'">إلغاء</button></div>
 </div>
 </div>
 
@@ -79,38 +90,22 @@ p.sub{color:#94a3b8;font-size:13px;margin-bottom:22px}
 <h3 id="pTitle" style="font-size:19px;margin-bottom:4px"></h3>
 <div id="pHandle" dir="ltr" style="color:#38bdf8;font-size:13px;margin-bottom:14px;cursor:pointer;font-weight:700" onclick="copyHandle()"></div>
 <div style="display:flex;gap:8px">
-<label class="btn b2" style="padding:10px;font-size:13px;margin:0;flex:1">تغيير الصورة 📷<input type="file" accept="image/*" style="display:none" onchange="pickImg(this)"></label>
-<button type="button" class="btn b3" style="padding:10px;font-size:13px;margin:0;width:auto" onclick="resetAv()">أفاتار مجهول 🕵️</button>
-</div>
-</div>
-<span class="lbl">الاسم الظاهر في المحادثات</span>
-<input id="pName" placeholder="الاسم الظاهر">
-<span class="lbl">تغيير كلمة المرور</span>
-<input type="password" id="pPass" placeholder="اتركه فارغاً للإبقاء على الحالية">
-<button type="button" class="btn b1" onclick="saveProf()">حفظ التعديلات ✅</button>
-<button type="button" class="btn b3" style="margin-top:10px" onclick="logout()">تسجيل الخروج 🚪</button>
-</div>
-
-<div class="nav">
-<button type="button" class="btn b2" onclick="tab(1)">💬 المحادثات</button>
-<button type="button" class="btn b2" onclick="tab(2)">🔐 التشفير</button>
-<button type="button" class="btn b2" onclick="tab(3)">👤 حسابي</button>
-</div>
-</div>
-</div>
+<label class="btn b2" style="padding:10px;font-size:13px;margin:0;flex:1">تغيير وقص الصورة 📷<input type="file" accept="image/*" style="display:none" onchange="pickImg(this)"></label>
 <script>
 const RTDB = "https://cryptx-app-default-rtdb." + "firebaseio.com";
 let prof = JSON.parse(localStorage.getItem("cx_prof") || "null"), peer = null, tmr = null, newAv = null, targetMsg = null;
+let cImg = null, cx = 0, cy = 0, drag = false, lx = 0, ly = 0;
+
 const go = id => { document.querySelectorAll(".scr").forEach(e => e.classList.remove("active")); document.getElementById(id).classList.add("active"); };
 function pop(t, err) {
   const e = document.getElementById("toast"); e.innerText = t; e.style.borderColor = err ? "#f43f5e" : "#38bdf8";
   e.style.display = "block"; clearTimeout(window._tt); window._tt = setTimeout(() => e.style.display = "none", 3200);
 }
 function renderAv(src) {
-  const has = !!src;
+  const has = src && src.startsWith("data:image");
   document.getElementById("hdrImg").style.display = document.getElementById("pImg").style.display = has ? "block" : "none";
   document.getElementById("hdrSvg").style.display = document.getElementById("pSvg").style.display = has ? "none" : "block";
-  if (has) document.getElementById("hdrImg").src = document.getElementById("pImg").src = src;
+  if (has) { document.getElementById("hdrImg").src = document.getElementById("pImg").src = src; }
 }
 function openHome() {
   const tag = "@" + prof.user;
@@ -154,15 +149,30 @@ function logout() { localStorage.clear(); location.reload(); }
 function copyHandle() { navigator.clipboard.writeText("@" + prof.user); pop("📋 تم نسخ اسم المستخدم!"); }
 
 function pickImg(inp) {
-  const f = inp.files && inp.files[0]; if (!f) return;
+  const file = inp.files && inp.files[0]; if (!file) return;
   const r = new FileReader(); r.onload = e => {
-    const img = new Image(); img.onload = () => {
-      const c = document.createElement("canvas"); c.width = 180; c.height = 180;
-      c.getContext("2d").drawImage(img, 0, 0, 180, 180);
-      newAv = c.toDataURL("image/jpeg", 0.75);
-      renderAv(newAv); pop("📷 تم اختيار الصورة! اضغط حفظ التعديلات");
-    }; img.src = e.target.result;
-  }; r.readAsDataURL(f);
+    cImg = new Image(); cImg.onload = () => {
+      cx = 0; cy = 0; document.getElementById("zoomRng").value = 1;
+      document.getElementById("cropModal").style.display = "flex";
+      drawCrop();
+    }; cImg.src = e.target.result;
+  }; r.readAsDataURL(file); inp.value = "";
+}
+function drawCrop() {
+  if (!cImg) return; const cvs = document.getElementById("cropCvs"), ctx = cvs.getContext("2d"), z = parseFloat(document.getElementById("zoomRng").value);
+  ctx.clearRect(0, 0, 240, 240);
+  const sc = Math.max(240 / cImg.width, 240 / cImg.height) * z;
+  const w = cImg.width * sc, h = cImg.height * sc;
+  ctx.drawImage(cImg, (240 - w) / 2 + cx, (240 - h) / 2 + cy, w, h);
+}
+const cb = document.getElementById("cropBox");
+cb.onpointerdown = e => { drag = true; lx = e.clientX; ly = e.clientY; cb.setPointerCapture(e.pointerId); };
+cb.onpointermove = e => { if (!drag) return; cx += e.clientX - lx; cy += e.clientY - ly; lx = e.clientX; ly = e.clientY; drawCrop(); };
+cb.onpointerup = () => { drag = false; };
+function applyCrop() {
+  newAv = document.getElementById("cropCvs").toDataURL("image/jpeg", 0.85);
+  renderAv(newAv); document.getElementById("cropModal").style.display = "none";
+  pop("✂️ تم قص الصورة بنجاح! اضغط حفظ التعديلات");
 }
 function resetAv() { newAv = ""; renderAv(""); pop("🕵️ تم تفعيل صورة الشخص المجهول! اضغط حفظ"); }
 
@@ -176,7 +186,7 @@ async function saveProf() {
     const up = { name, pass: pass.length >= 4 ? pass : cur.pass, av: finalAv };
     await fetch(RTDB + "/users/" + prof.user + ".json", { method: "PUT", body: JSON.stringify(up) });
     prof.name = name; prof.av = finalAv; newAv = null; document.getElementById("pPass").value = "";
-    localStorage.setItem("cx_prof", JSON.stringify(prof)); openHome(); pop("✅ تم حفظ إعدادات ملفك الشخصي!");
+    localStorage.setItem("cx_prof", JSON.stringify(prof)); openHome(); pop("✅ تم تحديث صورتك وبياناتك بنجاح!");
   } catch { pop("❌ تعذر حفظ التعديلات", 1); }
 }
 
@@ -240,13 +250,3 @@ async function confirmPin() {
 async function runTool(isEnc) {
   const t = document.getElementById("tIn").value.trim(), k = document.getElementById("tKey").value;
   if (!t || !k) return pop("⚠️ أدخل النص وكلمة السر", 1);
-  try { document.getElementById("tOut").value = isEnc ? await enc(t, k) : await dec(t, k); pop(isEnc ? "🔒 تم التشفير بنجاح" : "🔓 تم فك التشفير"); }
-  catch { pop("❌ خطأ في البيانات أو كلمة السر", 1); }
-}
-function copyOut() {
-  const v = document.getElementById("tOut").value; if (!v) return;
-  navigator.clipboard.writeText(v); pop("📋 تم نسخ النتيجة إلى الحافظة!");
-}
-</script>
-</body>
-</html>
