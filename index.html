@@ -138,6 +138,13 @@ function openHome() {
 }
 if (prof) openHome();
 
+function getLocalUsers() {
+  try { return JSON.parse(localStorage.getItem("cx_db_users") || "{}"); } catch(e) { return {}; }
+}
+function saveLocalUsers(u) {
+  localStorage.setItem("cx_db_users", JSON.stringify(u));
+}
+
 async function doSignup() {
   const name = document.getElementById("sName").value.trim();
   const user = document.getElementById("sUser").value.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
@@ -148,11 +155,16 @@ async function doSignup() {
     const chk = await (await fetch(RTDB + "/users/" + user + ".json")).json();
     if (chk) return pop("❌ اسم المستخدم محجوز!", 1);
     await fetch(RTDB + "/users/" + user + ".json", { method: "PUT", body: JSON.stringify({ name, pass, av: "" }) });
-    prof = { name, user, av: "" };
-    localStorage.setItem("cx_prof", JSON.stringify(prof));
-    openHome();
-    pop("✅ تم إنشاء الحساب بنجاح!");
-  } catch (e) { pop("❌ خطأ في الاتصال", 1); }
+  } catch (e) {
+    const db = getLocalUsers();
+    if (db[user]) return pop("❌ اسم المستخدم محجوز!", 1);
+    db[user] = { name, pass, av: "" };
+    saveLocalUsers(db);
+  }
+  prof = { name, user, av: "" };
+  localStorage.setItem("cx_prof", JSON.stringify(prof));
+  openHome();
+  pop("✅ تم إنشاء الحساب بنجاح!");
 }
 
 async function doLogin() {
@@ -160,17 +172,19 @@ async function doLogin() {
   const pass = document.getElementById("lPass").value;
   if (user.length < 3 || !pass) return pop("⚠️ أدخل اسم المستخدم وكلمة المرور", 1);
   pop("⏳ جاري الدخول...");
+  let u = null;
   try {
-    const u = await (await fetch(RTDB + "/users/" + user + ".json")).json();
-    if (!u) return pop("❌ الحساب غير موجود!", 1);
-    if (u.pass !== pass) return pop("❌ كلمة المرور غير صحيحة!", 1);
-    prof = { name: u.name, user, av: u.av || "" };
-    localStorage.setItem("cx_prof", JSON.stringify(prof));
-    openHome();
-    pop("👋 أهلاً بك يا " + u.name);
-  } catch (e) { pop("❌ خطأ في الاتصال", 1); }
+    u = await (await fetch(RTDB + "/users/" + user + ".json")).json();
+  } catch (e) {
+    u = getLocalUsers()[user] || null;
+  }
+  if (!u) return pop("❌ الحساب غير موجود! أنشئ حساباً جديداً", 1);
+  if (u.pass !== pass) return pop("❌ كلمة المرور غير صحيحة!", 1);
+  prof = { name: u.name, user, av: u.av || "" };
+  localStorage.setItem("cx_prof", JSON.stringify(prof));
+  openHome();
+  pop("👋 أهلاً بك يا " + u.name);
 }
-
 function tab(n) {
   document.getElementById("t-chat").style.display = n === 1 ? "flex" : "none";
   document.getElementById("t-tool").style.display = n === 2 ? "flex" : "none";
