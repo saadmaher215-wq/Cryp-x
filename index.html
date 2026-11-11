@@ -25,99 +25,111 @@ input,textarea{width:100%;padding:14px;border-radius:12px;border:1px solid #1e29
 </head>
 <body>
 <div class="app">
-<div id="s-auth" class="scr active">
+
+<div id="s-login" class="scr active">
 <div class="box">
 <h1>Crypt<span>X</span></h1>
 <p class="sub">منصة التراسل المشفر والخصوصية المطلقة</p>
-<input type="text" id="rName" placeholder="الاسم الظاهر (مثال: سعد ماهر)">
-<input type="text" id="rUser" placeholder="اسم المستخدم بالإنجليزية (مثال: saad99)">
-<input type="password" id="rPass" placeholder="كلمة مرور الحساب (6 أحرف+)">
-<button type="button" class="btn b1" id="btnStart">دخول / إنشاء حساب فوري 🚀</button>
-<div id="fb" class="msg"></div>
+<input type="text" id="lUser" placeholder="اسم المستخدم (مثال: user_101)">
+<input type="password" id="lPass" placeholder="كلمة المرور">
+<button type="button" class="btn b1" onclick="doLogin()">تسجيل الدخول 🚀</button>
+<button type="button" class="btn b2" onclick="go('s-signup')">إنشاء حساب جديد ✨</button>
+<div id="fb1" class="msg"></div>
+</div>
+</div>
+
+<div id="s-signup" class="scr">
+<div class="box">
+<h2 style="margin-bottom:6px">إنشاء حساب جديد</h2>
+<p class="sub">اختر بياناتك للانضمام إلى الشبكة المشفرة</p>
+<input type="text" id="sName" placeholder="الاسم الظاهر (مثال: مستخدم جديد)">
+<input type="text" id="sUser" placeholder="اسم المستخدم بالإنجليزية (مثال: user_101)">
+<input type="password" id="sPass" placeholder="كلمة المرور (4 أحرف أو أرقام+)">
+<button type="button" class="btn b1" onclick="doSignup()">تأكيد وإنشاء الحساب ✅</button>
+<button type="button" class="btn b2" onclick="go('s-login')">لدي حساب بالفعل (دخول) ➔</button>
+<div id="fb2" class="msg"></div>
 </div>
 </div>
 
 <div id="s-home" class="scr">
 <div class="hdr"><b style="font-size:20px">Crypt<span style="color:#38bdf8">X</span></b><span id="myTag" style="color:#38bdf8;font-size:13px">@user</span></div>
 <div id="t-chat" style="display:flex;flex-direction:column;flex:1">
-<div style="display:flex;gap:6px"><input id="sInput" placeholder="ابحث باسم مستخدم صديقك..."><button type="button" class="btn b1" style="width:auto;margin:0;padding:0 18px" id="btnSearch">بحث</button></div>
-<div id="sRes"></div>
+<div style="display:flex;gap:6px"><input id="qInput" placeholder="ابحث باسم مستخدم صديقك..."><button type="button" class="btn b1" style="width:auto;margin:0;padding:0 18px" onclick="findPeer()">بحث</button></div>
+<div id="qRes"></div>
 <div id="roomBox" style="display:none;flex-direction:column;flex:1">
-<div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0"><b id="peerTitle" style="color:#38bdf8"></b><button type="button" class="btn b2" style="width:auto;padding:6px 12px;margin:0" id="btnClose">إغلاق</button></div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0"><b id="peerTitle" style="color:#38bdf8"></b><button type="button" class="btn b2" style="width:auto;padding:6px 12px;margin:0" onclick="closeRoom()">إغلاق</button></div>
 <input type="password" id="roomKey" placeholder="🔑 الرمز السري المشترك بينكما...">
 <div id="stream" class="chat"></div>
 <textarea id="draft" rows="2" placeholder="اكتب رسالتك المشفرة..."></textarea>
-<button type="button" class="btn b1" id="btnSend">إرسال مشفر 🔒</button>
+<button type="button" class="btn b1" onclick="sendMsg()">إرسال مشفر 🔒</button>
 </div>
 </div>
 <div id="t-tool" style="display:none;flex-direction:column">
 <textarea id="tIn" rows="3" placeholder="النص أو الرموز المشفرة..."></textarea>
 <input type="password" id="tKey" placeholder="كلمة السر...">
-<div style="display:flex;gap:8px"><button type="button" class="btn b1" id="btnEnc">تشفير 🔒</button><button type="button" class="btn b2" id="btnDec">فك التشفير 🔓</button></div>
+<div style="display:flex;gap:8px"><button type="button" class="btn b1" onclick="runTool(1)">تشفير 🔒</button><button type="button" class="btn b2" onclick="runTool(0)">فك التشفير 🔓</button></div>
 <textarea id="tOut" rows="3" readonly placeholder="النتيجة ستظهر هنا..."></textarea>
 </div>
 <div class="nav">
-<button type="button" class="btn b2" id="nav1">💬 المحادثات</button>
-<button type="button" class="btn b2" id="nav2">🔐 التشفير</button>
-<button type="button" class="btn b3" style="width:auto;padding:0 16px" id="btnOut">خروج</button>
+<button type="button" class="btn b2" onclick="tab(1)">💬 المحادثات</button>
+<button type="button" class="btn b2" onclick="tab(2)">🔐 التشفير</button>
+<button type="button" class="btn b3" style="width:auto;padding:0 16px" onclick="logout()">خروج</button>
 </div>
 </div>
+
 </div>
 
 <script>
 const DB="https://googleapis.com";
 let prof=JSON.parse(localStorage.getItem("cx_prof")||"null"),peer=null,tmr=null;
-const note=t=>{const e=document.getElementById("fb");e.style.display="block";e.innerText=t};
-
-function openHome(){
-document.getElementById("s-auth").classList.remove("active");
-document.getElementById("s-home").classList.add("active");
-document.getElementById("myTag").innerText="@"+prof.user;
-}
+function go(id){document.querySelectorAll(".scr").forEach(e=>e.classList.remove("active"));document.getElementById(id).classList.add("active")}
+function note(id,t){const e=document.getElementById(id);e.style.display="block";e.innerText=t}
+function openHome(){document.getElementById("myTag").innerText="@"+prof.user;go("s-home")}
 if(prof)openHome();
 
-document.getElementById("btnStart").onclick=async()=>{
-const name=document.getElementById("rName").value.trim();
-const user=document.getElementById("rUser").value.trim().toLowerCase().replace(/[^a-z0-9_]/g,"");
-const pass=document.getElementById("rPass").value;
-if(user.length<3||pass.length<4){note("⚠️ أدخل اسم مستخدم إنجليزي (3 أحرف+) وكلمة مرور (4 أحرف+)");return}
-note("⏳ جاري الاتصال بالخادم...");
+async function doSignup(){
+const name=document.getElementById("sName").value.trim();
+const user=document.getElementById("sUser").value.trim().toLowerCase().replace(/[^a-z0-9_]/g,"");
+const pass=document.getElementById("sPass").value;
+if(!name||user.length<3||pass.length<4){note("fb2","⚠️ املأ جميع الخانات (اسم المستخدم بالإنجليزية 3 أحرف+ وكلمة المرور 4+)");return}
+note("fb2","⏳ جاري التحقق وإنشاء الحساب...");
 try{
-const r=await fetch(`${DB}/accounts/${user}`);
-if(r.ok){
-const d=await r.json();
-if(d.fields.pass.stringValue!==pass){note("❌ اسم المستخدم محجوز أو كلمة المرور غير صحيحة!");return}
-prof={name:d.fields.name.stringValue,user};
-}else{
-if(!name){note("⚠️ هذا حساب جديد! اكتب اسمك الظاهر في الخانة الأولى.");return}
-const save=await fetch(`${DB}/accounts?documentId=${user}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:{name:{stringValue:name},user:{stringValue:user},pass:{stringValue:pass}}})});
-if(!save.ok){note("❌ تعذر الحفظ، تأكد من تفعيل وضع الاختبار في Firestore.");return}
-prof={name,user};
+const chk=await fetch(DB+"/accounts/"+user);
+if(chk.ok){note("fb2","❌ اسم المستخدم هذا محجوز! اختر اسماً آخر.");return}
+const res=await fetch(DB+"/accounts?documentId="+user,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:{name:{stringValue:name},user:{stringValue:user},pass:{stringValue:pass}}})});
+if(!res.ok){note("fb2","❌ رفض الخادم الحفظ! تأكد من تفعيل Firestore Rules (allow read, write: if true;)");return}
+prof={name,user};localStorage.setItem("cx_prof",JSON.stringify(prof));openHome();
+}catch(e){note("fb2","❌ خطأ في الاتصال: "+e.message)}
 }
-localStorage.setItem("cx_prof",JSON.stringify(prof));
-openHome();
-}catch(e){note("❌ خطأ شبكة: "+e.message)}
-};
 
-document.getElementById("nav1").onclick=()=>{document.getElementById("t-chat").style.display="flex";document.getElementById("t-tool").style.display="none"};
-document.getElementById("nav2").onclick=()=>{document.getElementById("t-chat").style.display="none";document.getElementById("t-tool").style.display="flex"};
-document.getElementById("btnOut").onclick=()=>{localStorage.clear();location.reload()};
+async function doLogin(){
+const user=document.getElementById("lUser").value.trim().toLowerCase().replace(/[^a-z0-9_]/g,"");
+const pass=document.getElementById("lPass").value;
+if(user.length<3||!pass){note("fb1","⚠️ أدخل اسم المستخدم وكلمة المرور");return}
+note("fb1","⏳ جاري تسجيل الدخول...");
+try{
+const res=await fetch(DB+"/accounts/"+user);
+if(!res.ok){note("fb1","❌ الحساب غير موجود! اضغط على (إنشاء حساب جديد ✨)");return}
+const d=await res.json();
+if(d.fields.pass.stringValue!==pass){note("fb1","❌ كلمة المرور غير صحيحة!");return}
+prof={name:d.fields.name.stringValue,user};localStorage.setItem("cx_prof",JSON.stringify(prof));openHome();
+}catch(e){note("fb1","❌ خطأ في الاتصال: "+e.message)}
+}
 
-document.getElementById("btnSearch").onclick=async()=>{
-const u=document.getElementById("sInput").value.trim().toLowerCase().replace("@",""),out=document.getElementById("sRes");
+function tab(n){document.getElementById("t-chat").style.display=n===1?"flex":"none";document.getElementById("t-tool").style.display=n===2?"flex":"none"}
+function logout(){localStorage.clear();location.reload()}
+
+async function findPeer(){
+const u=document.getElementById("qInput").value.trim().toLowerCase().replace("@",""),out=document.getElementById("qRes");
 if(!u||u===prof.user)return;
 out.innerHTML="<div class='msg' style='display:block'>⏳ جاري البحث...</div>";
-const r=await fetch(`${DB}/accounts/${u}`);
+const r=await fetch(DB+"/accounts/"+u);
 if(!r.ok){out.innerHTML="<div class='msg' style='display:block;color:#f43f5e'>❌ لم يتم العثور على المستخدم</div>";return}
-const d=await r.json();
-peer={user:u,name:d.fields.name.stringValue};
-out.innerHTML="";
-document.getElementById("roomBox").style.display="flex";
-document.getElementById("peerTitle").innerText=`${peer.name} (@${peer.user})`;
+const d=await r.json();peer={user:u,name:d.fields.name.stringValue};out.innerHTML="";
+document.getElementById("roomBox").style.display="flex";document.getElementById("peerTitle").innerText=peer.name+" (@"+peer.user+")";
 loadMsgs();if(tmr)clearInterval(tmr);tmr=setInterval(loadMsgs,3000);
-};
-
-document.getElementById("btnClose").onclick=()=>{clearInterval(tmr);document.getElementById("roomBox").style.display="none"};
+}
+function closeRoom(){clearInterval(tmr);document.getElementById("roomBox").style.display="none"}
 
 async function enc(t,p){
 const s=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
@@ -134,35 +146,14 @@ const k=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b.slice(0,16),iteratio
 return new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:b.slice(16,28)},k,b.slice(28)));
 }
 
-document.getElementById("btnSend").onclick=async()=>{
+async function sendMsg(){
 const t=document.getElementById("draft").value.trim(),k=document.getElementById("roomKey").value;
 if(!t||!k){alert("اكتب الرسالة والرمز السري!");return}
-const rid=[prof.user,peer.user].sort().join("_"),c=await enc(t,k);
-document.getElementById("draft").value="";
-await fetch(`${DB}/chats/${rid}/messages`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:{s:{stringValue:prof.user},c:{stringValue:c},ts:{integerValue:String(Date.now())}}})});
+const rid=[prof.user,peer.user].sort().join("_"),c=await enc(t,k);document.getElementById("draft").value="";
+await fetch(DB+"/chats/"+rid+"/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:{s:{stringValue:prof.user},c:{stringValue:c},ts:{integerValue:String(Date.now())}}})});
 loadMsgs();
-};
-
-async function loadMsgs(){
-if(!peer)return;
-const rid=[prof.user,peer.user].sort().join("_"),st=document.getElementById("stream");
-const r=await fetch(`${DB}/chats/${rid}/messages?pageSize=50`);
-if(!r.ok)return;
-const d=await r.json();if(!d.documents){st.innerHTML="";return}
-const docs=d.documents.sort((a,b)=>Number(a.fields.ts.integerValue)-Number(b.fields.ts.integerValue));
-st.innerHTML="";
-docs.forEach(m=>{
-const sender=m.fields.s.stringValue,cipher=m.fields.c.stringValue;
-const div=document.createElement("div");div.className="bbl"+(sender===prof.user?" me":"");
-div.innerHTML=`<div style="font-size:10px;color:#94a3b8">@${sender}</div><div>${cipher}</div>`;
-const btn=document.createElement("button");btn.innerText="فك التشفير 🔓";
-btn.style.cssText="margin-top:6px;padding:4px 10px;border-radius:6px;border:1px solid #38bdf8;background:#050811;color:#38bdf8;font-size:11px";
-btn.onclick=async()=>{
-const k=document.getElementById("roomKey").value;if(!k){alert("أدخل الرمز السري أولاً!");return}
-try{btn.previousElementSibling.innerText=await dec(cipher,k);btn.remove()}catch{alert("❌ الرمز السري خطأ!")}
-};
-div.appendChild(btn);st.appendChild(div);
-});
 }
-
-document.getElementById("btnEnc").onclick=async()=>{
+async function loadMsgs(){
+if(!peer)return;const rid=[prof.user,peer.user].sort().join("_"),st=document.getElementById("stream");
+const r=await fetch(DB+"/chats/"+rid+"/messages?pageSize=50");if(!r.ok)return;
+const d=await r.json();if(!d.documents){st.innerHTML="";return}
