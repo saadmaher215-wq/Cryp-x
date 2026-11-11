@@ -19,8 +19,10 @@ p.sub{color:#94a3b8;font-size:13px;margin-bottom:22px}
 .b1{background:#38bdf8;color:#050811}.b2{background:#1e293b;color:#fff}.b3{background:#f43f5e;color:#fff}
 .toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;border:1px solid #38bdf8;padding:12px 20px;border-radius:30px;font-size:13px;font-weight:700;z-index:999;box-shadow:0 10px 25px rgba(0,0,0,.7);display:none;text-align:center;max-width:90%}
 .hdr{display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid #1e293b;margin-bottom:14px}
-.av{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#1e293b;border:2px solid #38bdf8}
-.av-lg{width:96px;height:96px;border-radius:50%;object-fit:cover;background:#1e293b;border:3px solid #38bdf8;margin:0 auto 12px;display:block}
+.av{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#0f172a;border:2px solid #38bdf8}
+.av-lg{width:104px;height:104px;border-radius:50%;object-fit:cover;background:#0f172a;border:3px solid #38bdf8;margin:0 auto 10px;display:block;box-shadow:0 0 20px rgba(56,189,248,.25)}
+.p-card{background:#0a0f1d;border:1px solid #1e293b;border-radius:18px;padding:18px;margin-bottom:12px;text-align:center}
+.lbl{display:block;text-align:right;font-size:12px;color:#94a3b8;margin-bottom:5px;font-weight:700}
 .chat{background:#02040a;border:1px solid #1e293b;border-radius:14px;padding:12px;height:250px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;margin:8px 0}
 .bbl{background:#1e293b;padding:10px 12px;border-radius:14px;font-size:13px;word-break:break-all;align-self:flex-start;max-width:85%}
 .bbl.me{background:#0c4a6e;align-self:flex-end}
@@ -49,7 +51,7 @@ p.sub{color:#94a3b8;font-size:13px;margin-bottom:22px}
 <div id="s-signup" class="scr"><div class="box"><h2 style="margin-bottom:6px">إنشاء حساب جديد</h2><p class="sub">انضم إلى الشبكة المشفرة</p><input id="sName" placeholder="الاسم الظاهر"><input id="sUser" placeholder="اسم المستخدم بالإنجليزية"><input type="password" id="sPass" placeholder="كلمة المرور (4+)"><button type="button" class="btn b1" onclick="doSignup()">تأكيد وإنشاء الحساب ✅</button><button type="button" class="btn b2" onclick="go('s-login')">لدي حساب بالفعل ➔</button></div></div>
 
 <div id="s-home" class="scr">
-<div class="hdr"><b style="font-size:20px">Crypt<span style="color:#38bdf8">X</span></b><div style="display:flex;align-items:center;gap:8px"><span id="myTag" style="color:#38bdf8;font-size:13px;font-weight:700"></span><img id="hdrAv" class="av"></div></div>
+<div class="hdr"><b style="font-size:20px">Crypt<span style="color:#38bdf8">X</span></b><div style="display:flex;align-items:center;gap:8px"><span id="myTag" style="color:#38bdf8;font-size:13px;font-weight:700" dir="ltr"></span><img id="hdrAv" class="av"></div></div>
 
 <div id="t-chat" style="display:flex;flex-direction:column;flex:1">
 <div style="display:flex;gap:6px"><input id="qInput" placeholder="ابحث باسم مستخدم صديقك..."><button type="button" class="btn b1" style="width:auto;margin:0;padding:0 18px" onclick="findPeer()">بحث</button></div>
@@ -70,13 +72,19 @@ p.sub{color:#94a3b8;font-size:13px;margin-bottom:22px}
 <div style="display:flex;gap:8px"><button type="button" class="btn b2" onclick="copyOut()">نسخ النتيجة 📋</button><button type="button" class="btn b3" style="width:auto;padding:0 16px" onclick="document.getElementById('tIn').value='';document.getElementById('tOut').value=''">مسح 🗑️</button></div>
 </div>
 
-<div id="t-prof" style="display:none;flex-direction:column;text-align:center">
+<div id="t-prof" style="display:none;flex-direction:column">
+<div class="p-card">
 <img id="pAv" class="av-lg">
-<label class="btn b2" style="margin-bottom:14px;display:inline-block">تغيير الصورة الشخصية 📷<input type="file" accept="image/*" style="display:none" onchange="pickImg(this)"></label>
+<h3 id="pTitle" style="font-size:18px;margin-bottom:4px"></h3>
+<div id="pHandle" dir="ltr" style="color:#38bdf8;font-size:13px;margin-bottom:12px;cursor:pointer" onclick="copyHandle()"></div>
+<label class="btn b2" style="padding:10px;font-size:13px;display:block">تغيير الصورة الشخصية 📷<input type="file" accept="image/*" style="display:none" onchange="pickImg(this)"></label>
+</div>
+<span class="lbl">الاسم الظاهر</span>
 <input id="pName" placeholder="الاسم الظاهر">
-<input type="password" id="pPass" placeholder="كلمة مرور جديدة (اختياري)">
+<span class="lbl">تغيير كلمة المرور</span>
+<input type="password" id="pPass" placeholder="اتركه فارغاً للإبقاء على الحالية">
 <button type="button" class="btn b1" onclick="saveProf()">حفظ التعديلات ✅</button>
-<button type="button" class="btn b3" style="margin-top:16px" onclick="logout()">تسجيل الخروج 🚪</button>
+<button type="button" class="btn b3" style="margin-top:10px" onclick="logout()">تسجيل الخروج 🚪</button>
 </div>
 
 <div class="nav">
@@ -88,7 +96,9 @@ p.sub{color:#94a3b8;font-size:13px;margin-bottom:22px}
 </div>
 <script>
 const RTDB = "https://cryptx-app-default-rtdb." + "firebaseio.com";
-const DEF_AV = "data:image/svg+xml,<svg xmlns='http://w3.org' viewBox='0 0 24 24' fill='%2338bdf8'><circle cx='12' cy='8' r='4'/><path d='M4 20c0-4 4-6 8-6s8 2 8 6'/></svg>";
+const ANON_SVG = `<svg xmlns="http://w3.org" viewBox="0 0 100 100"><rect width="100" height="100" fill="#0f172a"/><path d="M18 92c2-18 16-26 32-26s30 8 32 26" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/><circle cx="50" cy="44" r="17" fill="#050811" stroke="#38bdf8" stroke-width="2"/><path d="M22 33h56l-8-16H30z" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/><ellipse cx="50" cy="33" rx="34" ry="5" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/><rect x="35" y="40" width="12" height="6" rx="2" fill="#38bdf8"/><rect x="53" y="40" width="12" height="6" rx="2" fill="#38bdf8"/><path d="M47 42h6" stroke="#38bdf8" stroke-width="2"/></svg>`;
+const DEF_AV = "data:image/svg+xml;base64," + btoa(ANON_SVG);
+
 let prof = JSON.parse(localStorage.getItem("cx_prof") || "null"), peer = null, tmr = null, newAv = "", targetMsg = null;
 const go = id => { document.querySelectorAll(".scr").forEach(e => e.classList.remove("active")); document.getElementById(id).classList.add("active"); };
 function pop(t, err) {
@@ -96,7 +106,10 @@ function pop(t, err) {
   e.style.display = "block"; clearTimeout(window._tt); window._tt = setTimeout(() => e.style.display = "none", 3200);
 }
 function openHome() {
-  document.getElementById("myTag").innerText = "@" + prof.user;
+  const tag = "@" + prof.user;
+  document.getElementById("myTag").innerText = tag;
+  document.getElementById("pHandle").innerText = tag + " 📋";
+  document.getElementById("pTitle").innerText = prof.name;
   document.getElementById("hdrAv").src = document.getElementById("pAv").src = prof.av || DEF_AV;
   document.getElementById("pName").value = prof.name; go("s-home");
 }
@@ -131,14 +144,17 @@ function tab(n) {
   document.getElementById("t-prof").style.display = n === 3 ? "flex" : "none";
 }
 function logout() { localStorage.clear(); location.reload(); }
+function copyHandle() { navigator.clipboard.writeText("@" + prof.user); pop("📋 تم نسخ اسم المستخدم!"); }
 
 function pickImg(inp) {
-  const f = inp.files; if (!f) return;
+  const f = inp.files[0]; if (!f) return;
   const r = new FileReader(); r.onload = e => {
     const img = new Image(); img.onload = () => {
-      const c = document.createElement("canvas"); c.width = 160; c.height = 160;
-      c.getContext("2d").drawImage(img, 0, 0, 160, 160);
-      newAv = c.toDataURL("image/jpeg", 0.7); document.getElementById("pAv").src = newAv;
+      const c = document.createElement("canvas"); c.width = 180; c.height = 180;
+      c.getContext("2d").drawImage(img, 0, 0, 180, 180);
+      newAv = c.toDataURL("image/jpeg", 0.75);
+      document.getElementById("pAv").src = newAv;
+      pop("📷 تم اختيار الصورة! اضغط حفظ التعديلات");
     }; img.src = e.target.result;
   }; r.readAsDataURL(f);
 }
@@ -147,10 +163,13 @@ async function saveProf() {
   const name = document.getElementById("pName").value.trim(), pass = document.getElementById("pPass").value;
   if (!name) return pop("⚠️ الاسم الظاهر مطلوب", 1);
   pop("⏳ جاري حفظ الإعدادات...");
-  const cur = await (await fetch(RTDB + "/users/" + prof.user + ".json")).json();
-  const up = { name, pass: pass.length >= 4 ? pass : cur.pass, av: newAv || prof.av || "" };
-  await fetch(RTDB + "/users/" + prof.user + ".json", { method: "PUT", body: JSON.stringify(up) });
-  prof.name = name; prof.av = up.av; localStorage.setItem("cx_prof", JSON.stringify(prof)); openHome(); pop("✅ تم تحديث ملفك الشخصي!");
+  try {
+    const cur = await (await fetch(RTDB + "/users/" + prof.user + ".json")).json();
+    const up = { name, pass: pass.length >= 4 ? pass : cur.pass, av: newAv || prof.av || "" };
+    await fetch(RTDB + "/users/" + prof.user + ".json", { method: "PUT", body: JSON.stringify(up) });
+    prof.name = name; prof.av = up.av; newAv = ""; document.getElementById("pPass").value = "";
+    localStorage.setItem("cx_prof", JSON.stringify(prof)); openHome(); pop("✅ تم تحديث ملفك الشخصي بنجاح!");
+  } catch { pop("❌ تعذر حفظ التعديلات", 1); }
 }
 
 async function findPeer() {
