@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptX - محادثات مشفرة</title>
+    <style>
+        * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+        body { margin: 0; background: #090d16; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .app { width: 100%; max-width: 480px; background: #111827; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 0 30px rgba(0,0,0,0.8); }
+        
+        /* شاشة الدخول */
+        #loginScreen { padding: 40px 25px; text-align: center; margin: auto; width: 100%; }
+        .brand { font-size: 44px; font-weight: 900; color: #38bdf8; letter-spacing: 2px; margin-bottom: 5px; }
+        .brand span { color: #f43f5e; }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #1f2937; background: #1f2937; color: white; font-size: 15px; outline: none; }
+        input:focus, textarea:focus { border-color: #38bdf8; }
+        button { width: 100%; padding: 13px; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        .btn-google { background: #38bdf8; color: #090d16; }
+        .btn-google:hover { background: #0284c7; color: white; }
+        .btn-anon { background: #1e293b; color: #cbd5e1; border: 1px solid #334155; }
+        .btn-anon:hover { background: #334155; }
+
+        /* الواجهة الرئيسية */
+        #mainScreen { display: none; flex-direction: column; height: 100vh; }
+        header { background: #0f172a; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; }
+        .tabs { display: flex; background: #0f172a; }
+        .tab { flex: 1; padding: 14px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; font-weight: bold; color: #64748b; font-size: 14px; }
+        .tab.active { border-color: #38bdf8; color: #38bdf8; }
+        
+        .content { padding: 18px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+        .section { display: none; flex: 1; flex-direction: column; }
+        .section.active { display: flex; }
+        
+        /* صندوق المحادثة */
+        .chat-box { flex: 1; background: #090d16; border-radius: 10px; padding: 12px; overflow-y: auto; margin: 10px 0; border: 1px solid #1e293b; min-height: 220px; max-height: 320px; }
+        .msg { background: #1e293b; padding: 10px 12px; border-radius: 10px; margin-bottom: 10px; font-size: 13px; word-break: break-all; }
+        .msg.me { background: #0c4a6e; border-right: 3px solid #38bdf8; }
+        .msg-header { display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; margin-bottom: 5px; }
+        .decrypt-mini-btn { background: #f43f5e; color: white; border: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; margin-top: 6px; width: auto; }
+        .copy-btn { background: #334155; color: white; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <div id="loginScreen">
+        <div class="brand">Crypt<span>X</span></div>
+        <p style="color:#94a3b8; margin-bottom:25px;">منصة التراسل المشفر والآمن</p>
+        <input type="text" id="usernameInput" placeholder="اختر اسم مستخدم فريد (مثال: saad99)">
+        <button class="btn-google" onclick="loginWithGoogle()">الدخول بواسطة حساب Google 🚀</button>
+        <button class="btn-anon" onclick="loginAnonymously()">دخول سريع ومجهول (بدون إيميل) 🕵️‍♂️</button>
+    </div>
+
+    <div id="mainScreen">
+        <header>
+            <div style="font-weight:900; font-size:22px; color:#38bdf8;">Crypt<span style="color:#f43f5e;">X</span></div>
+            <div style="font-size:13px; color:#cbd5e1; background:#1e293b; padding:5px 10px; border-radius:20px;" id="userBadge"></div>
+        </header>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('chat', this)">💬 المحادثات</div>
+            <div class="tab" onclick="switchTab('encrypt', this)">🔒 تشفير</div>
+            <div class="tab" onclick="switchTab('decrypt', this)">🔓 فك التشفير</div>
+        </div>
+
+        <div class="content">
+            <div id="chat" class="section active">
+                <input type="text" id="friendUsername" placeholder="اسم مستخدم الصديق (مثال: ahmad22)..." oninput="listenToMessages()">
+                <input type="password" id="sessionKey" placeholder="الرمز السري المشترك بينكما لفك الرسائل...">
+                
+                <div class="chat-box" id="messagesList">
+                    <div style="text-align:center; color:#475569; margin-top:30px;">اكتب اسم مستخدم الصديق في الأعلى لعرض الرسائل المشفرة</div>
+                </div>
+                
+                <textarea id="msgInput" rows="2" placeholder="اكتب رسالتك (ستصل كرموز مشفرة)..."></textarea>
+                <button class="btn-google" onclick="sendMessage()">إرسال رسالة مشفرة 🔒</button>
+            </div>
+
+            <div id="encrypt" class="section">
+                <textarea id="rawText" rows="4" placeholder="اكتب النص العادي هنا..."></textarea>
+                <input type="password" id="encPass" placeholder="كلمة سر التشفير...">
+                <button class="btn-google" onclick="manualEncrypt()">تشفير إلى رموز 🔒</button>
+                <textarea id="encOut" rows="4" readonly placeholder="الرموز المشفرة ستظهر هنا..."></textarea>
+                <button class="copy-btn" onclick="copyText('encOut')">نسخ الرموز 📋</button>
+            </div>
+
+            <div id="decrypt" class="section">
+                <textarea id="cipherIn" rows="4" placeholder="الصق الرموز المشفرة هنا..."></textarea>
+                <input type="password" id="decPass" placeholder="كلمة سر فك التشفير...">
+                <button class="btn-google" onclick="manualDecrypt()">فك التشفير 🔓</button>
+                <textarea id="decOut" rows="4" readonly placeholder="النص الأصلي سيظهر هنا..."></textarea>
+                <button class="copy-btn" onclick="copyText('decOut')">نسخ النص المفكوك 📋</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://gstatic.com";
+    import { getAuth, signInWithPopup, signInAnonymously, GoogleAuthProvider } from "https://gstatic.com";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://gstatic.com";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBcO6WTzrBtO8PhvPXnm81w-nkM9Ljdqqc",
+        authDomain: "cryp-x-8e20c.firebaseapp.com",
+        projectId: "cryp-x-8e20c",
+        storageBucket: "cryp-x-8e20c.firebasestorage.app",
+        messagingSenderId: "370777825799",
+        appId: "1:370777825799:web:0ac44bf12870e10d0700a2",
+        measurementId: "G-9LSGE90S3T"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    let myUsername = "";
+    let unsubscribeChat = null;
+
+    function enterApp(uName) {
+        myUsername = uName;
+        document.getElementById("userBadge").innerText = `@${myUsername}`;
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("mainScreen").style.display = "flex";
+    }
+
+    // الدخول بحساب Google
+    window.loginWithGoogle = async () => {
+        const uName = document.getElementById("usernameInput").value.trim().toLowerCase();
+        if (!uName) return alert("يرجى اختيار اسم مستخدم أولاً!");
+        try {
+            await signInWithPopup(auth, provider);
+            enterApp(uName);
+        } catch (error) {
+            alert("خطأ في الدخول بجوجل: تأكد من إضافة رابط GitHub في Authorized Domains داخل Firebase.");
+        }
+    };
+
+    // الدخول السريع المجهول
+    window.loginAnonymously = async () => {
+        const uName = document.getElementById("usernameInput").value.trim().toLowerCase();
+        if (!uName) return alert("يرجى اختيار اسم مستخدم أولاً!");
+        try {
+            await signInAnonymously(auth);
+            enterApp(uName);
+        } catch (error) {
+            alert("حدث خطأ أثناء الدخول السريع: " + error.message);
+        }
+    };
+
+    // التنقل بين الواجهات
+    window.switchTab = (id, el) => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById(id).classList.add('active');
+    };
+
+    // دوال التشفير AES-GCM
+    async function getKey(pass, salt) {
+        const enc = new TextEncoder();
+        const mat = await crypto.subtle.importKey("raw", enc.encode(pass), { name: "PBKDF2" }, false, ["deriveKey"]);
+        return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" }, mat, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+    }
+
+    async function encryptText(text, pass) {
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const key = await getKey(pass, salt);
+        const enc = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(text));
+        const res = new Uint8Array(salt.length + iv.length + enc.byteLength);
+        res.set(salt, 0); res.set(iv, 16); res.set(new Uint8Array(enc), 28);
+        return btoa(String.fromCharCode(...res));
+    }
+
+    window.decryptText = async (cipher, pass) => {
+        const combined = new Uint8Array(atob(cipher).split("").map(c => c.charCodeAt(0)));
+        const key = await getKey(pass, combined.slice(0, 16));
