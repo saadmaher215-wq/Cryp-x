@@ -2,179 +2,142 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CryptX - محادثات مشفرة</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CryptX</title>
     <style>
-        * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
-        body { margin: 0; background: #090d16; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .app { width: 100%; max-width: 480px; background: #111827; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 0 30px rgba(0,0,0,0.8); }
+        * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; }
+        body { background: #000000; color: #ffffff; display: flex; justify-content: center; min-height: 100vh; }
+        .app { width: 100%; max-width: 480px; background: #0f172a; min-height: 100vh; display: flex; flex-direction: column; position: relative; overflow-x: hidden; }
         
-        /* شاشة الدخول */
-        #loginScreen { padding: 40px 25px; text-align: center; margin: auto; width: 100%; }
-        .brand { font-size: 44px; font-weight: 900; color: #38bdf8; letter-spacing: 2px; margin-bottom: 5px; }
+        /* شاشة التحميل */
+        #loadingScreen { position: fixed; inset: 0; background: #090d16; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #1e293b; border-top-color: #38bdf8; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* شاشات الدخول واختيار اليوزر */
+        .auth-screen { padding: 40px 25px; text-align: center; margin: auto; width: 100%; display: none; flex-direction: column; }
+        .brand { font-size: 46px; font-weight: 900; color: #38bdf8; letter-spacing: 2px; margin-bottom: 8px; }
         .brand span { color: #f43f5e; }
-        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #1f2937; background: #1f2937; color: white; font-size: 15px; outline: none; }
+        input, textarea { width: 100%; padding: 14px; margin: 8px 0; border-radius: 12px; border: 1px solid #1e293b; background: #1e293b; color: white; font-size: 15px; outline: none; transition: 0.2s; }
         input:focus, textarea:focus { border-color: #38bdf8; }
-        button { width: 100%; padding: 13px; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; transition: 0.2s; }
-        .btn-google { background: #38bdf8; color: #090d16; }
-        .btn-google:hover { background: #0284c7; color: white; }
-        .btn-anon { background: #1e293b; color: #cbd5e1; border: 1px solid #334155; }
-        .btn-anon:hover { background: #334155; }
+        button { width: 100%; padding: 14px; border: none; border-radius: 12px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        .btn-primary { background: #38bdf8; color: #090d16; }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-secondary { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; }
+        .btn-danger { background: rgba(244, 63, 94, 0.15); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); }
+        .error-text { color: #f43f5e; font-size: 13px; margin-top: 8px; min-height: 20px; }
 
         /* الواجهة الرئيسية */
-        #mainScreen { display: none; flex-direction: column; height: 100vh; }
-        header { background: #0f172a; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; }
-        .tabs { display: flex; background: #0f172a; }
-        .tab { flex: 1; padding: 14px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; font-weight: bold; color: #64748b; font-size: 14px; }
-        .tab.active { border-color: #38bdf8; color: #38bdf8; }
-        
-        .content { padding: 18px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
-        .section { display: none; flex: 1; flex-direction: column; }
-        .section.active { display: flex; }
-        
-        /* صندوق المحادثة */
-        .chat-box { flex: 1; background: #090d16; border-radius: 10px; padding: 12px; overflow-y: auto; margin: 10px 0; border: 1px solid #1e293b; min-height: 220px; max-height: 320px; }
-        .msg { background: #1e293b; padding: 10px 12px; border-radius: 10px; margin-bottom: 10px; font-size: 13px; word-break: break-all; }
-        .msg.me { background: #0c4a6e; border-right: 3px solid #38bdf8; }
-        .msg-header { display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; margin-bottom: 5px; }
-        .decrypt-mini-btn { background: #f43f5e; color: white; border: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; margin-top: 6px; width: auto; }
-        .copy-btn { background: #334155; color: white; margin-top: 5px; }
+        #mainApp { display: none; flex-direction: column; height: 100vh; }
+        .top-bar { background: #090d16; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; }
+        .main-content { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 80px; }
+        .view { display: none; flex-direction: column; }
+        .view.active { display: flex; }
+
+        /* شريط التنقل السفلي (مثل تيك توك) */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 480px; background: #090d16; border-top: 1px solid #1e293b; display: flex; padding: 8px 0; z-index: 50; }
+        .nav-item { flex: 1; text-align: center; color: #64748b; font-size: 11px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .nav-item.active { color: #38bdf8; font-weight: bold; }
+        .nav-icon { font-size: 20px; }
+
+        /* البحث والمحادثات */
+        .search-box { display: flex; gap: 8px; margin-bottom: 15px; }
+        .search-box input { margin: 0; }
+        .search-box button { width: auto; margin: 0; padding: 0 20px; }
+        .user-card { background: #1e293b; padding: 14px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border: 1px solid #334155; }
+        .chat-area { background: #090d16; border-radius: 12px; padding: 12px; height: 260px; overflow-y: auto; margin: 10px 0; border: 1px solid #1e293b; display: flex; flex-direction: column; gap: 10px; }
+        .msg { background: #1e293b; padding: 10px 14px; border-radius: 14px; font-size: 13px; word-break: break-all; max-width: 85%; align-self: flex-start; }
+        .msg.me { background: #0284c7; align-self: flex-end; }
+        .msg-meta { font-size: 10px; opacity: 0.7; margin-bottom: 4px; display: flex; justify-content: space-between; gap: 10px; }
+        .unlock-btn { background: #0f172a; color: #38bdf8; border: 1px solid #38bdf8; padding: 4px 10px; border-radius: 8px; font-size: 11px; margin-top: 6px; width: auto; }
+
+        /* واجهة الملف الشخصي (ستايل تيك توك) */
+        .profile-header { display: flex; flex-direction: column; align-items: center; padding: 20px 0; border-bottom: 1px solid #1e293b; }
+        .avatar { width: 86px; height: 86px; border-radius: 50%; background: linear-gradient(45deg, #38bdf8, #f43f5e); display: flex; justify-content: center; align-items: center; font-size: 36px; font-weight: bold; margin-bottom: 12px; border: 3px solid #0f172a; box-shadow: 0 0 0 2px #38bdf8; }
+        .username-pill { background: #1e293b; padding: 6px 14px; border-radius: 20px; font-size: 14px; color: #94a3b8; margin-top: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .stats-row { display: flex; justify-content: space-around; width: 100%; margin-top: 20px; }
+        .stat-box { text-align: center; }
+        .stat-num { font-size: 18px; font-weight: bold; color: white; }
+        .stat-label { font-size: 12px; color: #64748b; }
+        .settings-list { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .setting-item { background: #1e293b; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
     </style>
 </head>
 <body>
 
 <div class="app">
-    <div id="loginScreen">
+    <div id="loadingScreen">
+        <div class="spinner"></div>
+        <div style="color:#94a3b8; font-size:14px;">جاري تشغيل CryptX...</div>
+    </div>
+
+    <div id="loginScreen" class="auth-screen">
         <div class="brand">Crypt<span>X</span></div>
-        <p style="color:#94a3b8; margin-bottom:25px;">منصة التراسل المشفر والآمن</p>
-        <input type="text" id="usernameInput" placeholder="اختر اسم مستخدم فريد (مثال: saad99)">
-        <button class="btn-google" onclick="loginWithGoogle()">الدخول بواسطة حساب Google 🚀</button>
-        <button class="btn-anon" onclick="loginAnonymously()">دخول سريع ومجهول (بدون إيميل) 🕵️‍♂️</button>
+        <p style="color:#94a3b8; margin-bottom:30px;">شبكة التواصل المشفر والآمن</p>
+        <button class="btn-primary" id="btnGoogle">المتابعة باستخدام Google 🚀</button>
+        <button class="btn-secondary" id="btnGuest">دخول سريع كضيف 🕵️‍♂️</button>
+        <div id="authError" class="error-text"></div>
     </div>
 
-    <div id="mainScreen">
-        <header>
-            <div style="font-weight:900; font-size:22px; color:#38bdf8;">Crypt<span style="color:#f43f5e;">X</span></div>
-            <div style="font-size:13px; color:#cbd5e1; background:#1e293b; padding:5px 10px; border-radius:20px;" id="userBadge"></div>
-        </header>
+    <div id="setupScreen" class="auth-screen">
+        <h2 style="margin-bottom:8px;">أنشئ ملفك الشخصي</h2>
+        <p style="color:#94a3b8; font-size:14px; margin-bottom:20px;">اختر اسماً واسم مستخدم فريد ليجدك أصدقاؤك</p>
+        <input type="text" id="displayNameInput" placeholder="الاسم الظاهر (مثال: سعد ماهر)">
+        <input type="text" id="newUsernameInput" placeholder="اسم المستخدم بالإنجليزية (مثال: saad99)">
+        <button class="btn-primary" id="btnSaveProfile">حفظ وبدء الاستخدام ✅</button>
+        <div id="setupError" class="error-text"></div>
+    </div>
 
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab('chat', this)">💬 المحادثات</div>
-            <div class="tab" onclick="switchTab('encrypt', this)">🔒 تشفير</div>
-            <div class="tab" onclick="switchTab('decrypt', this)">🔓 فك التشفير</div>
+    <div id="mainApp">
+        <div class="top-bar">
+            <div style="font-weight:900; font-size:20px; color:#38bdf8;">Crypt<span style="color:#f43f5e;">X</span></div>
+            <div id="topUserTag" style="font-size:13px; color:#94a3b8;"></div>
         </div>
 
-        <div class="content">
-            <div id="chat" class="section active">
-                <input type="text" id="friendUsername" placeholder="اسم مستخدم الصديق (مثال: ahmad22)..." oninput="listenToMessages()">
-                <input type="password" id="sessionKey" placeholder="الرمز السري المشترك بينكما لفك الرسائل...">
-                
-                <div class="chat-box" id="messagesList">
-                    <div style="text-align:center; color:#475569; margin-top:30px;">اكتب اسم مستخدم الصديق في الأعلى لعرض الرسائل المشفرة</div>
+        <div class="main-content">
+            <div id="view-chats" class="view active">
+                <div class="search-box">
+                    <input type="text" id="searchUserInput" placeholder="ابحث باسم مستخدم صديقك...">
+                    <button class="btn-primary" id="btnSearchUser">بحث 🔍</button>
                 </div>
-                
-                <textarea id="msgInput" rows="2" placeholder="اكتب رسالتك (ستصل كرموز مشفرة)..."></textarea>
-                <button class="btn-google" onclick="sendMessage()">إرسال رسالة مشفرة 🔒</button>
+                <div id="searchResultArea"></div>
+
+                <div id="activeChatBox" style="display:none;">
+                    <div style="background:#1e293b; padding:10px 14px; border-radius:10px; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                        <span id="chattingWithTitle" style="font-weight:bold; color:#38bdf8;"></span>
+                        <span style="font-size:11px; color:#10b981;">● اتصال مشفر</span>
+                    </div>
+                    <input type="password" id="chatSecretKey" placeholder="🔑 اكتب الرمز السري المشترك بينكما...">
+                    <div class="chat-area" id="messagesContainer"></div>
+                    <textarea id="chatInput" rows="2" placeholder="اكتب رسالتك (تُرسل مشفرة)..."></textarea>
+                    <button class="btn-primary" id="btnSendMsg">إرسال مشفر 🔒</button>
+                </div>
             </div>
 
-            <div id="encrypt" class="section">
-                <textarea id="rawText" rows="4" placeholder="اكتب النص العادي هنا..."></textarea>
-                <input type="password" id="encPass" placeholder="كلمة سر التشفير...">
-                <button class="btn-google" onclick="manualEncrypt()">تشفير إلى رموز 🔒</button>
-                <textarea id="encOut" rows="4" readonly placeholder="الرموز المشفرة ستظهر هنا..."></textarea>
-                <button class="copy-btn" onclick="copyText('encOut')">نسخ الرموز 📋</button>
+            <div id="view-tools" class="view">
+                <h3 style="margin-bottom:10px; color:#38bdf8;">🔒 تشفير نص سريع</h3>
+                <textarea id="toolRaw" rows="3" placeholder="اكتب الكلام هنا..."></textarea>
+                <input type="password" id="toolEncPass" placeholder="كلمة سر التشفير...">
+                <button class="btn-primary" id="btnToolEnc">تشفير إلى رموز</button>
+                <textarea id="toolEncOut" rows="3" readonly placeholder="الرموز المشفرة..."></textarea>
+
+                <hr style="border-color:#1e293b; margin:20px 0;">
+
+                <h3 style="margin-bottom:10px; color:#f43f5e;">🔓 فك تشفير رموز</h3>
+                <textarea id="toolCipher" rows="3" placeholder="الصق الرموز المشفرة هنا..."></textarea>
+                <input type="password" id="toolDecPass" placeholder="كلمة سر فك التشفير...">
+                <button class="btn-primary" id="btnToolDec">فك التشفير</button>
+                <textarea id="toolDecOut" rows="3" readonly placeholder="الكلام الأصلي..."></textarea>
             </div>
 
-            <div id="decrypt" class="section">
-                <textarea id="cipherIn" rows="4" placeholder="الصق الرموز المشفرة هنا..."></textarea>
-                <input type="password" id="decPass" placeholder="كلمة سر فك التشفير...">
-                <button class="btn-google" onclick="manualDecrypt()">فك التشفير 🔓</button>
-                <textarea id="decOut" rows="4" readonly placeholder="النص الأصلي سيظهر هنا..."></textarea>
-                <button class="copy-btn" onclick="copyText('decOut')">نسخ النص المفكوك 📋</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script type="module">
-    import { initializeApp } from "https://gstatic.com";
-    import { getAuth, signInWithPopup, signInAnonymously, GoogleAuthProvider } from "https://gstatic.com";
-    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://gstatic.com";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyBcO6WTzrBtO8PhvPXnm81w-nkM9Ljdqqc",
-        authDomain: "cryp-x-8e20c.firebaseapp.com",
-        projectId: "cryp-x-8e20c",
-        storageBucket: "cryp-x-8e20c.firebasestorage.app",
-        messagingSenderId: "370777825799",
-        appId: "1:370777825799:web:0ac44bf12870e10d0700a2",
-        measurementId: "G-9LSGE90S3T"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const provider = new GoogleAuthProvider();
-
-    let myUsername = "";
-    let unsubscribeChat = null;
-
-    function enterApp(uName) {
-        myUsername = uName;
-        document.getElementById("userBadge").innerText = `@${myUsername}`;
-        document.getElementById("loginScreen").style.display = "none";
-        document.getElementById("mainScreen").style.display = "flex";
-    }
-
-    // الدخول بحساب Google
-    window.loginWithGoogle = async () => {
-        const uName = document.getElementById("usernameInput").value.trim().toLowerCase();
-        if (!uName) return alert("يرجى اختيار اسم مستخدم أولاً!");
-        try {
-            await signInWithPopup(auth, provider);
-            enterApp(uName);
-        } catch (error) {
-            alert("خطأ في الدخول بجوجل: تأكد من إضافة رابط GitHub في Authorized Domains داخل Firebase.");
-        }
-    };
-
-    // الدخول السريع المجهول
-    window.loginAnonymously = async () => {
-        const uName = document.getElementById("usernameInput").value.trim().toLowerCase();
-        if (!uName) return alert("يرجى اختيار اسم مستخدم أولاً!");
-        try {
-            await signInAnonymously(auth);
-            enterApp(uName);
-        } catch (error) {
-            alert("حدث خطأ أثناء الدخول السريع: " + error.message);
-        }
-    };
-
-    // التنقل بين الواجهات
-    window.switchTab = (id, el) => {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-        el.classList.add('active');
-        document.getElementById(id).classList.add('active');
-    };
-
-    // دوال التشفير AES-GCM
-    async function getKey(pass, salt) {
-        const enc = new TextEncoder();
-        const mat = await crypto.subtle.importKey("raw", enc.encode(pass), { name: "PBKDF2" }, false, ["deriveKey"]);
-        return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" }, mat, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
-    }
-
-    async function encryptText(text, pass) {
-        const salt = crypto.getRandomValues(new Uint8Array(16));
-        const iv = crypto.getRandomValues(new Uint8Array(12));
-        const key = await getKey(pass, salt);
-        const enc = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(text));
-        const res = new Uint8Array(salt.length + iv.length + enc.byteLength);
-        res.set(salt, 0); res.set(iv, 16); res.set(new Uint8Array(enc), 28);
-        return btoa(String.fromCharCode(...res));
-    }
-
-    window.decryptText = async (cipher, pass) => {
-        const combined = new Uint8Array(atob(cipher).split("").map(c => c.charCodeAt(0)));
-        const key = await getKey(pass, combined.slice(0, 16));
+            <div id="view-profile" class="view">
+                <div class="profile-header">
+                    <div class="avatar" id="profileAvatar">S</div>
+                    <h2 id="profileDisplayName">الاسم</h2>
+                    <div class="username-pill" id="copyUsernameBtn">
+                        <span id="profileUsername">@username</span> 📋
+                    </div>
+                    <div class="stats-row">
+                        <div class="stat-box">
+                            <div class="stat-num">AES-256</div>
+                            <div class="stat-label">مستوى التشفير</div>
