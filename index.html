@@ -1,146 +1,78 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>CryptX</title>
-<style>
-*{box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;margin:0;padding:0;user-select:none}
-input,textarea{user-select:text;width:100%;padding:14px;border-radius:14px;border:1px solid #1e293b;background:#0f172a;color:#fff;font-size:15px;margin-bottom:10px;outline:none;transition:.2s}
-input:focus,textarea:focus{border-color:#38bdf8}
-body{background:#050811;color:#f8fafc;display:flex;justify-content:center;min-height:100vh}
-.app{width:100%;max-width:480px;padding:20px 16px;display:flex;flex-direction:column;position:relative}
-.scr{display:none;flex-direction:column;flex:1}.scr.active{display:flex}
-.box{margin:auto 0;text-align:center}
-h1{font-size:38px;font-weight:900;margin-bottom:6px}h1 span{color:#38bdf8}
-p.sub{color:#94a3b8;font-size:13px;margin-bottom:22px}
-.btn{width:100%;padding:14px;border:none;border-radius:14px;font-weight:800;font-size:15px;cursor:pointer;margin-top:6px;transition:.2s}
-.btn:active{transform:scale(.98)}
-.b1{background:#38bdf8;color:#050811}.b2{background:#1e293b;color:#fff}.b3{background:#f43f5e;color:#fff}
-.toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;border:1px solid #38bdf8;padding:12px 20px;border-radius:30px;font-size:13px;font-weight:700;z-index:999;box-shadow:0 10px 25px rgba(0,0,0,.7);display:none;text-align:center;max-width:90%}
-.hdr{display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid #1e293b;margin-bottom:14px}
-.av-wrap{width:40px;height:40px;border-radius:50%;overflow:hidden;background:#0f172a;border:2px solid #38bdf8;display:flex;align-items:center;justify-content:center}
-.av-lg-wrap{width:110px;height:110px;border-radius:50%;overflow:hidden;background:#0f172a;border:3px solid #38bdf8;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 25px rgba(56,189,248,.3)}
-.av-wrap img,.av-lg-wrap img{width:100%;height:100%;object-fit:cover;display:none}
-.p-card{background:#0a0f1d;border:1px solid #1e293b;border-radius:20px;padding:20px;margin-bottom:14px;text-align:center}
-.lbl{display:block;text-align:right;font-size:12px;color:#94a3b8;margin-bottom:5px;font-weight:700}
-.chat{background:#02040a;border:1px solid #1e293b;border-radius:14px;padding:12px;height:250px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;margin:8px 0}
-.bbl{background:#1e293b;padding:10px 12px;border-radius:14px;font-size:13px;word-break:break-all;align-self:flex-start;max-width:85%}
-.bbl.me{background:#0c4a6e;align-self:flex-end}
-.pin-bar{background:#0f172a;border:1px solid #38bdf8;border-radius:12px;padding:10px;margin-bottom:8px;display:none;justify-content:space-between;align-items:center;font-size:13px}
-.modal{position:fixed;inset:0;background:rgba(2,4,10,.9);display:none;align-items:center;justify-content:center;padding:20px;z-index:900}
-.m-card{background:#0f172a;border:1px solid #1e293b;border-radius:20px;padding:22px;width:100%;max-width:340px;text-align:center}
-.crop-box{width:240px;height:240px;margin:12px auto;border-radius:50%;overflow:hidden;border:3px solid #38bdf8;position:relative;background:#02040a;touch-action:none;cursor:grab}
-.nav{display:flex;gap:6px;margin-top:auto;padding-top:12px}
-.nav .btn{font-size:13px;padding:12px 6px}
-</style>
-</head>
-<body>
-<div id="toast" class="toast"></div>
-
-<div id="pinModal" class="modal">
-<div class="m-card">
-<h3 style="margin-bottom:6px;color:#38bdf8">فك تشفير الرسالة 🔐</h3>
-<p style="font-size:12px;color:#94a3b8;margin-bottom:14px">أدخل الرمز السري المكون من 4 أرقام الذي أرسله لك صديقك</p>
-<input type="tel" id="pinInp" maxlength="4" placeholder="• • • •" style="text-align:center;font-size:24px;letter-spacing:8px;font-weight:900">
-<div style="display:flex;gap:8px"><button type="button" class="btn b1" onclick="confirmPin()">فتح الرسالة 🔓</button><button type="button" class="btn b2" onclick="closePin()">إلغاء</button></div>
-</div>
-</div>
-
-<div id="cropModal" class="modal">
-<div class="m-card">
-<h3 style="margin-bottom:4px;color:#38bdf8">ضبط الصورة الشخصية ✂️</h3>
-<p style="font-size:11px;color:#94a3b8">اسحب الصورة بإصبعك واستخدم الشريط للتكبير</p>
-<div class="crop-box" id="cropBox"><canvas id="cropCvs" width="240" height="240"></canvas></div>
-<input type="range" id="zoomRng" min="1" max="3" step="0.05" value="1" style="margin:8px 0;padding:0;accent-color:#38bdf8" oninput="drawCrop()">
-<div style="display:flex;gap:8px"><button type="button" class="btn b1" onclick="applyCrop()">اعتماد وقص ✅</button><button type="button" class="btn b2" onclick="document.getElementById('cropModal').style.display='none'">إلغاء</button></div>
-</div>
-</div>
-
-<div class="app">
-<div id="s-login" class="scr active"><div class="box"><h1>Crypt<span>X</span></h1><p class="sub">منصة التراسل المشفر والخصوصية المطلقة</p><input id="lUser" placeholder="اسم المستخدم"><input type="password" id="lPass" placeholder="كلمة المرور"><button type="button" class="btn b1" onclick="doLogin()">تسجيل الدخول 🚀</button><button type="button" class="btn b2" onclick="go('s-signup')">إنشاء حساب جديد ✨</button></div></div>
-
-<div id="s-signup" class="scr"><div class="box"><h2 style="margin-bottom:6px">إنشاء حساب جديد</h2><p class="sub">انضم إلى الشبكة المشفرة</p><input id="sName" placeholder="الاسم الظاهر"><input id="sUser" placeholder="اسم المستخدم بالإنجليزية"><input type="password" id="sPass" placeholder="كلمة المرور (4+)"><button type="button" class="btn b1" onclick="doSignup()">تأكيد وإنشاء الحساب ✅</button><button type="button" class="btn b2" onclick="go('s-login')">لدي حساب بالفعل ➔</button></div></div>
-
-<div id="s-home" class="scr">
-<div class="hdr"><b style="font-size:20px">Crypt<span style="color:#38bdf8">X</span></b><div style="display:flex;align-items:center;gap:8px"><span id="myTag" style="color:#38bdf8;font-size:13px;font-weight:700" dir="ltr"></span><div class="av-wrap"><img id="hdrImg"><svg id="hdrSvg" viewBox="0 0 100 100" width="100%" height="100%"><path d="M18 92c2-18 16-26 32-26s30 8 32 26" fill="#1e293b" stroke="#38bdf8" stroke-width="3"/><circle cx="50" cy="45" r="16" fill="#050811" stroke="#38bdf8" stroke-width="3"/><path d="M22 33h56l-8-16H30z" fill="#1e293b" stroke="#38bdf8" stroke-width="3"/><ellipse cx="50" cy="33" rx="34" ry="5" fill="#0f172a" stroke="#38bdf8" stroke-width="3"/><rect x="35" y="41" width="12" height="6" rx="2" fill="#38bdf8"/><rect x="53" y="41" width="12" height="6" rx="2" fill="#38bdf8"/></svg></div></div></div>
-
-<div id="t-chat" style="display:flex;flex-direction:column;flex:1">
-<div style="display:flex;gap:6px"><input id="qInput" placeholder="ابحث باسم مستخدم صديقك..."><button type="button" class="btn b1" style="width:auto;margin:0;padding:0 18px" onclick="findPeer()">بحث</button></div>
-<div id="roomBox" style="display:none;flex-direction:column;flex:1">
-<div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0"><b id="peerTitle" style="color:#38bdf8"></b><button type="button" class="btn b2" style="width:auto;padding:6px 12px;margin:0" onclick="closeRoom()">إغلاق</button></div>
-<div id="lastPinBox" class="pin-bar"><span>🔑 رمز آخر رسالة: <b id="lastPinVal" style="color:#38bdf8;font-size:16px;letter-spacing:2px"></b></span><button type="button" class="btn b1" style="width:auto;margin:0;padding:5px 12px;font-size:12px" onclick="copyPin()">نسخ الرمز</button></div>
-<div id="stream" class="chat"></div>
-<textarea id="draft" rows="2" placeholder="اكتب رسالتك وسيتم توليد رمز سري من 4 أرقام تلقائياً..."></textarea>
-<button type="button" class="btn b1" onclick="sendMsg()">تشفير وإرسال برمز تلقائي 🔒</button>
-</div>
-</div>
-
-<div id="t-tool" style="display:none;flex-direction:column">
-<textarea id="tIn" rows="3" placeholder="اكتب النص للتشفير أو ألصق الرموز لفكها..." oninput="if(!this.value.trim())document.getElementById('tOut').value=''"></textarea>
-<input type="password" id="tKey" placeholder="🔑 كلمة السر...">
-<div style="display:flex;gap:8px"><button type="button" class="btn b1" onclick="runTool(1)">تشفير 🔒</button><button type="button" class="btn b2" onclick="runTool(0)">فك التشفير 🔓</button></div>
-<textarea id="tOut" rows="3" readonly placeholder="النتيجة ستظهر هنا..." style="margin-top:10px"></textarea>
-<div style="display:flex;gap:8px"><button type="button" class="btn b2" onclick="copyOut()">نسخ النتيجة 📋</button><button type="button" class="btn b3" style="width:auto;padding:0 16px" onclick="document.getElementById('tIn').value='';document.getElementById('tOut').value=''">مسح 🗑️</button></div>
-</div>
-
-<div id="t-prof" style="display:none;flex-direction:column">
-<div class="p-card">
-<div class="av-lg-wrap"><img id="pImg"><svg id="pSvg" viewBox="0 0 100 100" width="100%" height="100%"><path d="M18 92c2-18 16-26 32-26s30 8 32 26" fill="#1e293b" stroke="#38bdf8" stroke-width="2.5"/><circle cx="50" cy="45" r="16" fill="#050811" stroke="#38bdf8" stroke-width="2.5"/><path d="M22 33h56l-8-16H30z" fill="#1e293b" stroke="#38bdf8" stroke-width="2.5"/><ellipse cx="50" cy="33" rx="34" ry="5" fill="#0f172a" stroke="#38bdf8" stroke-width="2.5"/><rect x="35" y="41" width="12" height="6" rx="2" fill="#38bdf8"/><rect x="53" y="41" width="12" height="6" rx="2" fill="#38bdf8"/></svg></div>
-<h3 id="pTitle" style="font-size:19px;margin-bottom:4px"></h3>
-<div id="pHandle" dir="ltr" style="color:#38bdf8;font-size:13px;margin-bottom:14px;cursor:pointer;font-weight:700" onclick="copyHandle()"></div>
-<div style="display:flex;gap:8px">
-<label class="btn b2" style="padding:10px;font-size:13px;margin:0;flex:1">تغيير وقص الصورة 📷<input type="file" accept="image/*" style="display:none" onchange="pickImg(this)"></label>
-<button type="button" class="btn b3" style="padding:10px;font-size:13px;margin:0;width:auto" onclick="resetAv()">أفاتار مجهول 🕵️</button>
-</div>
-</div>
 <script>
-const RTDB = "https://cryptx-app-default-rtdb." + "firebaseio.com";
-let prof = JSON.parse(localStorage.getItem("cx_prof") || "null"), peer = null, tmr = null, newAv = null, targetMsg = null;
+const RTDB = "https://firebaseio.com";
+let prof = null;
+try { prof = JSON.parse(localStorage.getItem("cx_prof") || "null"); } catch(e) {}
+let peer = null, tmr = null, newAv = null, targetMsg = null;
 let cImg = null, cx = 0, cy = 0, drag = false, lx = 0, ly = 0;
 
-const go = id => { document.querySelectorAll(".scr").forEach(e => e.classList.remove("active")); document.getElementById(id).classList.add("active"); };
-function pop(t, err) {
-  const e = document.getElementById("toast"); e.innerText = t; e.style.borderColor = err ? "#f43f5e" : "#38bdf8";
-  e.style.display = "block"; clearTimeout(window._tt); window._tt = setTimeout(() => e.style.display = "none", 3200);
+function go(id) {
+  document.querySelectorAll(".scr").forEach(e => e.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
 }
+
+function pop(t, err) {
+  const e = document.getElementById("toast");
+  e.innerText = t;
+  e.style.borderColor = err ? "#f43f5e" : "#38bdf8";
+  e.style.display = "block";
+  clearTimeout(window._tt);
+  window._tt = setTimeout(() => { e.style.display = "none"; }, 3200);
+}
+
 function renderAv(src) {
   const has = src && src.startsWith("data:image");
-  document.getElementById("hdrImg").style.display = document.getElementById("pImg").style.display = has ? "block" : "none";
-  document.getElementById("hdrSvg").style.display = document.getElementById("pSvg").style.display = has ? "none" : "block";
-  if (has) { document.getElementById("hdrImg").src = document.getElementById("pImg").src = src; }
+  document.getElementById("hdrImg").style.display = has ? "block" : "none";
+  document.getElementById("pImg").style.display = has ? "block" : "none";
+  document.getElementById("hdrSvg").style.display = has ? "none" : "block";
+  document.getElementById("pSvg").style.display = has ? "none" : "block";
+  if (has) {
+    document.getElementById("hdrImg").src = src;
+    document.getElementById("pImg").src = src;
+  }
 }
+
 function openHome() {
   const tag = "@" + prof.user;
   document.getElementById("myTag").innerText = tag;
   document.getElementById("pHandle").innerText = tag + " 📋";
   document.getElementById("pTitle").innerText = prof.name;
   document.getElementById("pName").value = prof.name;
-  renderAv(prof.av); go("s-home");
+  renderAv(prof.av);
+  go("s-home");
 }
 if (prof) openHome();
 
 async function doSignup() {
-  const name = document.getElementById("sName").value.trim(), user = document.getElementById("sUser").value.trim().toLowerCase().replace(/[^a-z0-9_]/g, ""), pass = document.getElementById("sPass").value;
+  const name = document.getElementById("sName").value.trim();
+  const user = document.getElementById("sUser").value.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
+  const pass = document.getElementById("sPass").value;
   if (!name || user.length < 3 || pass.length < 4) return pop("⚠️ املأ جميع الخانات (المستخدم 3+ وكلمة المرور 4+)", 1);
   pop("⏳ جاري إنشاء الحساب...");
   try {
-    if (await (await fetch(RTDB + "/users/" + user + ".json")).json()) return pop("❌ اسم المستخدم محجوز!", 1);
+    const chk = await (await fetch(RTDB + "/users/" + user + ".json")).json();
+    if (chk) return pop("❌ اسم المستخدم محجوز!", 1);
     await fetch(RTDB + "/users/" + user + ".json", { method: "PUT", body: JSON.stringify({ name, pass, av: "" }) });
-    prof = { name, user, av: "" }; localStorage.setItem("cx_prof", JSON.stringify(prof)); openHome(); pop("✅ تم إنشاء الحساب بنجاح!");
-  } catch { pop("❌ خطأ في الاتصال", 1); }
+    prof = { name, user, av: "" };
+    localStorage.setItem("cx_prof", JSON.stringify(prof));
+    openHome();
+    pop("✅ تم إنشاء الحساب بنجاح!");
+  } catch (e) { pop("❌ خطأ في الاتصال", 1); }
 }
 
 async function doLogin() {
-  const user = document.getElementById("lUser").value.trim().toLowerCase().replace(/[^a-z0-9_]/g, ""), pass = document.getElementById("lPass").value;
+  const user = document.getElementById("lUser").value.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
+  const pass = document.getElementById("lPass").value;
   if (user.length < 3 || !pass) return pop("⚠️ أدخل اسم المستخدم وكلمة المرور", 1);
   pop("⏳ جاري الدخول...");
   try {
     const u = await (await fetch(RTDB + "/users/" + user + ".json")).json();
     if (!u) return pop("❌ الحساب غير موجود!", 1);
     if (u.pass !== pass) return pop("❌ كلمة المرور غير صحيحة!", 1);
-    prof = { name: u.name, user, av: u.av || "" }; localStorage.setItem("cx_prof", JSON.stringify(prof)); openHome(); pop("👋 أهلاً بك يا " + u.name);
-  } catch { pop("❌ خطأ في الاتصال", 1); }
+    prof = { name: u.name, user, av: u.av || "" };
+    localStorage.setItem("cx_prof", JSON.stringify(prof));
+    openHome();
+    pop("👋 أهلاً بك يا " + u.name);
+  } catch (e) { pop("❌ خطأ في الاتصال", 1); }
 }
 
 function tab(n) {
@@ -152,35 +84,52 @@ function logout() { localStorage.clear(); location.reload(); }
 function copyHandle() { navigator.clipboard.writeText("@" + prof.user); pop("📋 تم نسخ اسم المستخدم!"); }
 
 function pickImg(inp) {
-  const file = inp.files && inp.files; if (!file) return;
-  const r = new FileReader(); r.onload = e => {
-    cImg = new Image(); cImg.onload = () => {
-      cx = 0; cy = 0; document.getElementById("zoomRng").value = 1;
+  const file = inp.files && inp.files;
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    cImg = new Image();
+    cImg.onload = () => {
+      cx = 0; cy = 0;
+      document.getElementById("zoomRng").value = 1;
       document.getElementById("cropModal").style.display = "flex";
       drawCrop();
-    }; cImg.src = e.target.result;
-  }; r.readAsDataURL(file); inp.value = "";
+    };
+    cImg.src = e.target.result;
+  };
+  r.readAsDataURL(file);
+  inp.value = "";
 }
+
 function drawCrop() {
-  if (!cImg) return; const cvs = document.getElementById("cropCvs"), ctx = cvs.getContext("2d"), z = parseFloat(document.getElementById("zoomRng").value);
+  if (!cImg) return;
+  const cvs = document.getElementById("cropCvs");
+  const ctx = cvs.getContext("2d");
+  const z = parseFloat(document.getElementById("zoomRng").value);
   ctx.clearRect(0, 0, 240, 240);
   const sc = Math.max(240 / cImg.width, 240 / cImg.height) * z;
   const w = cImg.width * sc, h = cImg.height * sc;
   ctx.drawImage(cImg, (240 - w) / 2 + cx, (240 - h) / 2 + cy, w, h);
 }
+
 const cb = document.getElementById("cropBox");
-cb.onpointerdown = e => { drag = true; lx = e.clientX; ly = e.clientY; cb.setPointerCapture(e.pointerId); };
-cb.onpointermove = e => { if (!drag) return; cx += e.clientX - lx; cy += e.clientY - ly; lx = e.clientX; ly = e.clientY; drawCrop(); };
-cb.onpointerup = () => { drag = false; };
+if (cb) {
+  cb.onpointerdown = e => { drag = true; lx = e.clientX; ly = e.clientY; cb.setPointerCapture(e.pointerId); };
+  cb.onpointermove = e => { if (!drag) return; cx += e.clientX - lx; cy += e.clientY - ly; lx = e.clientX; ly = e.clientY; drawCrop(); };
+  cb.onpointerup = () => { drag = false; };
+}
+
 function applyCrop() {
   newAv = document.getElementById("cropCvs").toDataURL("image/jpeg", 0.85);
-  renderAv(newAv); document.getElementById("cropModal").style.display = "none";
+  renderAv(newAv);
+  document.getElementById("cropModal").style.display = "none";
   pop("✂️ تم قص الصورة بنجاح! اضغط حفظ التعديلات");
 }
 function resetAv() { newAv = ""; renderAv(""); pop("🕵️ تم تفعيل صورة الشخص المجهول! اضغط حفظ"); }
 
 async function saveProf() {
-  const name = document.getElementById("pName").value.trim(), pass = document.getElementById("pPass").value;
+  const name = document.getElementById("pName").value.trim();
+  const pass = document.getElementById("pPass").value;
   if (!name) return pop("⚠️ الاسم الظاهر مطلوب", 1);
   pop("⏳ جاري حفظ الإعدادات...");
   try {
@@ -188,19 +137,26 @@ async function saveProf() {
     const finalAv = newAv !== null ? newAv : (prof.av || "");
     const up = { name, pass: pass.length >= 4 ? pass : cur.pass, av: finalAv };
     await fetch(RTDB + "/users/" + prof.user + ".json", { method: "PUT", body: JSON.stringify(up) });
-    prof.name = name; prof.av = finalAv; newAv = null; document.getElementById("pPass").value = "";
-    localStorage.setItem("cx_prof", JSON.stringify(prof)); openHome(); pop("✅ تم تحديث صورتك وبياناتك بنجاح!");
-  } catch { pop("❌ تعذر حفظ التعديلات", 1); }
+    prof.name = name; prof.av = finalAv; newAv = null;
+    document.getElementById("pPass").value = "";
+    localStorage.setItem("cx_prof", JSON.stringify(prof));
+    openHome();
+    pop("✅ تم تحديث صورتك وبياناتك بنجاح!");
+  } catch (e) { pop("❌ تعذر حفظ التعديلات", 1); }
 }
 
 async function findPeer() {
   const u = document.getElementById("qInput").value.trim().toLowerCase().replace("@", "");
-  if (!u || u === prof.user) return; pop("⏳ جاري البحث...");
+  if (!u || u === prof.user) return;
+  pop("⏳ جاري البحث...");
   const d = await (await fetch(RTDB + "/users/" + u + ".json")).json();
   if (!d) return pop("❌ المستخدم غير موجود", 1);
-  peer = { user: u, name: d.name }; document.getElementById("roomBox").style.display = "flex";
-  document.getElementById("peerTitle").innerText = peer.name + " (@" + peer.user + ")"; loadMsgs();
-  if (tmr) clearInterval(tmr); tmr = setInterval(loadMsgs, 3500);
+  peer = { user: u, name: d.name };
+  document.getElementById("roomBox").style.display = "flex";
+  document.getElementById("peerTitle").innerText = peer.name + " (@" + peer.user + ")";
+  loadMsgs();
+  if (tmr) clearInterval(tmr);
+  tmr = setInterval(loadMsgs, 3500);
 }
 function closeRoom() { clearInterval(tmr); document.getElementById("roomBox").style.display = "none"; }
 
@@ -209,8 +165,10 @@ async function enc(t, p) {
   const km = await crypto.subtle.importKey("raw", new TextEncoder().encode(p), "PBKDF2", false, ["deriveKey"]);
   const k = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: s, iterations: 100000, hash: "SHA-256" }, km, { name: "AES-GCM", length: 256 }, false, ["encrypt"]);
   const c = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, k, new TextEncoder().encode(t)));
-  const b = new Uint8Array(28 + c.length); b.set(s); b.set(iv, 16); b.set(c, 28); return btoa(String.fromCharCode(...b));
+  const b = new Uint8Array(28 + c.length); b.set(s); b.set(iv, 16); b.set(c, 28);
+  return btoa(String.fromCharCode(...b));
 }
+
 async function dec(b64, p) {
   const b = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
   const km = await crypto.subtle.importKey("raw", new TextEncoder().encode(p), "PBKDF2", false, ["deriveKey"]);
@@ -227,29 +185,49 @@ async function sendMsg() {
   document.getElementById("lastPinVal").innerText = pin;
   document.getElementById("lastPinBox").style.display = "flex";
   pop("🔒 تم الإرسال! الرمز السري للرسالة: " + pin);
-  await fetch(RTDB + "/chats/" + rid + ".json", { method: "POST", body: JSON.stringify({ s: prof.user, c }) }); loadMsgs();
+  await fetch(RTDB + "/chats/" + rid + ".json", { method: "POST", body: JSON.stringify({ s: prof.user, c }) });
+  loadMsgs();
 }
 function copyPin() { navigator.clipboard.writeText(document.getElementById("lastPinVal").innerText); pop("📋 تم نسخ الرمز السري!"); }
 
 async function loadMsgs() {
-  if (!peer) return; const rid = [prof.user, peer.user].sort().join("_"), st = document.getElementById("stream");
-  const data = await (await fetch(RTDB + "/chats/" + rid + ".json")).json(); st.innerHTML = ""; if (!data) return;
+  if (!peer) return;
+  const rid = [prof.user, peer.user].sort().join("_"), st = document.getElementById("stream");
+  const data = await (await fetch(RTDB + "/chats/" + rid + ".json")).json();
+  st.innerHTML = "";
+  if (!data) return;
   Object.values(data).forEach(m => {
-    const div = document.createElement("div"); div.className = "bbl" + (m.s === prof.user ? " me" : "");
+    const div = document.createElement("div");
+    div.className = "bbl" + (m.s === prof.user ? " me" : "");
     div.innerHTML = "<div style='font-size:10px;color:#94a3b8'>@" + m.s + "</div><div>" + m.c + "</div>";
-    const btn = document.createElement("button"); btn.innerText = "فك التشفير 🔓";
+    const btn = document.createElement("button");
+    btn.innerText = "فك التشفير 🔓";
     btn.style.cssText = "margin-top:6px;padding:5px 12px;border-radius:8px;border:1px solid #38bdf8;background:#050811;color:#38bdf8;font-size:11px;font-weight:700";
     btn.onclick = () => { targetMsg = { el: btn.previousElementSibling, btn, cipher: m.c }; document.getElementById("pinInp").value = ""; document.getElementById("pinModal").style.display = "flex"; document.getElementById("pinInp").focus(); };
-    div.appendChild(btn); st.appendChild(div);
+    div.appendChild(btn);
+    st.appendChild(div);
   });
 }
 function closePin() { document.getElementById("pinModal").style.display = "none"; }
 async function confirmPin() {
-  const k = document.getElementById("pinInp").value.trim(); if (k.length < 4) return pop("⚠️ أدخل 4 أرقام", 1);
+  const k = document.getElementById("pinInp").value.trim();
+  if (k.length < 4) return pop("⚠️ أدخل 4 أرقام", 1);
   try { targetMsg.el.innerText = await dec(targetMsg.cipher, k); targetMsg.btn.remove(); closePin(); pop("🔓 تم فك التشفير بنجاح!"); }
-  catch { pop("❌ الرمز السري من 4 أرقام غير صحيح!", 1); }
+  catch (e) { pop("❌ الرمز السري من 4 أرقام غير صحيح!", 1); }
 }
 
 async function runTool(isEnc) {
   const t = document.getElementById("tIn").value.trim(), k = document.getElementById("tKey").value;
   if (!t || !k) return pop("⚠️ أدخل النص وكلمة السر", 1);
+  try { document.getElementById("tOut").value = isEnc ? await enc(t, k) : await dec(t, k); pop(isEnc ? "🔒 تم التشفير بنجاح" : "🔓 تم فك التشفير"); }
+  catch (e) { pop("❌ خطأ في البيانات أو كلمة السر", 1); }
+}
+function copyOut() {
+  const v = document.getElementById("tOut").value;
+  if (!v) return;
+  navigator.clipboard.writeText(v);
+  pop("📋 تم نسخ النتيجة إلى الحافظة!");
+}
+</script>
+</body>
+</html>
