@@ -31,25 +31,21 @@ p.sub{color:#94a3b8;font-size:13px;margin-bottom:24px}
 </div>
 
 <script>
-const BLOB_ID = "01a1cb67-2e71-7b67-8baa-4a5624730d04";
-const API = "https://jsonblob." + "com/api/jsonBlob/" + BLOB_ID;
+const RTDB = "https://cryptx-app-default-rtdb." + "firebaseio.com";
 let prof = JSON.parse(localStorage.getItem("cx_prof") || "null"), peer = null, tmr = null;
 const go = id => { document.querySelectorAll(".scr").forEach(e => e.classList.remove("active")); document.getElementById(id).classList.add("active"); };
 const note = (id, t) => { const e = document.getElementById(id); e.style.display = "block"; e.innerText = t; };
 const openHome = () => { document.getElementById("myTag").innerText = "@" + prof.user; go("s-home"); };
 if (prof) openHome();
 
-const getDB = async () => (await fetch(API)).json();
-const setDB = async data => fetch(API, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
-
 async function doSignup() {
   const name = document.getElementById("sName").value.trim(), user = document.getElementById("sUser").value.trim().toLowerCase().replace(/[^a-z0-9_]/g, ""), pass = document.getElementById("sPass").value;
   if (!name || user.length < 3 || pass.length < 4) { note("fb2", "⚠️ املأ جميع الخانات (اسم المستخدم 3+ وكلمة المرور 4+)"); return; }
   note("fb2", "⏳ جاري إنشاء الحساب...");
   try {
-    const db = await getDB();
-    if (db.users[user]) { note("fb2", "❌ اسم المستخدم محجوز! اختر غيره."); return; }
-    db.users[user] = { name, pass }; await setDB(db);
+    const chk = await (await fetch(RTDB + "/users/" + user + ".json")).json();
+    if (chk) { note("fb2", "❌ اسم المستخدم محجوز! اختر غيره."); return; }
+    await fetch(RTDB + "/users/" + user + ".json", { method: "PUT", body: JSON.stringify({ name, pass }) });
     prof = { name, user }; localStorage.setItem("cx_prof", JSON.stringify(prof)); openHome();
   } catch (e) { note("fb2", "❌ خطأ: " + e.message); }
 }
@@ -59,7 +55,7 @@ async function doLogin() {
   if (user.length < 3 || !pass) { note("fb1", "⚠️ أدخل اسم المستخدم وكلمة المرور"); return; }
   note("fb1", "⏳ جاري الدخول...");
   try {
-    const db = await getDB(), u = db.users[user];
+    const u = await (await fetch(RTDB + "/users/" + user + ".json")).json();
     if (!u) { note("fb1", "❌ الحساب غير موجود! أنشئ حساباً جديداً."); return; }
     if (u.pass !== pass) { note("fb1", "❌ كلمة المرور خطأ!"); return; }
     prof = { name: u.name, user }; localStorage.setItem("cx_prof", JSON.stringify(prof)); openHome();
@@ -72,8 +68,9 @@ function logout() { localStorage.clear(); location.reload(); }
 async function findPeer() {
   const u = document.getElementById("qInput").value.trim().toLowerCase().replace("@", ""), out = document.getElementById("qRes");
   if (!u || u === prof.user) return; out.innerHTML = "<div class='msg' style='display:block'>⏳ جاري البحث...</div>";
-  const db = await getDB(); if (!db.users[u]) { out.innerHTML = "<div class='msg' style='display:block;color:#f43f5e'>❌ غير موجود</div>"; return; }
-  peer = { user: u, name: db.users[u].name }; out.innerHTML = "";
+  const d = await (await fetch(RTDB + "/users/" + u + ".json")).json();
+  if (!d) { out.innerHTML = "<div class='msg' style='display:block;color:#f43f5e'>❌ غير موجود</div>"; return; }
+  peer = { user: u, name: d.name }; out.innerHTML = "";
   document.getElementById("roomBox").style.display = "flex"; document.getElementById("peerTitle").innerText = peer.name + " (@" + peer.user + ")";
   loadMsgs(); if (tmr) clearInterval(tmr); tmr = setInterval(loadMsgs, 3000);
 }
@@ -97,12 +94,12 @@ async function sendMsg() {
   const t = document.getElementById("draft").value.trim(), k = document.getElementById("roomKey").value;
   if (!t || !k) { alert("اكتب الرسالة والرمز السري!"); return; }
   const rid = [prof.user, peer.user].sort().join("_"), c = await enc(t, k); document.getElementById("draft").value = "";
-  const db = await getDB(); db.msgs.push({ rid, s: prof.user, c }); await setDB(db); loadMsgs();
+  await fetch(RTDB + "/chats/" + rid + ".json", { method: "POST", body: JSON.stringify({ s: prof.user, c }) }); loadMsgs();
 }
 async function loadMsgs() {
-  if (!peer) return; const rid = [prof.user, peer.user].sort().join("_"), st = document.getElementById("stream"), db = await getDB();
-  st.innerHTML = "";
-  db.msgs.filter(m => m.rid === rid).forEach(m => {
+  if (!peer) return; const rid = [prof.user, peer.user].sort().join("_"), st = document.getElementById("stream");
+  const data = await (await fetch(RTDB + "/chats/" + rid + ".json")).json(); st.innerHTML = ""; if (!data) return;
+  Object.values(data).forEach(m => {
     const div = document.createElement("div"); div.className = "bbl" + (m.s === prof.user ? " me" : "");
     div.innerHTML = "<div style='font-size:10px;color:#94a3b8'>@" + m.s + "</div><div>" + m.c + "</div><button style='margin-top:6px;padding:4px 10px;border-radius:6px;border:1px solid #38bdf8;background:#050811;color:#38bdf8;font-size:11px' onclick=\"decOne(this,'" + m.c + "')\">فك التشفير 🔓</button>";
     st.appendChild(div);
