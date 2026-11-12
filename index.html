@@ -6,7 +6,7 @@
 <title>CryptX</title>
 <style>
 *{box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;margin:0;padding:0;user-select:none}
-input,textarea{user-select:text;width:100%;padding:13px;border-radius:14px;border:1px solid #1e293b;background:#0f172a;color:#fff;font-size:14px;margin-bottom:10px;outline:none;transition:.2s}
+input,textarea{user-select:text;width:100%;padding:13px;border-radius:14px;border:1px solid #1e293b;background:#0f172a;color:#fff;font-size:14px;margin-bottom:10px;outline:none}
 input:focus,textarea:focus{border-color:#38bdf8}
 body{background:#050811;color:#f8fafc;display:flex;justify-content:center;min-height:100vh}
 .app{width:100%;max-width:480px;padding:16px;display:flex;flex-direction:column;position:relative;min-height:100vh}
@@ -14,23 +14,22 @@ body{background:#050811;color:#f8fafc;display:flex;justify-content:center;min-he
 .box{margin:auto 0;text-align:center}
 h1{font-size:38px;font-weight:900;margin-bottom:6px}h1 span{color:#38bdf8}
 p.sub{color:#94a3b8;font-size:13px;margin-bottom:22px}
-.btn{width:100%;padding:13px;border:none;border-radius:14px;font-weight:800;font-size:14px;cursor:pointer;margin-top:6px;transition:.2s}
+.btn{width:100%;padding:13px;border:none;border-radius:14px;font-weight:800;font-size:14px;cursor:pointer;margin-top:6px}
 .btn:active{transform:scale(.97)}
-.b1{background:linear-gradient(135deg,#38bdf8,#0284c7);color:#050811}.b2{background:#1e293b;color:#fff}.b3{background:#f43f5e;color:#fff}
+.b1{background:#38bdf8;color:#050811}.b2{background:#1e293b;color:#fff}.b3{background:#f43f5e;color:#fff}
 .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;border:1px solid #38bdf8;padding:11px 18px;border-radius:30px;font-size:13px;font-weight:700;z-index:999;box-shadow:0 10px 25px rgba(0,0,0,.8);display:none;text-align:center;max-width:90%}
 .hdr{display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid #1e293b;margin-bottom:12px}
 .av-sm{width:38px;height:38px;border-radius:50%;overflow:hidden;background:#0f172a;border:2px solid #38bdf8;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.av-lg{width:96px;height:96px;border-radius:50%;overflow:hidden;background:#0f172a;border:3px solid #38bdf8;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 25px rgba(56,189,248,.35)}
+.av-lg{width:96px;height:96px;border-radius:50%;overflow:hidden;background:#0f172a;border:3px solid #38bdf8;margin:0 auto 10px;display:flex;align-items:center;justify-content:center}
 .av-sm img,.av-lg img{width:100%;height:100%;object-fit:cover;display:none}
 .card{background:#0a0f1d;border:1px solid #1e293b;border-radius:20px;padding:16px;margin-bottom:12px}
 .stats{display:flex;justify-content:space-around;text-align:center;margin:14px 0;padding:10px 0;border-top:1px solid #1e293b;border-bottom:1px solid #1e293b}
 .stats div{cursor:pointer}.stats b{display:block;font-size:17px;color:#fff}.stats span{font-size:11px;color:#94a3b8}
-.res-item{display:flex;align-items:center;gap:12px;background:#0f172a;border:1px solid #1e293b;padding:10px 12px;border-radius:16px;margin-bottom:8px;cursor:pointer;transition:.2s}
-.res-item:hover{border-color:#38bdf8}
+.res-item{display:flex;align-items:center;gap:12px;background:#0f172a;border:1px solid #1e293b;padding:10px 12px;border-radius:16px;margin-bottom:8px;cursor:pointer}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:10px}
 .post-sq{aspect-ratio:1;background:#0f172a;border-radius:8px;overflow:hidden;position:relative;cursor:pointer;border:1px solid #1e293b;display:flex;align-items:center;justify-content:center}
 .post-sq img{width:100%;height:100%;object-fit:cover}
-.post-sq .lk-tag{position:absolute;bottom:4px;right:5px;background:rgba(0,0,0,.65);padding:2px 6px;border-radius:8px;font-size:10px;font-weight:700}
+.post-sq .lk-tag{position:absolute;bottom:4px;right:5px;background:rgba(0,0,0,.7);padding:2px 6px;border-radius:8px;font-size:10px;font-weight:700}
 .sw-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #1e293b;font-size:13px}
 .chat{background:#02040a;border:1px solid #1e293b;border-radius:14px;padding:12px;height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;margin:8px 0}
 .bbl{background:#1e293b;padding:10px 12px;border-radius:14px;font-size:13px;word-break:break-all;align-self:flex-start;max-width:85%}
@@ -45,18 +44,13 @@ p.sub{color:#94a3b8;font-size:13px;margin-bottom:22px}
 </head>
 <body>
 <div id="toast" class="toast"></div>
-
 <div id="pinModal" class="modal"><div class="m-card"><h3 style="margin-bottom:6px;color:#38bdf8">فك تشفير الرسالة 🔐</h3><p style="font-size:12px;color:#94a3b8;margin-bottom:14px">أدخل الرمز السري المكون من 4 أرقام</p><input type="tel" id="pinInp" maxlength="4" placeholder="• • • •" style="text-align:center;font-size:24px;letter-spacing:8px;font-weight:900"><div style="display:flex;gap:8px"><button type="button" class="btn b1" onclick="confirmPin()">فتح 🔓</button><button type="button" class="btn b2" onclick="closePin()">إلغاء</button></div></div></div>
-
 <div id="cropModal" class="modal"><div class="m-card"><h3 style="margin-bottom:4px;color:#38bdf8">ضبط الصورة الشخصية ✂️</h3><p style="font-size:11px;color:#94a3b8">اسحب الصورة وحرّك الشريط للتكبير</p><div class="crop-box" id="cropBox"><canvas id="cropCvs" width="230" height="230"></canvas></div><input type="range" id="zoomRng" min="1" max="3" step="0.05" value="1" style="margin:8px 0;padding:0;accent-color:#38bdf8" oninput="drawCrop()"><div style="display:flex;gap:8px"><button type="button" class="btn b1" onclick="applyCrop()">اعتماد وقص ✅</button><button type="button" class="btn b2" onclick="document.getElementById('cropModal').style.display='none'">إلغاء</button></div></div></div>
-
 <div id="listModal" class="modal"><div class="m-card"><h3 id="listTitle" style="margin-bottom:12px;color:#38bdf8"></h3><div id="listBody" style="text-align:right"></div><button type="button" class="btn b2" style="margin-top:12px" onclick="document.getElementById('listModal').style.display='none'">إغلاق</button></div></div>
-
 <div id="postModal" class="modal"><div class="m-card"><img id="pmImg" style="width:100%;border-radius:14px;margin-bottom:10px;display:none"><p id="pmCap" style="font-size:14px;margin-bottom:12px;line-height:1.5"></p><div style="display:flex;gap:8px"><button type="button" class="btn b1" id="pmLikeBtn" onclick="toggleLike()">❤️ إعجاب</button><button type="button" class="btn b2" onclick="document.getElementById('postModal').style.display='none'">إغلاق</button></div></div></div>
 
 <div class="app">
 <div id="s-login" class="scr active"><div class="box"><h1>Crypt<span>X</span></h1><p class="sub">منصة التواصل المشفر والخصوصية المطلقة</p><input id="lUser" placeholder="اسم المستخدم"><input type="password" id="lPass" placeholder="كلمة المرور"><button type="button" class="btn b1" onclick="doLogin()">تسجيل الدخول 🚀</button><button type="button" class="btn b2" onclick="go('s-signup')">إنشاء حساب جديد ✨</button></div></div>
-
 <div id="s-signup" class="scr"><div class="box"><h2 style="margin-bottom:6px">إنشاء حساب جديد</h2><p class="sub">انضم إلى الشبكة المشفرة</p><input id="sName" placeholder="الاسم الظاهر"><input id="sUser" placeholder="اسم المستخدم بالإنجليزية"><input type="password" id="sPass" placeholder="كلمة المرور (4+)"><button type="button" class="btn b1" onclick="doSignup()">تأكيد وإنشاء الحساب ✅</button><button type="button" class="btn b2" onclick="go('s-login')">لدي حساب بالفعل ➔</button></div></div>
 <div id="s-home" class="scr">
 <div class="hdr"><b style="font-size:20px">Crypt<span style="color:#38bdf8">X</span></b><div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="tab(3)"><span id="myTag" style="color:#38bdf8;font-size:13px;font-weight:700" dir="ltr"></span><div class="av-sm"><img id="hdrImg"><svg id="hdrSvg" viewBox="0 0 100 100" width="100%" height="100%"><path d="M18 92c2-18 16-26 32-26s30 8 32 26" fill="#1e293b" stroke="#38bdf8" stroke-width="3"/><circle cx="50" cy="45" r="16" fill="#050811" stroke="#38bdf8" stroke-width="3"/><path d="M22 33h56l-8-16H30z" fill="#1e293b" stroke="#38bdf8" stroke-width="3"/><ellipse cx="50" cy="33" rx="34" ry="5" fill="#0f172a" stroke="#38bdf8" stroke-width="3"/><rect x="35" y="41" width="12" height="6" rx="2" fill="#38bdf8"/><rect x="53" y="41" width="12" height="6" rx="2" fill="#38bdf8"/></svg></div></div></div>
@@ -174,7 +168,9 @@ async function fastFetch(url, opt) {
 
 async function getUserData(u) {
   try {
-    const res = await fastFetch(RTDB + "/users/" + u + ".json"); const d = await res.json();
+    const res = await fastFetch(RTDB + "/users/" + u + ".json");
+    const d = await res.json();
+    if (d) { const db = getDB(); db[u] = d; saveDB(db); return d; }
   } catch(e) {}
   return getDB()[u] || null;
 }
@@ -255,7 +251,8 @@ async function liveSearch(q) {
   if (!q) { box.innerHTML = ""; return; }
   let all = getDB();
   try {
-    const res = await fastFetch(RTDB + "/users.json"); const r = await res.json();
+    const res = await fastFetch(RTDB + "/users.json");
+    const r = await res.json();
     if (r) { all = { ...all, ...r }; saveDB(all); }
   } catch(e) {}
   box.innerHTML = "";
@@ -265,8 +262,9 @@ async function liveSearch(q) {
     if (u.includes(q) || (item.name && item.name.toLowerCase().includes(q))) {
       const div = document.createElement("div");
       div.className = "res-item";
-      const avHtml = item.av ? `<img src="${item.av}" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-size:18px">🕵️</span>`;
-      div.innerHTML = `<div class="av-sm">${avHtml}</div><div style="flex:1;text-align:right"><b>${item.name}</b><div style="font-size:11px;color:#38bdf8" dir="ltr">@${u}</div></div><span style="font-size:12px;color:#94a3b8">${item.priv ? "🔒" : "عرض ➔"}</span>`;
+      const avHtml = item.av ? '<img src="' + item.av + '" style="width:100%;height:100%;object-fit:cover">' : '<span style="font-size:18px">🕵️</span>';
+      const privTag = item.priv ? "🔒" : "عرض ➔";
+      div.innerHTML = '<div class="av-sm">' + avHtml + '</div><div style="flex:1;text-align:right"><b>' + item.name + '</b><div style="font-size:11px;color:#38bdf8" dir="ltr">@' + u + '</div></div><span style="font-size:12px;color:#94a3b8">' + privTag + '</span>';
       div.onclick = () => viewProfile(u);
       box.appendChild(div);
     }
@@ -338,7 +336,7 @@ function showListModal(title, arr) {
   arr.forEach(u => {
     const row = document.createElement("div");
     row.style.cssText = "padding:8px;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center";
-    row.innerHTML = `<span dir="ltr" style="color:#38bdf8;font-weight:700">@${u}</span><button type="button" class="btn b2" style="width:auto;padding:4px 10px;margin:0;font-size:11px" onclick="document.getElementById('listModal').style.display='none';tab(1);viewProfile('${u}')">عرض</button>`;
+    row.innerHTML = '<span dir="ltr" style="color:#38bdf8;font-weight:700">@' + u + '</span><button type="button" class="btn b2" style="width:auto;padding:4px 10px;margin:0;font-size:11px" onclick="document.getElementById(\'listModal\').style.display=\'none\';tab(1);viewProfile(\'' + u + '\')">عرض</button>';
     b.appendChild(row);
   });
   document.getElementById("listModal").style.display = "flex";
@@ -351,7 +349,8 @@ function renderGrid(gridId, posts, ownerUser) {
     const sq = document.createElement("div"); sq.className = "post-sq";
     const lkCount = p.likes ? p.likes.length : 0;
     const cmCount = p.comments ? p.comments.length : 0;
-    sq.innerHTML = (p.img ? `<img src="${p.img}">` : `<div style="padding:6px;font-size:11px;text-align:center;color:#cbd5e1">${p.cap || "منشور"}</div>`) + `<div class="lk-tag">❤️ ${lkCount} 💬 ${cmCount}</div>`;
+    const mediaHtml = p.img ? '<img src="' + p.img + '">' : '<div style="padding:6px;font-size:11px;text-align:center;color:#cbd5e1">' + (p.cap || "منشور") + '</div>';
+    sq.innerHTML = mediaHtml + '<div class="lk-tag">❤️ ' + lkCount + ' 💬 ' + cmCount + '</div>';
     sq.onclick = () => openPostModal(ownerUser, realIdx);
     g.appendChild(sq);
   });
@@ -360,7 +359,7 @@ function renderGrid(gridId, posts, ownerUser) {
 async function publishPost() {
   const cap = document.getElementById("postCap").value.trim();
   const fileInp = document.getElementById("postFile");
-  const file = fileInp.files && fileInp.files[0];
+  const file = fileInp.files && fileInp.files;
   if (!cap && !file) return pop("⚠️ اكتب نصاً أو اختر صورة", 1);
   pop("⏳ جاري النشر...");
   const finish = async (imgData) => {
@@ -398,8 +397,9 @@ async function openPostModal(ownerUser, idx) {
     cBox.style.cssText = "margin-top:12px;text-align:right;border-top:1px solid #1e293b;padding-top:10px";
     mCard.appendChild(cBox);
   }
-  const cmList = (post.comments || []).map(c => `<div style="background:#050811;padding:7px 10px;border-radius:10px;margin-bottom:5px;font-size:12px"><b style="color:#38bdf8">@${c.u}:</b> ${c.t}</div>`).join("");
-  cBox.innerHTML = `<div style="max-height:110px;overflow-y:auto;margin-bottom:8px">${cmList || "<span style='font-size:11px;color:#94a3b8'>لا توجد تعليقات بعد</span>"}</div><div style="display:flex;gap:5px"><input id="cmInp" placeholder="أضف تعليقاً..." style="margin:0;padding:8px;font-size:12px"><button type="button" class="btn b1" style="width:auto;margin:0;padding:0 12px;font-size:12px" onclick="addComment()">إرسال</button><button type="button" class="btn b2" style="width:auto;margin:0;padding:0 10px;font-size:12px" onclick="sharePost()">📤</button></div>`;
+  const cmList = (post.comments || []).map(c => '<div style="background:#050811;padding:7px 10px;border-radius:10px;margin-bottom:5px;font-size:12px"><b style="color:#38bdf8">@' + c.u + ':</b> ' + c.t + '</div>').join("");
+  const emptyMsg = "<span style='font-size:11px;color:#94a3b8'>لا توجد تعليقات بعد</span>";
+  cBox.innerHTML = '<div style="max-height:110px;overflow-y:auto;margin-bottom:8px">' + (cmList || emptyMsg) + '</div><div style="display:flex;gap:5px"><input id="cmInp" placeholder="أضف تعليقاً..." style="margin:0;padding:8px;font-size:12px"><button type="button" class="btn b1" style="width:auto;margin:0;padding:0 12px;font-size:12px" onclick="addComment()">إرسال</button><button type="button" class="btn b2" style="width:auto;margin:0;padding:0 10px;font-size:12px" onclick="sharePost()">📤</button></div>';
   document.getElementById("postModal").style.display = "flex";
 }
 
@@ -431,37 +431,31 @@ async function addComment() {
 
 function sharePost() {
   const cap = document.getElementById("pmCap").innerText;
-  const txt = `شاهد هذا المنشور على CryptX (@${activePost.ownerUser}): ${cap}\nhttps://github.io`;
+  const txt = "شاهد هذا المنشور على CryptX (@" + activePost.ownerUser + "): " + cap + " https://github.io";
   if (navigator.share) navigator.share({ title: "CryptX", text: txt }).catch(()=>{});
   else { navigator.clipboard.writeText(txt); pop("📋 تم نسخ رابط المشاركة!"); }
 }
 function shareProfile() {
   if (!peer) return;
-  const txt = `تابع حساب ${peer.name} (@${peer.user}) على تطبيق CryptX:\nhttps://github.io`;
+  const txt = "تابع حساب " + peer.name + " (@" + peer.user + ") على تطبيق CryptX: https://github.io";
   if (navigator.share) navigator.share({ title: "CryptX", text: txt }).catch(()=>{});
   else { navigator.clipboard.writeText(txt); pop("📋 تم نسخ رابط الحساب للمشاركة!"); }
 }
 function shareMyProfile() {
-  const txt = `تابع حسابي ${prof.name} (@${prof.user}) على تطبيق CryptX:\nhttps://github.io`;
+  const txt = "تابع حسابي " + prof.name + " (@" + prof.user + ") على تطبيق CryptX: https://github.io";
   if (navigator.share) navigator.share({ title: "CryptX", text: txt }).catch(()=>{});
   else { navigator.clipboard.writeText(txt); pop("📋 تم نسخ رابط حسابك للمشاركة!"); }
 }
 
 function pickImg(inp) {
-  const file = inp.files && inp.files[0];
-  if (!file) return;
-  const r = new FileReader();
-  r.onload = e => {
-    cImg = new Image();
-    cImg.onload = () => {
+  const file = inp.files && inp.files; if (!file) return;
+  const r = new FileReader(); r.onload = e => {
+    cImg = new Image(); cImg.onload = () => {
       cx = 0; cy = 0; document.getElementById("zoomRng").value = 1;
       document.getElementById("cropModal").style.display = "flex"; drawCrop();
-    };
-    cImg.src = e.target.result;
-  };
-  r.readAsDataURL(file); inp.value = "";
+    }; cImg.src = e.target.result;
+  }; r.readAsDataURL(file); inp.value = "";
 }
-
 function drawCrop() {
   if (!cImg) return; const cvs = document.getElementById("cropCvs"), ctx = cvs.getContext("2d"), z = parseFloat(document.getElementById("zoomRng").value);
   ctx.clearRect(0, 0, 230, 230);
@@ -474,7 +468,6 @@ if (cb) {
   cb.onpointerdown = e => { drag = true; lx = e.clientX; ly = e.clientY; cb.setPointerCapture(e.pointerId); };
   cb.onpointermove = e => { if (!drag) return; cx += e.clientX - lx; cy += e.clientY - ly; lx = e.clientX; ly = e.clientY; drawCrop(); };
   cb.onpointerup = () => { drag = false; };
-}
 }
 function applyCrop() {
   newAv = document.getElementById("cropCvs").toDataURL("image/jpeg", 0.85);
@@ -544,7 +537,8 @@ async function loadMsgs() {
   const rid = [prof.user, peer.user].sort().join("_"), st = document.getElementById("stream");
   let list = JSON.parse(localStorage.getItem("cx_chat_" + rid) || "[]");
   try {
-    const res = await fastFetch(RTDB + "/chats/" + rid + ".json"); const d = await res.json();
+    const res = await fastFetch(RTDB + "/chats/" + rid + ".json");
+    const d = await res.json();
     if (d) list = Object.values(d);
   } catch(e) {}
   st.innerHTML = "";
