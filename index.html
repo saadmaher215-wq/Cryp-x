@@ -174,8 +174,7 @@ async function fastFetch(url, opt) {
 
 async function getUserData(u) {
   try {
-    const d = await (await fastFetch(RTDB + "/users/" + u + ".json")).json();
-    if (d) { const db = getDB(); db[u] = d; saveDB(db); return d; }
+    const res = await fastFetch(RTDB + "/users/" + u + ".json"); const d = await res.json();
   } catch(e) {}
   return getDB()[u] || null;
 }
@@ -256,7 +255,7 @@ async function liveSearch(q) {
   if (!q) { box.innerHTML = ""; return; }
   let all = getDB();
   try {
-    const r = await (await fastFetch(RTDB + "/users.json")).json();
+    const res = await fastFetch(RTDB + "/users.json"); const r = await res.json();
     if (r) { all = { ...all, ...r }; saveDB(all); }
   } catch(e) {}
   box.innerHTML = "";
@@ -361,7 +360,7 @@ function renderGrid(gridId, posts, ownerUser) {
 async function publishPost() {
   const cap = document.getElementById("postCap").value.trim();
   const fileInp = document.getElementById("postFile");
-  const file = fileInp.files && fileInp.files;
+  const file = fileInp.files && fileInp.files[0];
   if (!cap && !file) return pop("⚠️ اكتب نصاً أو اختر صورة", 1);
   pop("⏳ جاري النشر...");
   const finish = async (imgData) => {
@@ -449,14 +448,20 @@ function shareMyProfile() {
 }
 
 function pickImg(inp) {
-  const file = inp.files && inp.files; if (!file) return;
-  const r = new FileReader(); r.onload = e => {
-    cImg = new Image(); cImg.onload = () => {
+  const file = inp.files && inp.files[0];
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    cImg = new Image();
+    cImg.onload = () => {
       cx = 0; cy = 0; document.getElementById("zoomRng").value = 1;
       document.getElementById("cropModal").style.display = "flex"; drawCrop();
-    }; cImg.src = e.target.result;
-  }; r.readAsDataURL(file); inp.value = "";
+    };
+    cImg.src = e.target.result;
+  };
+  r.readAsDataURL(file); inp.value = "";
 }
+
 function drawCrop() {
   if (!cImg) return; const cvs = document.getElementById("cropCvs"), ctx = cvs.getContext("2d"), z = parseFloat(document.getElementById("zoomRng").value);
   ctx.clearRect(0, 0, 230, 230);
@@ -539,7 +544,7 @@ async function loadMsgs() {
   const rid = [prof.user, peer.user].sort().join("_"), st = document.getElementById("stream");
   let list = JSON.parse(localStorage.getItem("cx_chat_" + rid) || "[]");
   try {
-    const d = await (await fastFetch(RTDB + "/chats/" + rid + ".json")).json();
+    const res = await fastFetch(RTDB + "/chats/" + rid + ".json"); const d = await res.json();
     if (d) list = Object.values(d);
   } catch(e) {}
   st.innerHTML = "";
