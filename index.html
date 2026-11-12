@@ -562,7 +562,8 @@ async function openPostModal(ownerUser, idx) {
   document.getElementById("postModal").style.display = "flex";
 }
 
-async function toggleLike() {
+  cBox.innerHTML = '<div style="max-height:110px;overflow-y:auto;margin-bottom:8px">' + (cmList || '<span style="font-size:12px;color:#8e8e8e">لا توجد تعليقات</span>') + '</div><div style="display:flex;gap:6px"><input id="cmInp" placeholder="أضف تعليقاً..." style="margin:0;padding:8px;font-size:12px"><button type="button" class="btn b-blue" style="width:auto;margin:0;padding:0 12px;font-size:12px" onclick="addComment()">نشر</button></div>';
+
   if (!activePost) return;
   const uData = await getUserData(activePost.ownerUser);
   const post = uData.posts[activePost.idx];
