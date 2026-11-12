@@ -5,149 +5,191 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>CryptX</title>
 <style>
-*{box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;margin:0;padding:0;user-select:none}
-input,textarea{user-select:text;width:100%;padding:12px 14px;border-radius:12px;border:1px solid #1e293b;background:#0f172a;color:#fff;font-size:14px;margin-bottom:10px;outline:none}
-input:focus,textarea:focus{border-color:#38bdf8}
-body{background:#050811;color:#f8fafc;display:flex;justify-content:center;min-height:100vh}
-.app{width:100%;max-width:480px;display:flex;flex-direction:column;position:relative;min-height:100vh;padding-bottom:65px}
-.scr{display:none;flex-direction:column;flex:1;padding:14px}.scr.active{display:flex}
-.box{margin:auto 0;text-align:center}
-h1{font-size:38px;font-weight:900;margin-bottom:6px}h1 span{color:#38bdf8}
-p.sub{color:#94a3b8;font-size:13px;margin-bottom:22px}
-.btn{width:100%;padding:12px;border:none;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;margin-top:6px}
-.btn:active{transform:scale(.97)}
-.b1{background:#38bdf8;color:#050811}.b2{background:#1e293b;color:#fff}.b3{background:#f43f5e;color:#fff}
-.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;border:1px solid #38bdf8;padding:10px 18px;border-radius:30px;font-size:13px;font-weight:700;z-index:999;display:none;text-align:center;max-width:90%}
-.search-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px}
-.search-box{flex:1;display:flex;align-items:center;background:#0f172a;border:1px solid #1e293b;border-radius:24px;padding:0 12px}
-.search-box input{border:none;background:transparent;margin:0;padding:10px 8px;font-size:14px}
-.search-btn{color:#f43f5e;font-weight:800;font-size:14px;background:none;border:none;cursor:pointer;padding:6px}
-.res-item{display:flex;align-items:center;gap:12px;padding:10px 6px;border-bottom:1px solid #0f172a;cursor:pointer}
-.av-sm{width:44px;height:44px;border-radius:50%;overflow:hidden;background:#0f172a;border:1.5px solid #38bdf8;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.av-lg{width:92px;height:92px;border-radius:50%;overflow:hidden;background:#0f172a;border:2.5px solid #38bdf8;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;position:relative}
-.av-sm img,.av-lg img{width:100%;height:100%;object-fit:cover;display:none}
-.top-bar{display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;margin-bottom:8px}
-.stats{display:flex;justify-content:center;gap:28px;text-align:center;margin:12px 0}
-.stats div{cursor:pointer}.stats b{display:block;font-size:17px;color:#fff}.stats span{font-size:12px;color:#94a3b8}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:12px}
-.post-sq{aspect-ratio:1;background:#0f172a;overflow:hidden;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.post-sq img{width:100%;height:100%;object-fit:cover}
-.post-sq .lk-tag{position:absolute;bottom:4px;right:5px;font-size:11px;font-weight:700;text-shadow:0 1px 4px #000}
-.drawer-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:800;display:none;justify-content:flex-end}
-.drawer{width:78%;max-width:310px;background:#0a0f1d;height:100%;padding:20px 16px;display:flex;flex-direction:column;border-right:1px solid #1e293b;overflow-y:auto}
-.d-sec{font-size:11px;color:#64748b;margin:14px 0 6px;font-weight:700}
-.d-item{display:flex;justify-content:space-between;align-items:center;padding:12px 8px;border-bottom:1px solid #1e293b;font-size:14px;cursor:pointer}
-.b-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#050811;border-top:1px solid #1e293b;display:flex;justify-content:space-around;padding:8px 0;z-index:700}
-.b-tab{background:none;border:none;color:#64748b;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-weight:700}
-.b-tab.on{color:#fff}
-.plus-btn{background:#fff;color:#050811;width:42px;height:28px;border-radius:8px;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;border-left:3px solid #38bdf8;border-right:3px solid #f43f5e}
-.chat{background:#02040a;border:1px solid #1e293b;border-radius:14px;padding:12px;height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;margin:8px 0}
-.bbl{background:#1e293b;padding:10px 12px;border-radius:14px;font-size:13px;word-break:break-all;align-self:flex-start;max-width:85%}
-.bbl.me{background:#0c4a6e;align-self:flex-end}
-.pin-bar{background:#0f172a;border:1px solid #38bdf8;border-radius:12px;padding:10px;margin-bottom:8px;display:none;justify-content:space-between;align-items:center;font-size:13px}
-.modal{position:fixed;inset:0;background:rgba(2,4,10,.92);display:none;align-items:center;justify-content:center;padding:18px;z-index:900}
-.m-card{background:#0f172a;border:1px solid #1e293b;border-radius:20px;padding:20px;width:100%;max-width:360px;text-align:center;max-height:85vh;overflow-y:auto}
-.crop-box{width:230px;height:230px;margin:10px auto;border-radius:50%;overflow:hidden;border:3px solid #38bdf8;position:relative;background:#02040a;touch-action:none;cursor:grab}
+*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin:0;padding:0;user-select:none;-webkit-tap-highlight-color:transparent}
+input,textarea{user-select:text;width:100%;padding:12px 14px;border-radius:10px;border:1px solid #262626;background:#121212;color:#fff;font-size:14px;margin-bottom:10px;outline:none}
+input:focus,textarea:focus{border-color:#555}
+body{background:#000;color:#fff;display:flex;justify-content:center;min-height:100vh}
+.app{width:100%;max-width:480px;background:#000;display:flex;flex-direction:column;position:relative;min-height:100vh;padding-bottom:58px}
+.scr{display:none;flex-direction:column;flex:1}.scr.active{display:flex}
+.auth-box{margin:auto 0;padding:24px;text-align:center}
+.brand{font-size:34px;font-weight:800;letter-spacing:-1px;margin-bottom:6px}
+.brand span{color:#0095f6}
+.sub{color:#a8a8a8;font-size:13px;margin-bottom:24px}
+.btn{width:100%;padding:11px;border:none;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;margin-top:6px}
+.btn:active{opacity:.8}
+.b-blue{background:#0095f6;color:#fff}.b-dark{background:#262626;color:#fff}.b-red{background:#ed4956;color:#fff}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#262626;color:#fff;border:1px solid #363636;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:500;z-index:999;display:none;text-align:center;max-width:90%}
+.hdr{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #1a1a1a;position:sticky;top:0;background:#000;z-index:500}
+.icon-btn{background:none;border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;padding:4px}
+.badge{position:absolute;top:0;right:0;background:#ff3040;color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:10px;display:none;align-items:center;justify-content:center;padding:0 4px}
+.stories{display:flex;gap:14px;padding:12px 14px;border-bottom:1px solid #1a1a1a;overflow-x:auto}
+.st-item{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;width:68px;cursor:pointer}
+.st-ring{width:64px;height:64px;border-radius:50%;padding:2.5px;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)}
+.st-ring.me{background:#262626}
+.st-in{width:100%;height:100%;border-radius:50%;background:#121212;border:2px solid #000;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.st-in img{width:100%;height:100%;object-fit:cover;display:none}
+.st-name{font-size:11px;color:#e5e5e5;max-width:66px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.feed-post{border-bottom:1px solid #1a1a1a;padding-bottom:12px;margin-bottom:4px}
+.fp-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px}
+.fp-user{display:flex;align-items:center;gap:10px;cursor:pointer}
+.av-36{width:36px;height:36px;border-radius:50%;background:#1a1a1a;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.av-48{width:48px;height:48px;border-radius:50%;background:#1a1a1a;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.av-86{width:86px;height:86px;border-radius:50%;background:#1a1a1a;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid #262626}
+.av-36 img,.av-48 img,.av-86 img{width:100%;height:100%;object-fit:cover;display:none}
+.fp-img{width:100%;max-height:460px;object-fit:cover;background:#0a0a0a;display:block}
+.fp-txt-card{padding:28px 18px;background:#0d0d0d;font-size:15px;line-height:1.6;text-align:center;border-top:1px solid #1a1a1a;border-bottom:1px solid #1a1a1a}
+.fp-acts{display:flex;align-items:center;gap:16px;padding:10px 14px 6px}
+.fp-meta{padding:0 14px;font-size:13px;line-height:1.5}
+.prof-top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px}
+.p-stats{display:flex;gap:22px;text-align:center}
+.p-stats div{cursor:pointer}.p-stats b{display:block;font-size:17px;font-weight:700}.p-stats span{font-size:12px;color:#e5e5e5}
+.p-bio{padding:0 16px 12px;font-size:13px;line-height:1.45}
+.p-btns{display:flex;gap:8px;padding:0 16px 14px}
+.p-btns .btn{margin:0;padding:8px;font-size:13px;background:#262626;color:#fff}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.sq{aspect-ratio:1;background:#121212;overflow:hidden;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sq img{width:100%;height:100%;object-fit:cover}
+.search-wrap{padding:10px 14px;border-bottom:1px solid #1a1a1a}
+.search-in{display:flex;align-items:center;background:#262626;border-radius:10px;padding:0 12px}
+.search-in input{border:none;background:transparent;margin:0;padding:9px 8px;font-size:14px}
+.row-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #121212}
+.chat-area{display:flex;flex-direction:column;height:calc(100vh - 112px)}
+.msgs{flex:1;padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.bbl{background:#262626;color:#fff;padding:10px 14px;border-radius:18px;font-size:14px;max-width:78%;align-self:flex-start;word-break:break-word;line-height:1.4}
+.bbl.me{background:#3797f0;align-self:flex-end}
+.msg-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid #1a1a1a;background:#000}
+.msg-pill{flex:1;display:flex;align-items:center;background:#121212;border:1px solid #262626;border-radius:22px;padding:2px 12px}
+.msg-pill input{border:none;background:transparent;margin:0;padding:8px 4px;font-size:14px}
+.c-act{width:34px;height:34px;border-radius:50%;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.b-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:52px;background:#000;border-top:1px solid #1a1a1a;display:flex;justify-content:space-around;align-items:center;z-index:600}
+.nav-btn{background:none;border:none;color:#737373;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:6px}
+.nav-btn.on{color:#fff}
+.nav-av{width:26px;height:26px;border-radius:50%;overflow:hidden;border:1.5px solid transparent;background:#262626;display:flex;align-items:center;justify-content:center}
+.nav-btn.on .nav-av{border-color:#fff}
+.nav-av img{width:100%;height:100%;object-fit:cover;display:none}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;padding:16px;z-index:900}
+.m-card{background:#121212;border:1px solid #262626;border-radius:16px;padding:18px;width:100%;max-width:360px;text-align:center;max-height:85vh;overflow-y:auto}
+.drawer-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:850;display:none;justify-content:flex-end}
+.drawer{width:78%;max-width:300px;background:#121212;height:100%;padding:18px 14px;border-right:1px solid #262626;overflow-y:auto}
+.d-row{display:flex;justify-content:space-between;align-items:center;padding:12px 4px;border-bottom:1px solid #262626;font-size:14px;cursor:pointer}
+.crop-box{width:220px;height:220px;margin:10px auto;border-radius:50%;overflow:hidden;border:2px solid #0095f6;position:relative;background:#000;touch-action:none}
 </style>
 </head>
 <body>
 <div id="toast" class="toast"></div>
-<div id="pinModal" class="modal"><div class="m-card"><h3 style="margin-bottom:6px;color:#38bdf8">فك تشفير الرسالة 🔐</h3><p style="font-size:12px;color:#94a3b8;margin-bottom:14px">أدخل الرمز السري المكون من 4 أرقام</p><input type="tel" id="pinInp" maxlength="4" placeholder="• • • •" style="text-align:center;font-size:24px;letter-spacing:8px;font-weight:900"><div style="display:flex;gap:8px"><button type="button" class="btn b1" onclick="confirmPin()">فتح 🔓</button><button type="button" class="btn b2" onclick="closePin()">إلغاء</button></div></div></div>
-<div id="cropModal" class="modal"><div class="m-card"><h3 style="margin-bottom:4px;color:#38bdf8">ضبط الصورة الشخصية ✂️</h3><p style="font-size:11px;color:#94a3b8">اسحب الصورة وحرّك الشريط للتكبير</p><div class="crop-box" id="cropBox"><canvas id="cropCvs" width="230" height="230"></canvas></div><input type="range" id="zoomRng" min="1" max="3" step="0.05" value="1" style="margin:8px 0;padding:0;accent-color:#38bdf8" oninput="drawCrop()"><div style="display:flex;gap:8px"><button type="button" class="btn b1" onclick="applyCrop()">اعتماد وقص ✅</button><button type="button" class="btn b2" onclick="document.getElementById('cropModal').style.display='none'">إلغاء</button></div></div></div>
-<div id="listModal" class="modal"><div class="m-card"><h3 id="listTitle" style="margin-bottom:12px;color:#38bdf8"></h3><div id="listBody" style="text-align:right"></div><button type="button" class="btn b2" style="margin-top:12px" onclick="document.getElementById('listModal').style.display='none'">إغلاق</button></div></div>
-<div id="postModal" class="modal"><div class="m-card"><img id="pmImg" style="width:100%;border-radius:14px;margin-bottom:10px;display:none"><p id="pmCap" style="font-size:14px;margin-bottom:12px;line-height:1.5"></p><div style="display:flex;gap:8px"><button type="button" class="btn b1" id="pmLikeBtn" onclick="toggleLike()">❤️ إعجاب</button><button type="button" class="btn b2" onclick="document.getElementById('postModal').style.display='none'">إغلاق</button></div></div></div>
-<div id="newPostModal" class="modal"><div class="m-card"><h3 style="margin-bottom:10px;color:#38bdf8">نشر منشور جديد 📸</h3><textarea id="postCap" rows="2" placeholder="اكتب وصف المنشور..."></textarea><input type="file" id="postFile" accept="image/*" style="font-size:12px;padding:8px"><div style="display:flex;gap:8px"><button type="button" class="btn b1" onclick="publishPost()">نشر الآن 🚀</button><button type="button" class="btn b2" onclick="document.getElementById('newPostModal').style.display='none'">إلغاء</button></div></div></div>
+<div id="pinModal" class="modal"><div class="m-card"><h3 style="margin-bottom:6px;font-size:16px">فك تشفير الرسالة</h3><p style="font-size:12px;color:#a8a8a8;margin-bottom:14px">أدخل رمز فك التشفير المكون من 4 أرقام</p><input type="tel" id="pinInp" maxlength="4" placeholder="0000" style="text-align:center;font-size:22px;letter-spacing:8px;font-weight:700"><div style="display:flex;gap:8px"><button type="button" class="btn b-blue" onclick="confirmPin()">تأكيد</button><button type="button" class="btn b-dark" onclick="closePin()">إلغاء</button></div></div></div>
+<div id="cropModal" class="modal"><div class="m-card"><h3 style="margin-bottom:4px;font-size:16px">تعديل الصورة الشخصية</h3><p style="font-size:12px;color:#a8a8a8">اسحب الصورة وحرك الشريط للتكبير</p><div class="crop-box" id="cropBox"><canvas id="cropCvs" width="220" height="220"></canvas></div><input type="range" id="zoomRng" min="1" max="3" step="0.05" value="1" style="margin:8px 0;padding:0;accent-color:#0095f6" oninput="drawCrop()"><div style="display:flex;gap:8px"><button type="button" class="btn b-blue" onclick="applyCrop()">حفظ الصورة</button><button type="button" class="btn b-dark" onclick="document.getElementById('cropModal').style.display='none'">إلغاء</button></div></div></div>
+<div id="newPostModal" class="modal"><div class="m-card"><h3 style="margin-bottom:10px;font-size:16px">منشور جديد</h3><textarea id="postCap" rows="3" placeholder="اكتب وصفاً للمنشور..."></textarea><input type="file" id="postFile" accept="image/*" style="font-size:12px;padding:8px"><div style="display:flex;gap:8px"><button type="button" class="btn b-blue" onclick="publishPost()">نشر</button><button type="button" class="btn b-dark" onclick="document.getElementById('newPostModal').style.display='none'">إلغاء</button></div></div></div>
+<div id="postModal" class="modal"><div class="m-card" style="padding:14px;text-align:right"><img id="pmImg" style="width:100%;border-radius:10px;margin-bottom:10px;display:none"><p id="pmCap" style="font-size:14px;margin-bottom:10px;line-height:1.5"></p><div style="display:flex;gap:8px;margin-bottom:10px"><button type="button" class="btn b-dark" id="pmLikeBtn" style="margin:0" onclick="toggleLike()">إعجاب</button><button type="button" class="btn b-dark" style="margin:0" onclick="sharePost()">مشاركة</button><button type="button" class="btn b-dark" style="margin:0" onclick="document.getElementById('postModal').style.display='none'">إغلاق</button></div><div id="pmCommentsArea"></div></div></div>
+<div id="notifModal" class="modal"><div class="m-card" style="text-align:right"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h3 style="font-size:16px">الإشعارات وصندوق الوارد</h3><span style="cursor:pointer;color:#a8a8a8" onclick="document.getElementById('notifModal').style.display='none'">إغلاق</span></div><div id="notifList" style="max-height:320px;overflow-y:auto"></div></div></div>
+<div id="followModal" class="modal"><div class="m-card" style="padding:14px;text-align:right"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3 id="fModalTitle" style="font-size:15px">المتابعون</h3><span style="cursor:pointer;color:#a8a8a8" onclick="document.getElementById('followModal').style.display='none'">إغلاق</span></div><div class="search-in" style="margin-bottom:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8e8e" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="fSearchInp" placeholder="بحث" oninput="filterFollowList(this.value)"></div><div id="fModalBody" style="max-height:320px;overflow-y:auto"></div></div></div>
 
 <div id="drawerBg" class="drawer-bg" onclick="if(event.target===this)this.style.display='none'">
 <div class="drawer">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><b style="font-size:16px">الإعدادات والخصوصية</b><span style="cursor:pointer;font-size:18px" onclick="document.getElementById('drawerBg').style.display='none'">✕</span></div>
-<div class="d-sec">الأدوات الشخصية</div>
-<div class="d-item" onclick="shareMyProfile()"><span>📱 مشاركة رابط حسابك QR</span><span>‹</span></div>
-<div class="d-item" onclick="document.getElementById('drawerBg').style.display='none';tab(2)"><span>🔐 أداة التشفير الفوري</span><span>‹</span></div>
-<div class="d-sec">الخصوصية والحساب</div>
-<div class="d-item"><span>🔒 حساب خاص (إخفاء المنشورات)</span><input type="checkbox" id="chkPriv" style="width:20px;height:20px;margin:0;accent-color:#38bdf8"></div>
-<div class="d-item"><span>👁️ إخفاء قائمة المتابعين</span><input type="checkbox" id="chkHideF" style="width:20px;height:20px;margin:0;accent-color:#38bdf8"></div>
-<div class="d-sec">تعديل البيانات</div>
-<input id="pName" placeholder="الاسم الظاهر" style="margin-top:6px">
-<input id="pBio" placeholder="السيرة الذاتية (البايو) ✨">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><b style="font-size:16px">الإعدادات والخصوصية</b><span style="cursor:pointer;color:#a8a8a8" onclick="document.getElementById('drawerBg').style.display='none'">إغلاق</span></div>
+<div class="d-row" onclick="shareMyProfile()"><span>مشاركة رابط الحساب</span><span style="color:#8e8e8e">‹</span></div>
+<div class="d-row" onclick="document.getElementById('drawerBg').style.display='none';tab(3)"><span>أداة التشفير المستقلة</span><span style="color:#8e8e8e">‹</span></div>
+<div class="d-row"><span>حساب خاص</span><input type="checkbox" id="chkPriv" style="width:18px;height:18px;margin:0;accent-color:#0095f6"></div>
+<div class="d-row"><span>إخفاء قائمة المتابعين</span><input type="checkbox" id="chkHideF" style="width:18px;height:18px;margin:0;accent-color:#0095f6"></div>
+<div style="margin-top:14px;font-size:12px;color:#8e8e8e;margin-bottom:6px">تعديل الملف الشخصي</div>
+<input id="pName" placeholder="الاسم">
+<input id="pBio" placeholder="السيرة الذاتية">
 <input type="password" id="pPass" placeholder="كلمة مرور جديدة (اختياري)">
-<button type="button" class="btn b1" onclick="saveProf()">حفظ الإعدادات ✅</button>
-<button type="button" class="btn b3" style="margin-top:12px" onclick="logout()">تسجيل الخروج 🚪</button>
+<button type="button" class="btn b-blue" onclick="saveProf()">حفظ التغييرات</button>
+<button type="button" class="btn b-red" style="margin-top:14px" onclick="logout()">تسجيل الخروج</button>
 </div>
 </div>
 
 <div class="app">
-<div id="s-login" class="scr active"><div class="box"><h1>Crypt<span>X</span></h1><p class="sub">منصة التواصل المشفر والخصوصية المطلقة</p><input id="lUser" placeholder="اسم المستخدم"><input type="password" id="lPass" placeholder="كلمة المرور"><button type="button" class="btn b1" onclick="doLogin()">تسجيل الدخول 🚀</button><button type="button" class="btn b2" onclick="go('s-signup')">إنشاء حساب جديد ✨</button></div></div>
-<div id="s-signup" class="scr"><div class="box"><h2 style="margin-bottom:6px">إنشاء حساب جديد</h2><p class="sub">انضم إلى الشبكة المشفرة</p><input id="sName" placeholder="الاسم الظاهر"><input id="sUser" placeholder="اسم المستخدم بالإنجليزية"><input type="password" id="sPass" placeholder="كلمة المرور (4+)"><button type="button" class="btn b1" onclick="doSignup()">تأكيد وإنشاء الحساب ✅</button><button type="button" class="btn b2" onclick="go('s-login')">لدي حساب بالفعل ➔</button></div></div>
+<div id="s-login" class="scr active"><div class="auth-box"><div class="brand">Crypt<span>X</span></div><p class="sub">منصة التواصل المشفر والخصوصية</p><input id="lUser" placeholder="اسم المستخدم"><input type="password" id="lPass" placeholder="كلمة المرور"><button type="button" class="btn b-blue" onclick="doLogin()">تسجيل الدخول</button><button type="button" class="btn b-dark" onclick="go('s-signup')">إنشاء حساب جديد</button></div></div>
+<div id="s-signup" class="scr"><div class="auth-box"><div class="brand">Crypt<span>X</span></div><p class="sub">إنشاء حساب جديد</p><input id="sName" placeholder="الاسم الظاهر"><input id="sUser" placeholder="اسم المستخدم بالإنجليزية"><input type="password" id="sPass" placeholder="كلمة المرور (4 أحرف على الأقل)"><button type="button" class="btn b-blue" onclick="doSignup()">إنشاء الحساب</button><button type="button" class="btn b-dark" onclick="go('s-login')">العودة لتسجيل الدخول</button></div></div>
 
-<div id="s-home" class="scr">
-<div id="t-chat" style="display:flex;flex-direction:column;flex:1">
-<div class="search-bar">
-<div class="search-box"><span>🔍</span><input id="qInput" placeholder="بحث" oninput="liveSearch(this.value)" onfocus="liveSearch(this.value)"></div>
-<button type="button" class="search-btn" onclick="liveSearch(document.getElementById('qInput').value)">بحث</button>
+<div id="s-home" class="scr" style="padding:0">
+<div id="t-feed" style="display:flex;flex-direction:column;flex:1">
+<div class="hdr">
+<div style="font-size:22px;font-weight:800;letter-spacing:-0.5px">Crypt<span style="color:#0095f6">X</span></div>
+<div style="display:flex;align-items:center;gap:14px">
+<button type="button" class="icon-btn" onclick="document.getElementById('newPostModal').style.display='flex'"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></button>
+<button type="button" class="icon-btn" onclick="openNotifs()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span id="notifBadge" class="badge">0</span></button>
 </div>
+</div>
+<div id="storiesRow" class="stories"></div>
+<div id="feedStream"></div>
+</div>
+
+<div id="t-search" style="display:none;flex-direction:column;flex:1">
+<div class="search-wrap"><div class="search-in"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8e8e" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="qInput" placeholder="بحث" oninput="liveSearch(this.value)" onfocus="liveSearch(this.value)"></div></div>
 <div id="liveResults"></div>
-
-<div id="peerCard" style="display:none;text-align:center;padding-top:8px">
-<div class="top-bar"><span style="cursor:pointer;font-size:18px" onclick="closePeer()">➔ رجوع</span><b id="vpTopName"></b><span style="cursor:pointer;font-size:18px" onclick="shareProfile()">📤</span></div>
-<div class="av-lg"><img id="vpImg"><svg id="vpSvg" viewBox="0 0 100 100" width="100%" height="100%"><path d="M18 92c2-18 16-26 32-26s30 8 32 26" fill="#1e293b" stroke="#38bdf8" stroke-width="2.5"/><circle cx="50" cy="45" r="16" fill="#050811" stroke="#38bdf8" stroke-width="2.5"/><path d="M22 33h56l-8-16H30z" fill="#1e293b" stroke="#38bdf8" stroke-width="2.5"/><ellipse cx="50" cy="33" rx="34" ry="5" fill="#0f172a" stroke="#38bdf8" stroke-width="2.5"/><rect x="35" y="41" width="12" height="6" rx="2" fill="#38bdf8"/><rect x="53" y="41" width="12" height="6" rx="2" fill="#38bdf8"/></svg></div>
-<h3 id="vpName" style="font-size:18px"></h3>
-<div id="vpUser" dir="ltr" style="color:#94a3b8;font-size:12px;margin-bottom:4px"></div>
-<div class="stats">
-<div onclick="openFollowList('following')"><b id="vpFollowing">0</b><span>أتابعه</span></div>
-<div onclick="openFollowList('followers')"><b id="vpFollowers">0</b><span>متابعين</span></div>
-<div><b id="vpLikes">0</b><span>تسجيلات الإعجاب</span></div>
+<div id="peerCard" style="display:none;flex-direction:column">
+<div class="hdr"><button type="button" class="icon-btn" onclick="closePeer()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button><b id="vpTopUser" dir="ltr" style="font-size:15px"></b><button type="button" class="icon-btn" onclick="shareProfile()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button></div>
+<div class="prof-top">
+<div class="av-86"><img id="vpImg"><svg id="vpSvg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+<div class="p-stats">
+<div><b id="vpPostsCount">0</b><span>منشورات</span></div>
+<div onclick="openPeerFollows('followers')"><b id="vpFollowers">0</b><span>المتابعون</span></div>
+<div onclick="openPeerFollows('following')"><b id="vpFollowing">0</b><span>متابعة</span></div>
 </div>
-<p id="vpBio" style="font-size:13px;color:#e2e8f0;margin-bottom:12px"></p>
-<div style="display:flex;gap:8px;justify-content:center;margin-bottom:10px">
-<button type="button" class="btn b1" id="vpFollowBtn" style="width:130px;margin:0" onclick="toggleFollow()">متابعة</button>
-<button type="button" class="btn b2" style="width:130px;margin:0" onclick="openChatRoom()">مراسلة 💬</button>
 </div>
-<div id="vpPrivateMsg" style="display:none;padding:24px;color:#94a3b8;font-size:13px;border:1px dashed #1e293b;border-radius:14px">🔒 هذا الحساب خاص. تابعه لمشاهدة منشوراته.</div>
+<div class="p-bio"><b id="vpName" style="display:block;margin-bottom:2px"></b><span id="vpBio" style="color:#e5e5e5"></span></div>
+<div class="p-btns">
+<button type="button" class="btn b-blue" id="vpFollowBtn" onclick="toggleFollow()">متابعة</button>
+<button type="button" class="btn b-dark" onclick="openChatRoom()">مراسلة</button>
+</div>
+<div id="vpPrivateMsg" style="display:none;padding:36px 16px;text-align:center;color:#8e8e8e;font-size:13px;border-top:1px solid #1a1a1a">هذا الحساب خاص. قم بمتابعته لمشاهدة منشوراته.</div>
 <div id="vpGrid" class="grid"></div>
 </div>
-
-<div id="roomBox" style="display:none;flex-direction:column;flex:1">
-<div class="top-bar"><span style="cursor:pointer;color:#38bdf8" onclick="closeRoom()">➔ رجوع</span><b id="peerTitle"></b><span>🔒</span></div>
-<div id="lastPinBox" class="pin-bar"><span>🔑 رمز آخر رسالة: <b id="lastPinVal" style="color:#38bdf8;font-size:16px;letter-spacing:2px"></b></span><button type="button" class="btn b1" style="width:auto;margin:0;padding:5px 12px;font-size:12px" onclick="copyPin()">نسخ</button></div>
-<div id="stream" class="chat"></div>
-<textarea id="draft" rows="2" placeholder="اكتب رسالتك (تُشفّر برمز 4 أرقام تلقائياً)..."></textarea>
-<button type="button" class="btn b1" onclick="sendMsg()">تشفير وإرسال 🔒</button>
-</div>
 </div>
 
-<div id="t-tool" style="display:none;flex-direction:column;padding-top:10px">
-<h3 style="margin-bottom:12px;color:#38bdf8">🔐 التشفير العسكري المباشر</h3>
-<textarea id="tIn" rows="3" placeholder="اكتب النص للتشفير أو ألصق الرموز لفكها..." oninput="if(!this.value.trim())document.getElementById('tOut').value=''"></textarea>
-<input type="password" id="tKey" placeholder="🔑 كلمة السر...">
-<div style="display:flex;gap:8px"><button type="button" class="btn b1" onclick="runTool(1)">تشفير 🔒</button><button type="button" class="btn b2" onclick="runTool(0)">فك التشفير 🔓</button></div>
-<textarea id="tOut" rows="3" readonly placeholder="النتيجة ستظهر هنا..." style="margin-top:10px"></textarea>
-<div style="display:flex;gap:8px"><button type="button" class="btn b2" onclick="copyOut()">نسخ النتيجة 📋</button><button type="button" class="btn b3" style="width:auto;padding:0 16px" onclick="document.getElementById('tIn').value='';document.getElementById('tOut').value=''">مسح 🗑️</button></div>
+<div id="t-tool" style="display:none;flex-direction:column;padding:16px">
+<h3 style="font-size:16px;margin-bottom:12px">أداة التشفير المستقلة</h3>
+<textarea id="tIn" rows="3" placeholder="أدخل النص للتشفير أو الرموز لفك التشفير..." oninput="if(!this.value.trim())document.getElementById('tOut').value=''"></textarea>
+<input type="password" id="tKey" placeholder="كلمة السر">
+<div style="display:flex;gap:8px"><button type="button" class="btn b-blue" onclick="runTool(1)">تشفير</button><button type="button" class="btn b-dark" onclick="runTool(0)">فك التشفير</button></div>
+<textarea id="tOut" rows="3" readonly placeholder="النتيجة..." style="margin-top:10px"></textarea>
+<div style="display:flex;gap:8px"><button type="button" class="btn b-dark" onclick="copyOut()">نسخ النتيجة</button><button type="button" class="btn b-red" style="width:auto;padding:0 16px" onclick="document.getElementById('tIn').value='';document.getElementById('tOut').value=''">مسح</button></div>
 </div>
 
-<div id="t-prof" style="display:none;flex-direction:column;text-align:center">
-<div class="top-bar"><span style="font-size:22px;cursor:pointer" onclick="document.getElementById('drawerBg').style.display='flex'">☰</span><b id="myTopName"></b><span style="font-size:18px;cursor:pointer" onclick="shareMyProfile()">📤</span></div>
-<label class="av-lg" style="cursor:pointer"><img id="pImg"><svg id="pSvg" viewBox="0 0 100 100" width="100%" height="100%"><path d="M18 92c2-18 16-26 32-26s30 8 32 26" fill="#1e293b" stroke="#38bdf8" stroke-width="2.5"/><circle cx="50" cy="45" r="16" fill="#050811" stroke="#38bdf8" stroke-width="2.5"/><path d="M22 33h56l-8-16H30z" fill="#1e293b" stroke="#38bdf8" stroke-width="2.5"/><ellipse cx="50" cy="33" rx="34" ry="5" fill="#0f172a" stroke="#38bdf8" stroke-width="2.5"/><rect x="35" y="41" width="12" height="6" rx="2" fill="#38bdf8"/><rect x="53" y="41" width="12" height="6" rx="2" fill="#38bdf8"/></svg><input type="file" accept="image/*" style="display:none" onchange="pickImg(this)"></label>
-<h3 id="pTitle" style="font-size:18px"></h3>
-<div id="pHandle" dir="ltr" style="color:#94a3b8;font-size:12px;margin-bottom:4px;cursor:pointer" onclick="copyHandle()"></div>
-<div class="stats">
-<div onclick="openMyList('following')"><b id="myFollowing">0</b><span>أتابعه</span></div>
-<div onclick="openMyList('followers')"><b id="myFollowers">0</b><span>متابعين</span></div>
-<div><b id="myLikes">0</b><span>تسجيلات الإعجاب</span></div>
+<div id="t-dm" style="display:none;flex-direction:column;flex:1">
+<div id="dmListBox" style="display:flex;flex-direction:column;flex:1">
+<div class="hdr"><b id="dmMyUser" dir="ltr" style="font-size:16px"></b><span style="font-size:12px;color:#0095f6">الرسائل المباشرة</span></div>
+<div class="search-wrap"><div class="search-in"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8e8e" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder="بحث في المحادثات" oninput="renderDmList(this.value)"></div></div>
+<div id="dmThreads"></div>
 </div>
-<p id="myBioTxt" style="font-size:13px;color:#e2e8f0;margin-bottom:10px"></p>
-<div style="display:flex;gap:8px;justify-content:center;margin-bottom:6px">
-<button type="button" class="btn b2" style="width:135px;margin:0;padding:8px;font-size:12px" onclick="document.getElementById('drawerBg').style.display='flex'">تعديل الملف الشخصي</button>
-<button type="button" class="btn b2" style="width:135px;margin:0;padding:8px;font-size:12px" onclick="shareMyProfile()">مشاركة الملف</button>
+<div id="roomBox" class="chat-area" style="display:none">
+<div class="hdr"><div style="display:flex;align-items:center;gap:10px"><button type="button" class="icon-btn" onclick="closeRoom()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button><b id="peerTitle" style="font-size:15px"></b></div><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0095f6" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+<div id="stream" class="msgs"></div>
+<div class="msg-bar">
+<div class="msg-pill"><input id="draft" placeholder="مراسلة..." onkeydown="if(event.key==='Enter')sendMsg(0)"></div>
+<button type="button" class="c-act" style="background:#0095f6;color:#fff" title="إرسال عادي" onclick="sendMsg(0)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+<button type="button" class="c-act" style="background:#1e293b;color:#38bdf8;border:1px solid #38bdf8" title="إرسال مشفر" onclick="sendMsg(1)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button>
+</div>
+</div>
+</div>
+
+<div id="t-prof" style="display:none;flex-direction:column">
+<div class="hdr"><b id="myTopUser" dir="ltr" style="font-size:17px"></b><div style="display:flex;align-items:center;gap:12px"><button type="button" class="icon-btn" onclick="openNotifs()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span id="notifBadge2" class="badge">0</span></button><button type="button" class="icon-btn" onclick="document.getElementById('drawerBg').style.display='flex'"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button></div></div>
+<div class="prof-top">
+<label class="av-86" style="cursor:pointer"><img id="pImg"><svg id="pSvg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><input type="file" accept="image/*" style="display:none" onchange="pickImg(this)"></label>
+<div class="p-stats">
+<div><b id="myPostsCount">0</b><span>منشورات</span></div>
+<div onclick="openMyFollows('followers')"><b id="myFollowers">0</b><span>المتابعون</span></div>
+<div onclick="openMyFollows('following')"><b id="myFollowing">0</b><span>متابعة</span></div>
+</div>
+</div>
+<div class="p-bio"><b id="pTitle" style="display:block;margin-bottom:2px"></b><span id="myBioTxt" style="color:#e5e5e5"></span></div>
+<div class="p-btns">
+<button type="button" class="btn" onclick="document.getElementById('drawerBg').style.display='flex'">تعديل الملف الشخصي</button>
+<button type="button" class="btn" onclick="shareMyProfile()">مشاركة الملف الشخصي</button>
 </div>
 <div id="myGrid" class="grid"></div>
 </div>
 
 <div class="b-nav">
-<button type="button" class="b-tab on" id="nav1" onclick="tab(1)"><span style="font-size:18px">🔍</span><span>البحث</span></button>
-<button type="button" class="b-tab" onclick="document.getElementById('newPostModal').style.display='flex'"><div class="plus-btn">+</div></button>
-<button type="button" class="b-tab" id="nav2" onclick="tab(2)"><span style="font-size:18px">🔐</span><span>التشفير</span></button>
-<button type="button" class="b-tab" id="nav3" onclick="tab(3)"><span style="font-size:18px">👤</span><span>الملف الشخصي</span></button>
+<button type="button" class="nav-btn on" id="nav1" onclick="tab(1)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></button>
+<button type="button" class="nav-btn" id="nav2" onclick="tab(2)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+<button type="button" class="nav-btn" onclick="document.getElementById('newPostModal').style.display='flex'"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0095f6" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></button>
+<button type="button" class="nav-btn" id="nav4" onclick="tab(4)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+<button type="button" class="nav-btn" id="nav5" onclick="tab(5)"><div class="nav-av"><img id="navAvImg"><svg id="navAvSvg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a8a8a8" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div></button>
 </div>
 </div>
 </div>
@@ -157,6 +199,7 @@ let prof = null;
 try { prof = JSON.parse(localStorage.getItem("cx_prof") || "null"); } catch(e) {}
 let peer = null, tmr = null, newAv = null, targetMsg = null, activePost = null;
 let cImg = null, cx = 0, cy = 0, drag = false, lx = 0, ly = 0;
+let curFollowArr = [], curFollowMode = "followers";
 
 function go(id) {
   document.querySelectorAll(".scr").forEach(e => e.classList.remove("active"));
@@ -164,9 +207,9 @@ function go(id) {
 }
 function pop(t, err) {
   const e = document.getElementById("toast");
-  e.innerText = t; e.style.borderColor = err ? "#f43f5e" : "#38bdf8";
+  e.innerText = t; e.style.borderColor = err ? "#ed4956" : "#363636";
   e.style.display = "block"; clearTimeout(window._tt);
-  window._tt = setTimeout(() => { e.style.display = "none"; }, 3000);
+  window._tt = setTimeout(() => { e.style.display = "none"; }, 2800);
 }
 function getDB() {
   try { return JSON.parse(localStorage.getItem("cx_db_users") || "{}"); } catch(e) { return {}; }
@@ -198,79 +241,20 @@ async function setUserData(u, data) {
   } catch(e) {}
 }
 
+async function pushNotif(targetUser, item) {
+  try {
+    await fastFetch(RTDB + "/notifs/" + targetUser + ".json", { method: "POST", body: JSON.stringify({ ...item, read: false, ts: Date.now() }) });
+  } catch(e) {}
+}
+
 function renderAv(src, imgId, svgId) {
   const has = src && src.startsWith("data:image");
-  document.getElementById(imgId).style.display = has ? "block" : "none";
-  document.getElementById(svgId).style.display = has ? "none" : "block";
-  if (has) document.getElementById(imgId).src = src;
+  const im = document.getElementById(imgId), sv = document.getElementById(svgId);
+  if (im) { im.style.display = has ? "block" : "none"; if (has) im.src = src; }
+  if (sv) { sv.style.display = has ? "none" : "block"; }
 }
 
-async function openHome() {
-  const fresh = await getUserData(prof.user);
-  if (fresh) { prof = { ...fresh, user: prof.user }; localStorage.setItem("cx_prof", JSON.stringify(prof)); }
-  await setUserData(prof.user, prof);
-  document.getElementById("myTopName").innerText = prof.name;
-  document.getElementById("pHandle").innerText = "@" + prof.user + " 📋";
-  document.getElementById("pTitle").innerText = prof.name;
-  document.getElementById("pName").value = prof.name;
-  document.getElementById("pBio").value = prof.bio || "";
-  document.getElementById("myBioTxt").innerText = prof.bio || "";
-  document.getElementById("chkPriv").checked = !!prof.priv;
-  document.getElementById("chkHideF").checked = !!prof.hideF;
-  renderAv(prof.av, "pImg", "pSvg");
-  const flw = prof.followers || [], flg = prof.following || [], posts = prof.posts || [];
-  document.getElementById("myFollowers").innerText = flw.length;
-  document.getElementById("myFollowing").innerText = flg.length;
-  let totalLikes = 0; posts.forEach(p => totalLikes += (p.likes ? p.likes.length : 0));
-  document.getElementById("myLikes").innerText = totalLikes;
-  renderGrid("myGrid", posts, prof.user);
-  go("s-home");
-  liveSearch("");
-}
-if (prof) openHome();
-
-async function doSignup() {
-  const name = document.getElementById("sName").value.trim();
-  const user = document.getElementById("sUser").value.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
-  const pass = document.getElementById("sPass").value;
-  if (!name || user.length < 3 || pass.length < 4) return pop("⚠️ املأ الخانات (المستخدم 3+ وكلمة المرور 4+)", 1);
-  pop("⏳ جاري إنشاء الحساب...");
-  const ex = await getUserData(user);
-  if (ex) return pop("❌ اسم المستخدم محجوز!", 1);
-  const newU = { name, pass, bio: "", av: "", priv: false, hideF: false, followers: [], following: [], posts: [] };
-  await setUserData(user, newU);
-  prof = { ...newU, user };
-  localStorage.setItem("cx_prof", JSON.stringify(prof));
-  openHome(); pop("✅ تم إنشاء الحساب بنجاح!");
-}
-
-async function doLogin() {
-  const user = document.getElementById("lUser").value.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
-  const pass = document.getElementById("lPass").value;
-  if (user.length < 3 || !pass) return pop("⚠️ أدخل اسم المستخدم وكلمة المرور", 1);
-  pop("⏳ جاري الدخول...");
-  const u = await getUserData(user);
-  if (!u) return pop("❌ الحساب غير موجود!", 1);
-  if (u.pass !== pass) return pop("❌ كلمة المرور غير صحيحة!", 1);
-  prof = { ...u, user };
-  localStorage.setItem("cx_prof", JSON.stringify(prof));
-  openHome(); pop("👋 أهلاً بك يا " + u.name);
-}
-
-function tab(n) {
-  document.getElementById("t-chat").style.display = n === 1 ? "flex" : "none";
-  document.getElementById("t-tool").style.display = n === 2 ? "flex" : "none";
-  document.getElementById("t-prof").style.display = n === 3 ? "flex" : "none";
-  [1, 2, 3].forEach(i => document.getElementById("nav" + i).classList.toggle("on", i === n));
-  if (n === 1) liveSearch(document.getElementById("qInput").value);
-  if (n === 3) openHome();
-}
-function logout() { localStorage.removeItem("cx_prof"); location.reload(); }
-function copyHandle() { navigator.clipboard.writeText("@" + prof.user); pop("📋 تم نسخ اسم المستخدم!"); }
-
-async function liveSearch(q) {
-  const box = document.getElementById("liveResults");
-  q = (q || "").trim().toLowerCase().replace("@", "");
+async function getAllUsers() {
   let all = getDB();
   try {
     const r1 = await fastFetch(RTDB + "/index.json");
@@ -282,47 +266,180 @@ async function liveSearch(q) {
     const d2 = await r2.json();
     if (d2) { all = { ...all, ...d2 }; saveDB(all); }
   } catch(e) {}
-  box.innerHTML = "";
-  const keys = Object.keys(all).filter(u => u !== prof.user);
-  if (!keys.length) {
-    box.innerHTML = '<div style="text-align:center;color:#64748b;font-size:13px;padding:24px">لا يوجد مستخدمون آخرون بعد. اطلب من صديقك التسجيل الآن!</div>';
+  return all;
+}
+
+async function openHome() {
+  const fresh = await getUserData(prof.user);
+  if (fresh) { prof = { ...fresh, user: prof.user }; localStorage.setItem("cx_prof", JSON.stringify(prof)); }
+  await setUserData(prof.user, prof);
+  document.getElementById("myTopUser").innerText = prof.user;
+  document.getElementById("dmMyUser").innerText = prof.user;
+  document.getElementById("pTitle").innerText = prof.name;
+  document.getElementById("pName").value = prof.name;
+  document.getElementById("pBio").value = prof.bio || "";
+  document.getElementById("myBioTxt").innerText = prof.bio || "";
+  document.getElementById("chkPriv").checked = !!prof.priv;
+  document.getElementById("chkHideF").checked = !!prof.hideF;
+  renderAv(prof.av, "pImg", "pSvg");
+  renderAv(prof.av, "navAvImg", "navAvSvg");
+  const flw = prof.followers || [], flg = prof.following || [], posts = prof.posts || [];
+  document.getElementById("myPostsCount").innerText = posts.length;
+  document.getElementById("myFollowers").innerText = flw.length;
+  document.getElementById("myFollowing").innerText = flg.length;
+  renderGrid("myGrid", posts, prof.user);
+  go("s-home");
+  loadFeed();
+  checkNotifBadge();
+}
+if (prof) openHome();
+
+async function checkNotifBadge() {
+  try {
+    const res = await fastFetch(RTDB + "/notifs/" + prof.user + ".json");
+    const d = await res.json();
+    const list = d ? Object.values(d) : [];
+    const unread = list.filter(x => !x.read).length;
+    ["notifBadge", "notifBadge2"].forEach(id => {
+      const b = document.getElementById(id);
+      b.innerText = unread > 9 ? "9+" : unread;
+      b.style.display = unread > 0 ? "flex" : "none";
+    });
+  } catch(e) {}
+}
+
+async function openNotifs() {
+  document.getElementById("notifModal").style.display = "flex";
+  const box = document.getElementById("notifList");
+  box.innerHTML = "<p style='color:#8e8e8e;font-size:13px;text-align:center;padding:16px'>جاري التحميل...</p>";
+  try {
+    const res = await fastFetch(RTDB + "/notifs/" + prof.user + ".json");
+    const d = await res.json();
+    if (!d) { box.innerHTML = "<p style='color:#8e8e8e;font-size:13px;text-align:center;padding:16px'>لا توجد إشعارات حالياً</p>"; return; }
+    const keys = Object.keys(d).reverse();
+    box.innerHTML = "";
+    keys.forEach(k => {
+      const n = d[k];
+      if (!n.read) fastFetch(RTDB + "/notifs/" + prof.user + "/" + k + "/read.json", { method: "PUT", body: "true" }).catch(()=>{});
+      const row = document.createElement("div");
+      row.style.cssText = "padding:10px 4px;border-bottom:1px solid #262626;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px";
+      if (n.type === "follow") {
+        row.innerHTML = '<div><b>@' + n.from + '</b> بدأ بمتابعتك</div><button type="button" class="btn b-blue" style="width:auto;margin:0;padding:5px 12px;font-size:12px" onclick="document.getElementById(\'notifModal\').style.display=\'none\';tab(2);viewProfile(\'' + n.from + '\')">عرض</button>';
+      } else if (n.type === "pin") {
+        row.innerHTML = '<div>رسالة مشفرة من <b>@' + n.from + '</b><div style="color:#0095f6;font-weight:700;margin-top:2px">رمز فك التشفير: ' + n.pin + '</div></div><button type="button" class="btn b-dark" style="width:auto;margin:0;padding:5px 10px;font-size:12px" onclick="navigator.clipboard.writeText(\'' + n.pin + '\');pop(\'تم نسخ الرمز\')">نسخ</button>';
+      }
+      box.appendChild(row);
+    });
+    checkNotifBadge();
+  } catch(e) { box.innerHTML = "<p style='color:#8e8e8e;font-size:13px;text-align:center'>تعذر الاتصال بالسحابة</p>"; }
+}
+
+async function loadFeed() {
+  const all = await getAllUsers();
+  const sRow = document.getElementById("storiesRow");
+  sRow.innerHTML = '<div class="st-item" onclick="tab(5)"><div class="st-ring me"><div class="st-in">' + (prof.av ? '<img src="' + prof.av + '" style="display:block">' : '<span style="font-size:18px;color:#8e8e8e">+</span>') + '</div></div><span class="st-name">قصتك</span></div>';
+  const feedPosts = [];
+  Object.keys(all).forEach(u => {
+    const uObj = all[u];
+    if (u !== prof.user) {
+      sRow.innerHTML += '<div class="st-item" onclick="tab(2);viewProfile(\'' + u + '\')"><div class="st-ring"><div class="st-in">' + (uObj.av ? '<img src="' + uObj.av + '" style="display:block">' : '<span style="font-size:13px;color:#fff">' + u[0].toUpperCase() + '</span>') + '</div></div><span class="st-name">' + u + '</span></div>';
+    }
+    if (!uObj.priv || u === prof.user || (uObj.followers || []).includes(prof.user)) {
+      (uObj.posts || []).forEach((p, idx) => feedPosts.push({ ...p, owner: u, ownerName: uObj.name || u, ownerAv: uObj.av || "", idx }));
+    }
+  });
+  const stream = document.getElementById("feedStream");
+  if (!feedPosts.length) {
+    stream.innerHTML = "<div style='text-align:center;color:#8e8e8e;padding:40px 16px;font-size:13px'>لا توجد منشورات بعد. انشر أول منشور أو تابع أصدقاءك!</div>";
     return;
   }
-  keys.forEach(u => {
+  stream.innerHTML = "";
+  feedPosts.reverse().forEach(p => {
+    const card = document.createElement("div"); card.className = "feed-post";
+    const avHtml = p.ownerAv ? '<img src="' + p.ownerAv + '" style="display:block">' : '<span style="font-size:13px">' + p.owner[0].toUpperCase() + '</span>';
+    const media = p.img ? '<img class="fp-img" src="' + p.img + '" onclick="openPostModal(\'' + p.owner + '\',' + p.idx + ')">' : '<div class="fp-txt-card" onclick="openPostModal(\'' + p.owner + '\',' + p.idx + ')">' + p.cap + '</div>';
+    const lk = (p.likes || []).length, cm = (p.comments || []).length;
+    card.innerHTML = '<div class="fp-hdr"><div class="fp-user" onclick="tab(2);viewProfile(\'' + p.owner + '\')"><div class="av-36">' + avHtml + '</div><b style="font-size:13px">' + p.owner + '</b></div></div>' + media + '<div class="fp-acts"><button type="button" class="icon-btn" onclick="openPostModal(\'' + p.owner + '\',' + p.idx + ')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button><button type="button" class="icon-btn" onclick="openPostModal(\'' + p.owner + '\',' + p.idx + ')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></button></div><div class="fp-meta"><b>' + lk + ' تسجيل إعجاب</b>' + (p.img && p.cap ? '<div><b>' + p.owner + '</b> ' + p.cap + '</div>' : '') + '<div style="color:#8e8e8e;font-size:12px;cursor:pointer" onclick="openPostModal(\'' + p.owner + '\',' + p.idx + ')">عرض جميع التعليقات (' + cm + ')</div></div>';
+    stream.appendChild(card);
+  });
+}
+  async function doSignup() {
+  const name = document.getElementById("sName").value.trim();
+  const user = document.getElementById("sUser").value.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
+  const pass = document.getElementById("sPass").value;
+  if (!name || user.length < 3 || pass.length < 4) return pop("أكمل جميع البيانات بشكل صحيح", 1);
+  pop("جاري إنشاء الحساب...");
+  const ex = await getUserData(user);
+  if (ex) return pop("اسم المستخدم محجوز", 1);
+  const newU = { name, pass, bio: "", av: "", priv: false, hideF: false, followers: [], following: [], posts: [] };
+  await setUserData(user, newU);
+  prof = { ...newU, user };
+  localStorage.setItem("cx_prof", JSON.stringify(prof));
+  openHome(); pop("تم إنشاء الحساب بنجاح");
+}
+
+async function doLogin() {
+  const user = document.getElementById("lUser").value.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
+  const pass = document.getElementById("lPass").value;
+  if (user.length < 3 || !pass) return pop("أدخل اسم المستخدم وكلمة المرور", 1);
+  pop("جاري تسجيل الدخول...");
+  const u = await getUserData(user);
+  if (!u || u.pass !== pass) return pop("بيانات الدخول غير صحيحة", 1);
+  prof = { ...u, user };
+  localStorage.setItem("cx_prof", JSON.stringify(prof));
+  openHome();
+}
+
+function tab(n) {
+  document.getElementById("t-feed").style.display = n === 1 ? "flex" : "none";
+  document.getElementById("t-search").style.display = n === 2 ? "flex" : "none";
+  document.getElementById("t-tool").style.display = n === 3 ? "flex" : "none";
+  document.getElementById("t-dm").style.display = n === 4 ? "flex" : "none";
+  document.getElementById("t-prof").style.display = n === 5 ? "flex" : "none";
+  [1, 2, 4, 5].forEach(i => { const b = document.getElementById("nav" + i); if (b) b.classList.toggle("on", i === n); });
+  if (n === 1) loadFeed();
+  if (n === 2) liveSearch(document.getElementById("qInput").value);
+  if (n === 4) renderDmList("");
+  if (n === 5) openHome();
+}
+function logout() { localStorage.removeItem("cx_prof"); location.reload(); }
+
+async function liveSearch(q) {
+  const box = document.getElementById("liveResults");
+  q = (q || "").trim().toLowerCase().replace("@", "");
+  const all = await getAllUsers();
+  box.innerHTML = "";
+  Object.keys(all).filter(u => u !== prof.user).forEach(u => {
     const item = all[u];
-    const match = !q || u.includes(q) || (item.name && item.name.toLowerCase().includes(q));
-    if (match) {
-      const div = document.createElement("div");
-      div.className = "res-item";
-      const avHtml = item.av ? '<img src="' + item.av + '" style="width:100%;height:100%;object-fit:cover">' : '<span style="font-size:20px">🕵️</span>';
-      const privTag = item.priv ? "🔒" : "عرض ➔";
-      div.innerHTML = '<div class="av-sm">' + avHtml + '</div><div style="flex:1;text-align:right"><b>' + (item.name || u) + '</b><div style="font-size:12px;color:#94a3b8" dir="ltr">@' + u + '</div></div><span style="font-size:12px;color:#38bdf8">' + privTag + '</span>';
+    if (!q || u.includes(q) || (item.name && item.name.toLowerCase().includes(q))) {
+      const div = document.createElement("div"); div.className = "row-item"; div.style.cursor = "pointer";
+      const av = item.av ? '<img src="' + item.av + '" style="display:block">' : '<span style="font-size:14px">' + u.toUpperCase() + '</span>';
+      div.innerHTML = '<div style="display:flex;align-items:center;gap:12px"><div class="av-48">' + av + '</div><div><b dir="ltr" style="font-size:14px">' + u + '</b><div style="font-size:13px;color:#8e8e8e">' + (item.name || "") + '</div></div></div>';
       div.onclick = () => viewProfile(u);
       box.appendChild(div);
     }
   });
 }
+
 async function viewProfile(u) {
   const d = await getUserData(u);
-  if (!d) return pop("❌ المستخدم غير موجود", 1);
+  if (!d) return pop("المستخدم غير موجود", 1);
   peer = { ...d, user: u };
-  document.getElementById("liveResults").innerHTML = "";
-  document.getElementById("peerCard").style.display = "block";
-  document.getElementById("vpTopName").innerText = d.name;
+  document.getElementById("liveResults").style.display = "none";
+  document.getElementById("peerCard").style.display = "flex";
+  document.getElementById("vpTopUser").innerText = u;
   document.getElementById("vpName").innerText = d.name;
-  document.getElementById("vpUser").innerText = "@" + u;
   document.getElementById("vpBio").innerText = d.bio || "";
   renderAv(d.av, "vpImg", "vpSvg");
   const flw = d.followers || [], flg = d.following || [], posts = d.posts || [];
-  const isFollowing = flw.includes(prof.user);
-  document.getElementById("vpFollowers").innerText = d.hideF ? "مخفي" : flw.length;
-  document.getElementById("vpFollowing").innerText = d.hideF ? "مخفي" : flg.length;
-  let lk = 0; posts.forEach(p => lk += (p.likes ? p.likes.length : 0));
-  document.getElementById("vpLikes").innerText = lk;
+  const isF = flw.includes(prof.user);
+  document.getElementById("vpPostsCount").innerText = posts.length;
+  document.getElementById("vpFollowers").innerText = d.hideF ? "-" : flw.length;
+  document.getElementById("vpFollowing").innerText = d.hideF ? "-" : flg.length;
   const fBtn = document.getElementById("vpFollowBtn");
-  fBtn.innerText = isFollowing ? "تتابعه ✓" : "متابعة";
-  fBtn.className = "btn " + (isFollowing ? "b2" : "b1");
-  if (d.priv && !isFollowing) {
+  fBtn.innerText = isF ? "تتابعه" : "متابعة";
+  fBtn.className = "btn " + (isF ? "b-dark" : "b-blue");
+  if (d.priv && !isF) {
     document.getElementById("vpPrivateMsg").style.display = "block";
     document.getElementById("vpGrid").innerHTML = "";
   } else {
@@ -330,65 +447,81 @@ async function viewProfile(u) {
     renderGrid("vpGrid", posts, u);
   }
 }
-function closePeer() {
-  document.getElementById("peerCard").style.display = "none";
-  peer = null;
-  liveSearch(document.getElementById("qInput").value);
-}
+function closePeer() { document.getElementById("peerCard").style.display = "none"; document.getElementById("liveResults").style.display = "block"; peer = null; }
 
 async function toggleFollow() {
   if (!peer) return;
-  const target = await getUserData(peer.user);
-  const me = await getUserData(prof.user);
-  target.followers = target.followers || [];
-  me.following = me.following || [];
+  const target = await getUserData(peer.user), me = await getUserData(prof.user);
+  target.followers = target.followers || []; me.following = me.following || [];
   const idx = target.followers.indexOf(prof.user);
   if (idx >= 0) {
     target.followers.splice(idx, 1);
     me.following = me.following.filter(x => x !== peer.user);
-    pop("تم إلغاء المتابعة");
   } else {
     target.followers.push(prof.user);
     if (!me.following.includes(peer.user)) me.following.push(peer.user);
-    pop("✅ تمت المتابعة!");
+    await pushNotif(peer.user, { type: "follow", from: prof.user });
   }
-  await setUserData(peer.user, target);
-  await setUserData(prof.user, me);
-  prof = { ...me, user: prof.user };
-  localStorage.setItem("cx_prof", JSON.stringify(prof));
+  await setUserData(peer.user, target); await setUserData(prof.user, me);
+  prof = { ...me, user: prof.user }; localStorage.setItem("cx_prof", JSON.stringify(prof));
   viewProfile(peer.user);
 }
 
-function openFollowList(type) {
-  if (!peer) return;
-  if (peer.hideF) return pop("🔒 هذا المستخدم أخفى قائمة المتابعين", 1);
-  showListModal(type === "followers" ? "المتابعون" : "يتابعهم", peer[type] || []);
+function openMyFollows(type) { openIgFollowModal(type === "followers" ? "المتابعون" : "متابعة", prof[type] || [], true); }
+function openPeerFollows(type) { if (peer.hideF) return pop("القائمة مخفية", 1); openIgFollowModal(type === "followers" ? "المتابعون" : "متابعة", peer[type] || [], false); }
+
+async function openIgFollowModal(title, arr, isMine) {
+  document.getElementById("fModalTitle").innerText = title + " (" + arr.length + ")";
+  document.getElementById("fSearchInp").value = "";
+  curFollowArr = arr; curFollowMode = isMine ? title : "peer";
+  document.getElementById("followModal").style.display = "flex";
+  renderFollowRows(arr, isMine);
 }
-function openMyList(type) {
-  showListModal(type === "followers" ? "متابعوك" : "تتابعهم", prof[type] || []);
+function filterFollowList(q) {
+  q = q.trim().toLowerCase();
+  renderFollowRows(curFollowArr.filter(u => u.includes(q)), curFollowMode !== "peer");
 }
-function showListModal(title, arr) {
-  document.getElementById("listTitle").innerText = title + " (" + arr.length + ")";
-  const b = document.getElementById("listBody");
-  b.innerHTML = arr.length ? "" : "<p style='text-align:center;color:#94a3b8'>القائمة فارغة</p>";
+async function renderFollowRows(arr, isMine) {
+  const b = document.getElementById("fModalBody");
+  if (!arr.length) { b.innerHTML = "<p style='text-align:center;color:#8e8e8e;padding:20px;font-size:13px'>القائمة فارغة</p>"; return; }
+  const all = await getAllUsers();
+  b.innerHTML = "";
   arr.forEach(u => {
-    const row = document.createElement("div");
-    row.style.cssText = "padding:8px;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center";
-    row.innerHTML = '<span dir="ltr" style="color:#38bdf8;font-weight:700">@' + u + '</span><button type="button" class="btn b2" style="width:auto;padding:4px 10px;margin:0;font-size:11px" onclick="document.getElementById(\'listModal\').style.display=\'none\';tab(1);viewProfile(\'' + u + '\')">عرض</button>';
+    const info = all[u] || { name: u };
+    const iFollow = (prof.following || []).includes(u);
+    const row = document.createElement("div"); row.className = "row-item"; row.style.padding = "8px 0";
+    const av = info.av ? '<img src="' + info.av + '" style="display:block">' : '<span style="font-size:13px">' + u.toUpperCase() + '</span>';
+    const actBtn = u === prof.user ? "" : '<button type="button" class="btn ' + (iFollow ? 'b-dark' : 'b-blue') + '" style="width:auto;margin:0;padding:6px 14px;font-size:12px" onclick="quickFollow(\'' + u + '\')">' + (iFollow ? 'تتابعه' : 'رد المتابعة') + '</button>';
+    const rmBtn = (isMine && curFollowMode.includes("المتابعون")) ? '<span style="color:#8e8e8e;cursor:pointer;padding:4px 8px;font-size:15px" onclick="removeFollower(\'' + u + '\')">×</span>' : '';
+    row.innerHTML = '<div style="display:flex;align-items:center;gap:10px;cursor:pointer" onclick="document.getElementById(\'followModal\').style.display=\'none\';tab(2);viewProfile(\'' + u + '\')"><div class="av-36">' + av + '</div><div><b dir="ltr" style="font-size:13px">' + u + '</b><div style="font-size:11px;color:#8e8e8e">' + (info.name || "") + '</div></div></div><div style="display:flex;align-items:center;gap:6px">' + actBtn + rmBtn + '</div>';
     b.appendChild(row);
   });
-  document.getElementById("listModal").style.display = "flex";
 }
-
+async function quickFollow(u) {
+  const target = await getUserData(u), me = await getUserData(prof.user);
+  target.followers = target.followers || []; me.following = me.following || [];
+  const i = me.following.indexOf(u);
+  if (i >= 0) { me.following.splice(i, 1); target.followers = target.followers.filter(x => x !== prof.user); }
+  else { me.following.push(u); if (!target.followers.includes(prof.user)) target.followers.push(prof.user); await pushNotif(u, { type: "follow", from: prof.user }); }
+  await setUserData(u, target); await setUserData(prof.user, me);
+  prof = { ...me, user: prof.user }; localStorage.setItem("cx_prof", JSON.stringify(prof));
+  renderFollowRows(curFollowArr, curFollowMode !== "peer");
+}
+async function removeFollower(u) {
+  const me = await getUserData(prof.user), target = await getUserData(u);
+  me.followers = (me.followers || []).filter(x => x !== u);
+  if (target) { target.following = (target.following || []).filter(x => x !== prof.user); await setUserData(u, target); }
+  await setUserData(prof.user, me);
+  prof = { ...me, user: prof.user }; localStorage.setItem("cx_prof", JSON.stringify(prof));
+  curFollowArr = me.followers; renderFollowRows(curFollowArr, true);
+}
+</script>
 function renderGrid(gridId, posts, ownerUser) {
   const g = document.getElementById(gridId); g.innerHTML = "";
   posts.slice().reverse().forEach((p, revIdx) => {
     const realIdx = posts.length - 1 - revIdx;
-    const sq = document.createElement("div"); sq.className = "post-sq";
-    const lkCount = p.likes ? p.likes.length : 0;
-    const cmCount = p.comments ? p.comments.length : 0;
-    const mediaHtml = p.img ? '<img src="' + p.img + '">' : '<div style="padding:6px;font-size:11px;text-align:center;color:#cbd5e1">' + (p.cap || "منشور") + '</div>';
-    sq.innerHTML = mediaHtml + '<div class="lk-tag">❤️ ' + lkCount + ' 💬 ' + cmCount + '</div>';
+    const sq = document.createElement("div"); sq.className = "sq";
+    sq.innerHTML = p.img ? '<img src="' + p.img + '">' : '<div style="padding:8px;font-size:11px;text-align:center;color:#e5e5e5">' + (p.cap || "") + '</div>';
     sq.onclick = () => openPostModal(ownerUser, realIdx);
     g.appendChild(sq);
   });
@@ -397,25 +530,21 @@ function renderGrid(gridId, posts, ownerUser) {
 async function publishPost() {
   const cap = document.getElementById("postCap").value.trim();
   const fileInp = document.getElementById("postFile");
-  const file = fileInp.files && fileInp.files;
-  if (!cap && !file) return pop("⚠️ اكتب نصاً أو اختر صورة", 1);
-  pop("⏳ جاري النشر...");
+  const file = fileInp.files && fileInp.files[0];
+  if (!cap && !file) return pop("أدخل نصاً أو اختر صورة", 1);
+  pop("جاري النشر...");
   const finish = async (imgData) => {
     const me = await getUserData(prof.user);
     me.posts = me.posts || [];
     me.posts.push({ cap, img: imgData, likes: [], comments: [] });
     await setUserData(prof.user, me);
-    prof = { ...me, user: prof.user };
-    localStorage.setItem("cx_prof", JSON.stringify(prof));
+    prof = { ...me, user: prof.user }; localStorage.setItem("cx_prof", JSON.stringify(prof));
     document.getElementById("postCap").value = ""; fileInp.value = "";
     document.getElementById("newPostModal").style.display = "none";
-    tab(3); pop("🚀 تم نشر منشورك!");
+    tab(1); pop("تم النشر بنجاح");
   };
-  if (file) {
-    const r = new FileReader();
-    r.onload = e => finish(e.target.result);
-    r.readAsDataURL(file);
-  } else finish("");
+  if (file) { const r = new FileReader(); r.onload = e => finish(e.target.result); r.readAsDataURL(file); }
+  else finish("");
 }
 
 async function openPostModal(ownerUser, idx) {
@@ -426,18 +555,10 @@ async function openPostModal(ownerUser, idx) {
   if (post.img) { pmImg.src = post.img; pmImg.style.display = "block"; } else pmImg.style.display = "none";
   document.getElementById("pmCap").innerText = post.cap || "";
   const likes = post.likes || [];
-  const liked = likes.includes(prof.user);
-  document.getElementById("pmLikeBtn").innerText = (liked ? "💔 إلغاء (" : "❤️ إعجاب (") + likes.length + ")";
-  const mCard = document.querySelector("#postModal .m-card");
-  let cBox = document.getElementById("pmCommentsArea");
-  if (!cBox) {
-    cBox = document.createElement("div"); cBox.id = "pmCommentsArea";
-    cBox.style.cssText = "margin-top:12px;text-align:right;border-top:1px solid #1e293b;padding-top:10px";
-    mCard.appendChild(cBox);
-  }
-  const cmList = (post.comments || []).map(c => '<div style="background:#050811;padding:7px 10px;border-radius:10px;margin-bottom:5px;font-size:12px"><b style="color:#38bdf8">@' + c.u + ':</b> ' + c.t + '</div>').join("");
-  const emptyMsg = "<span style='font-size:11px;color:#94a3b8'>لا توجد تعليقات بعد</span>";
-  cBox.innerHTML = '<div style="max-height:110px;overflow-y:auto;margin-bottom:8px">' + (cmList || emptyMsg) + '</div><div style="display:flex;gap:5px"><input id="cmInp" placeholder="أضف تعليقاً..." style="margin:0;padding:8px;font-size:12px"><button type="button" class="btn b1" style="width:auto;margin:0;padding:0 12px;font-size:12px" onclick="addComment()">إرسال</button><button type="button" class="btn b2" style="width:auto;margin:0;padding:0 10px;font-size:12px" onclick="sharePost()">📤</button></div>';
+  document.getElementById("pmLikeBtn").innerText = (likes.includes(prof.user) ? "إلغاء الإعجاب (" : "إعجاب (") + likes.length + ")";
+  const cBox = document.getElementById("pmCommentsArea");
+  const cmList = (post.comments || []).map(c => '<div style="background:#000;padding:8px 10px;border-radius:8px;margin-bottom:5px;font-size:12px"><b>' + c.u + '</b> ' + c.t + '</div>').join("");
+  cBox.innerHTML = '<div style="max-height:110px;overflow-y:auto;margin-bottom:8px">' + (cmList || "<span style='font-size:12px;color:#8e8e8e'>لا توجد تعليقات</span>") + '</div><div style="display:flex;gap:6px"><input id="cmInp" placeholder="أضف تعليقاً..." style="margin:0;padding:8px;font-size:12px"><button type="button" class="btn b-blue" style="width:auto;margin:0;padding:0 12px;font-size:12px" onclick="addComment()">نشر</button></div>';
   document.getElementById("postModal").style.display = "flex";
 }
 
@@ -450,7 +571,7 @@ async function toggleLike() {
   if (i >= 0) post.likes.splice(i, 1); else post.likes.push(prof.user);
   await setUserData(activePost.ownerUser, uData);
   openPostModal(activePost.ownerUser, activePost.idx);
-  if (activePost.ownerUser === prof.user) openHome(); else viewProfile(activePost.ownerUser);
+  loadFeed();
 }
 
 async function addComment() {
@@ -462,44 +583,27 @@ async function addComment() {
   post.comments = post.comments || [];
   post.comments.push({ u: prof.user, t: txt });
   await setUserData(activePost.ownerUser, uData);
-  pop("💬 تم إضافة تعليقك!");
   openPostModal(activePost.ownerUser, activePost.idx);
-  if (activePost.ownerUser === prof.user) openHome(); else viewProfile(activePost.ownerUser);
+  loadFeed();
 }
 
-function sharePost() {
-  const cap = document.getElementById("pmCap").innerText;
-  const txt = "شاهد هذا المنشور على CryptX (@" + activePost.ownerUser + "): " + cap + " https://github.io";
-  if (navigator.share) navigator.share({ title: "CryptX", text: txt }).catch(()=>{});
-  else { navigator.clipboard.writeText(txt); pop("📋 تم نسخ رابط المشاركة!"); }
-}
-function shareProfile() {
-  if (!peer) return;
-  const txt = "تابع حساب " + peer.name + " (@" + peer.user + ") على تطبيق CryptX: https://github.io";
-  if (navigator.share) navigator.share({ title: "CryptX", text: txt }).catch(()=>{});
-  else { navigator.clipboard.writeText(txt); pop("📋 تم نسخ رابط الحساب للمشاركة!"); }
-}
-function shareMyProfile() {
-  const txt = "تابع حسابي " + prof.name + " (@" + prof.user + ") على تطبيق CryptX: https://github.io";
-  if (navigator.share) navigator.share({ title: "CryptX", text: txt }).catch(()=>{});
-  else { navigator.clipboard.writeText(txt); pop("📋 تم نسخ رابط حسابك للمشاركة!"); }
-}
+function sharePost() { navigator.clipboard.writeText("https://github.io"); pop("تم نسخ رابط المنشور"); }
+function shareProfile() { if (peer) { navigator.clipboard.writeText("@" + peer.user + " - https://github.io"); pop("تم نسخ رابط الحساب"); } }
+function shareMyProfile() { navigator.clipboard.writeText("@" + prof.user + " - https://github.io"); pop("تم نسخ رابط حسابك"); }
 
 function pickImg(inp) {
-  const file = inp.files && inp.files; if (!file) return;
+  const file = inp.files && inp.files[0]; if (!file) return;
   const r = new FileReader(); r.onload = e => {
-    cImg = new Image(); cImg.onload = () => {
-      cx = 0; cy = 0; document.getElementById("zoomRng").value = 1;
-      document.getElementById("cropModal").style.display = "flex"; drawCrop();
-    }; cImg.src = e.target.result;
+    cImg = new Image(); cImg.onload = () => { cx = 0; cy = 0; document.getElementById("zoomRng").value = 1; document.getElementById("cropModal").style.display = "flex"; drawCrop(); };
+    cImg.src = e.target.result;
   }; r.readAsDataURL(file); inp.value = "";
 }
 function drawCrop() {
   if (!cImg) return; const cvs = document.getElementById("cropCvs"), ctx = cvs.getContext("2d"), z = parseFloat(document.getElementById("zoomRng").value);
-  ctx.clearRect(0, 0, 230, 230);
-  const sc = Math.max(230 / cImg.width, 230 / cImg.height) * z;
+  ctx.clearRect(0, 0, 220, 220);
+  const sc = Math.max(220 / cImg.width, 220 / cImg.height) * z;
   const w = cImg.width * sc, h = cImg.height * sc;
-  ctx.drawImage(cImg, (230 - w) / 2 + cx, (230 - h) / 2 + cy, w, h);
+  ctx.drawImage(cImg, (220 - w) / 2 + cx, (220 - h) / 2 + cy, w, h);
 }
 const cb = document.getElementById("cropBox");
 if (cb) {
@@ -510,36 +614,48 @@ if (cb) {
 function applyCrop() {
   newAv = document.getElementById("cropCvs").toDataURL("image/jpeg", 0.85);
   renderAv(newAv, "pImg", "pSvg"); document.getElementById("cropModal").style.display = "none";
-  pop("✂️ تم قص الصورة! افتح الإعدادات واضغط حفظ");
+  pop("افتح القائمة واضغط حفظ التغييرات");
 }
 
 async function saveProf() {
   const name = document.getElementById("pName").value.trim(), pass = document.getElementById("pPass").value;
-  if (!name) return pop("⚠️ الاسم الظاهر مطلوب", 1);
-  pop("⏳ جاري الحفظ...");
+  if (!name) return pop("الاسم مطلوب", 1);
+  pop("جاري الحفظ...");
   const me = await getUserData(prof.user);
-  me.name = name;
-  me.bio = document.getElementById("pBio").value.trim();
+  me.name = name; me.bio = document.getElementById("pBio").value.trim();
   if (pass.length >= 4) me.pass = pass;
   if (newAv !== null) { me.av = newAv; newAv = null; }
-  me.priv = document.getElementById("chkPriv").checked;
-  me.hideF = document.getElementById("chkHideF").checked;
+  me.priv = document.getElementById("chkPriv").checked; me.hideF = document.getElementById("chkHideF").checked;
   await setUserData(prof.user, me);
-  prof = { ...me, user: prof.user };
-  localStorage.setItem("cx_prof", JSON.stringify(prof));
-  document.getElementById("pPass").value = "";
-  document.getElementById("drawerBg").style.display = "none";
-  openHome(); pop("✅ تم حفظ الإعدادات والخصوصية!");
+  prof = { ...me, user: prof.user }; localStorage.setItem("cx_prof", JSON.stringify(prof));
+  document.getElementById("pPass").value = ""; document.getElementById("drawerBg").style.display = "none";
+  openHome(); pop("تم حفظ الإعدادات");
+}
+
+async function renderDmList(q) {
+  q = (q || "").trim().toLowerCase();
+  const all = await getAllUsers();
+  const box = document.getElementById("dmThreads");
+  box.innerHTML = "";
+  Object.keys(all).filter(u => u !== prof.user && (!q || u.includes(q) || (all[u].name || "").toLowerCase().includes(q))).forEach(u => {
+    const info = all[u];
+    const row = document.createElement("div"); row.className = "row-item"; row.style.cursor = "pointer";
+    const av = info.av ? '<img src="' + info.av + '" style="display:block">' : '<span style="font-size:14px">' + u[0].toUpperCase() + '</span>';
+    row.innerHTML = '<div style="display:flex;align-items:center;gap:12px"><div class="av-48">' + av + '</div><div><b style="font-size:14px">' + (info.name || u) + '</b><div dir="ltr" style="font-size:12px;color:#8e8e8e">@' + u + '</div></div></div><span style="font-size:12px;color:#0095f6">مراسلة</span>';
+    row.onclick = () => { peer = { ...info, user: u }; openChatRoom(); };
+    box.appendChild(row);
+  });
 }
 
 function openChatRoom() {
   if (!peer) return;
-  document.getElementById("peerCard").style.display = "none";
+  tab(4);
+  document.getElementById("dmListBox").style.display = "none";
   document.getElementById("roomBox").style.display = "flex";
   document.getElementById("peerTitle").innerText = peer.name + " (@" + peer.user + ")";
   loadMsgs(); if (tmr) clearInterval(tmr); tmr = setInterval(loadMsgs, 3500);
 }
-function closeRoom() { clearInterval(tmr); document.getElementById("roomBox").style.display = "none"; document.getElementById("peerCard").style.display = "block"; }
+function closeRoom() { clearInterval(tmr); document.getElementById("roomBox").style.display = "none"; document.getElementById("dmListBox").style.display = "flex"; }
 
 async function enc(t, p) {
   const s = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
@@ -555,22 +671,25 @@ async function dec(b64, p) {
   return new TextDecoder().decode(await crypto.subtle.decrypt({ name: "AES-GCM", iv: b.slice(16, 28) }, k, b.slice(28)));
 }
 
-async function sendMsg() {
+async function sendMsg(isEnc) {
   const t = document.getElementById("draft").value.trim();
-  if (!t) return pop("⚠️ اكتب رسالتك أولاً!", 1);
-  const pin = String(Math.floor(1000 + Math.random() * 9000));
-  const rid = [prof.user, peer.user].sort().join("_"), c = await enc(t, pin);
+  if (!t || !peer) return;
   document.getElementById("draft").value = "";
-  document.getElementById("lastPinVal").innerText = pin;
-  document.getElementById("lastPinBox").style.display = "flex";
-  pop("🔒 تم الإرسال! الرمز السري: " + pin);
+  const rid = [prof.user, peer.user].sort().join("_");
+  let msgObj = { s: prof.user, enc: false, c: t };
+  if (isEnc) {
+    const pin = String(Math.floor(1000 + Math.random() * 9000));
+    const c = await enc(t, pin);
+    msgObj = { s: prof.user, enc: true, c };
+    await pushNotif(peer.user, { type: "pin", from: prof.user, pin });
+    pop("تم إرسال الرسالة مشفرة والرمز وصل لإشعارات صديقك");
+  }
   const key = "cx_chat_" + rid;
   const arr = JSON.parse(localStorage.getItem(key) || "[]");
-  arr.push({ s: prof.user, c }); localStorage.setItem(key, JSON.stringify(arr));
-  try { await fastFetch(RTDB + "/chats/" + rid + ".json", { method: "POST", body: JSON.stringify({ s: prof.user, c }) }); } catch(e) {}
+  arr.push(msgObj); localStorage.setItem(key, JSON.stringify(arr));
+  try { await fastFetch(RTDB + "/chats/" + rid + ".json", { method: "POST", body: JSON.stringify(msgObj) }); } catch(e) {}
   loadMsgs();
 }
-function copyPin() { navigator.clipboard.writeText(document.getElementById("lastPinVal").innerText); pop("📋 تم نسخ الرمز!"); }
 
 async function loadMsgs() {
   if (!peer) return;
@@ -584,27 +703,34 @@ async function loadMsgs() {
   st.innerHTML = "";
   list.forEach(m => {
     const div = document.createElement("div"); div.className = "bbl" + (m.s === prof.user ? " me" : "");
-    div.innerHTML = "<div style='font-size:10px;color:#94a3b8'>@" + m.s + "</div><div>" + m.c + "</div>";
-    const btn = document.createElement("button"); btn.innerText = "فك التشفير 🔓";
-    btn.style.cssText = "margin-top:6px;padding:5px 12px;border-radius:8px;border:1px solid #38bdf8;background:#050811;color:#38bdf8;font-size:11px;font-weight:700";
-    btn.onclick = () => { targetMsg = { el: btn.previousElementSibling, btn, cipher: m.c }; document.getElementById("pinInp").value = ""; document.getElementById("pinModal").style.display = "flex"; document.getElementById("pinInp").focus(); };
-    div.appendChild(btn); st.appendChild(div);
+    if (!m.enc) {
+      div.innerText = m.c;
+    } else {
+      div.innerHTML = "<div style='font-size:11px;opacity:.75;margin-bottom:4px'>رسالة مشفرة</div><div style='word-break:break-all;font-size:12px'>" + m.c + "</div>";
+      const btn = document.createElement("button"); btn.innerText = "فك التشفير";
+      btn.style.cssText = "margin-top:6px;padding:4px 10px;border-radius:6px;border:1px solid #fff;background:transparent;color:#fff;font-size:11px;cursor:pointer";
+      btn.onclick = () => { targetMsg = { el: btn.previousElementSibling, btn, cipher: m.c }; document.getElementById("pinInp").value = ""; document.getElementById("pinModal").style.display = "flex"; document.getElementById("pinInp").focus(); };
+      div.appendChild(btn);
+    }
+    st.appendChild(div);
   });
+  st.scrollTop = st.scrollHeight;
 }
 function closePin() { document.getElementById("pinModal").style.display = "none"; }
 async function confirmPin() {
-  const k = document.getElementById("pinInp").value.trim(); if (k.length < 4) return pop("⚠️ أدخل 4 أرقام", 1);
-  try { targetMsg.el.innerText = await dec(targetMsg.cipher, k); targetMsg.btn.remove(); closePin(); pop("🔓 تم فك التشفير!"); }
-  catch (e) { pop("❌ الرمز السري غير صحيح!", 1); }
+  const k = document.getElementById("pinInp").value.trim(); if (k.length < 4) return pop("أدخل 4 أرقام", 1);
+  try { targetMsg.el.innerText = await dec(targetMsg.cipher, k); targetMsg.btn.remove(); closePin(); pop("تم فك التشفير"); }
+  catch (e) { pop("الرمز غير صحيح", 1); }
 }
 
 async function runTool(isEnc) {
   const t = document.getElementById("tIn").value.trim(), k = document.getElementById("tKey").value;
-  if (!t || !k) return pop("⚠️ أدخل النص وكلمة السر", 1);
-  try { document.getElementById("tOut").value = isEnc ? await enc(t, k) : await dec(t, k); pop(isEnc ? "🔒 تم التشفير" : "🔓 تم فك التشفير"); }
-  catch (e) { pop("❌ خطأ في البيانات أو كلمة السر", 1); }
+  if (!t || !k) return pop("أدخل النص وكلمة السر", 1);
+  try { document.getElementById("tOut").value = isEnc ? await enc(t, k) : await dec(t, k); pop(isEnc ? "تم التشفير" : "تم فك التشفير"); }
+  catch (e) { pop("خطأ في البيانات", 1); }
 }
-function copyOut() { const v = document.getElementById("tOut").value; if (v) { navigator.clipboard.writeText(v); pop("📋 تم النسخ!"); } }
+function copyOut() { const v = document.getElementById("tOut").value; if (v) { navigator.clipboard.writeText(v); pop("تم النسخ"); } }
 </script>
 </body>
 </html>
+
