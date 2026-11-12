@@ -129,10 +129,10 @@ function renderAv(src) {
 
 function openHome() {
   const tag = "@" + prof.user;
-  document.getElementById("myTag").innerText = tag;
-  document.getElementById("pHandle").innerText = tag + " 📋";
-  document.getElementById("pTitle").innerText = prof.name;
-  document.getElementById("pName").value = prof.name;
+  if (document.getElementById("myTag")) document.getElementById("myTag").innerText = tag;
+  if (document.getElementById("pHandle")) document.getElementById("pHandle").innerText = tag + " 📋";
+  if (document.getElementById("pTitle")) document.getElementById("pTitle").innerText = prof.name;
+  if (document.getElementById("pName")) document.getElementById("pName").value = prof.name;
   renderAv(prof.av);
   go("s-home");
 }
@@ -145,6 +145,19 @@ function saveLocalUsers(u) {
   localStorage.setItem("cx_db_users", JSON.stringify(u));
 }
 
+async function fastFetch(url, opt) {
+  const ctrl = new AbortController();
+  const id = setTimeout(() => ctrl.abort(), 2500);
+  try {
+    const res = await fetch(url, { ...opt, signal: ctrl.signal });
+    clearTimeout(id);
+    return res;
+  } catch (e) {
+    clearTimeout(id);
+    throw e;
+  }
+}
+
 async function doSignup() {
   const name = document.getElementById("sName").value.trim();
   const user = document.getElementById("sUser").value.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
@@ -152,9 +165,9 @@ async function doSignup() {
   if (!name || user.length < 3 || pass.length < 4) return pop("⚠️ املأ جميع الخانات (المستخدم 3+ وكلمة المرور 4+)", 1);
   pop("⏳ جاري إنشاء الحساب...");
   try {
-    const chk = await (await fetch(RTDB + "/users/" + user + ".json")).json();
+    const chk = await (await fastFetch(RTDB + "/users/" + user + ".json")).json();
     if (chk) return pop("❌ اسم المستخدم محجوز!", 1);
-    await fetch(RTDB + "/users/" + user + ".json", { method: "PUT", body: JSON.stringify({ name, pass, av: "" }) });
+    await fastFetch(RTDB + "/users/" + user + ".json", { method: "PUT", body: JSON.stringify({ name, pass, av: "" }) });
   } catch (e) {
     const db = getLocalUsers();
     if (db[user]) return pop("❌ اسم المستخدم محجوز!", 1);
@@ -174,7 +187,7 @@ async function doLogin() {
   pop("⏳ جاري الدخول...");
   let u = null;
   try {
-    u = await (await fetch(RTDB + "/users/" + user + ".json")).json();
+    u = await (await fastFetch(RTDB + "/users/" + user + ".json")).json();
   } catch (e) {
     u = getLocalUsers()[user] || null;
   }
@@ -185,7 +198,8 @@ async function doLogin() {
   openHome();
   pop("👋 أهلاً بك يا " + u.name);
 }
-function tab(n) {
+  function tab(n) {
+
   document.getElementById("t-chat").style.display = n === 1 ? "flex" : "none";
   document.getElementById("t-tool").style.display = n === 2 ? "flex" : "none";
   document.getElementById("t-prof").style.display = n === 3 ? "flex" : "none";
