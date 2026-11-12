@@ -68,11 +68,14 @@ body{background:#000;color:#fff;display:flex;justify-content:center;min-height:1
 .nav-btn.on .nav-av{border-color:#fff}
 .nav-av img{width:100%;height:100%;object-fit:cover;display:none}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;padding:16px;z-index:900}
-.m-card{background:#121212;border:1px solid #262626;border-radius:16px;padding:18px;width:100%;max-width:360px;text-align:center;max-height:85vh;overflow-y:auto}
-.drawer-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:850;display:none;justify-content:flex-end}
-.drawer{width:78%;max-width:300px;background:#121212;height:100%;padding:18px 14px;border-right:1px solid #262626;overflow-y:auto}
-.d-row{display:flex;justify-content:space-between;align-items:center;padding:12px 4px;border-bottom:1px solid #262626;font-size:14px;cursor:pointer}
-.crop-box{width:220px;height:220px;margin:10px auto;border-radius:50%;overflow:hidden;border:2px solid #0095f6;position:relative;background:#000;touch-action:none}
+.full-scr{position:fixed;inset:0;background:#000;z-index:880;display:none;flex-direction:column;overflow-y:auto;max-width:480px;margin:0 auto}
+.ig-field{border:1px solid #262626;border-radius:12px;padding:8px 14px;margin-bottom:12px;background:#000}
+.ig-field label{display:block;font-size:11px;color:#8e8e8e;margin-bottom:2px}
+.ig-field input,.ig-field textarea{border:none;background:transparent;padding:2px 0;margin:0;font-size:14px}
+.set-sec{padding:14px 16px 6px;font-size:12px;font-weight:600;color:#8e8e8e;border-top:4px solid #121212}
+.set-row{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;font-size:14px;cursor:pointer}
+.set-row:active{background:#121212}
+
 </style>
 </head>
 <body>
@@ -84,20 +87,60 @@ body{background:#000;color:#fff;display:flex;justify-content:center;min-height:1
 <div id="notifModal" class="modal"><div class="m-card" style="text-align:right"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h3 style="font-size:16px">الإشعارات وصندوق الوارد</h3><span style="cursor:pointer;color:#a8a8a8" onclick="document.getElementById('notifModal').style.display='none'">إغلاق</span></div><div id="notifList" style="max-height:320px;overflow-y:auto"></div></div></div>
 <div id="followModal" class="modal"><div class="m-card" style="padding:14px;text-align:right"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3 id="fModalTitle" style="font-size:15px">المتابعون</h3><span style="cursor:pointer;color:#a8a8a8" onclick="document.getElementById('followModal').style.display='none'">إغلاق</span></div><div class="search-in" style="margin-bottom:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8e8e" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="fSearchInp" placeholder="بحث" oninput="filterFollowList(this.value)"></div><div id="fModalBody" style="max-height:320px;overflow-y:auto"></div></div></div>
 
-<div id="drawerBg" class="drawer-bg" onclick="if(event.target===this)this.style.display='none'">
-<div class="drawer">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><b style="font-size:16px">الإعدادات والخصوصية</b><span style="cursor:pointer;color:#a8a8a8" onclick="document.getElementById('drawerBg').style.display='none'">إغلاق</span></div>
-<div class="d-row" onclick="shareMyProfile()"><span>مشاركة رابط الحساب</span><span style="color:#8e8e8e">‹</span></div>
-<div class="d-row" onclick="document.getElementById('drawerBg').style.display='none';tab(3)"><span>أداة التشفير المستقلة</span><span style="color:#8e8e8e">‹</span></div>
-<div class="d-row"><span>حساب خاص</span><input type="checkbox" id="chkPriv" style="width:18px;height:18px;margin:0;accent-color:#0095f6"></div>
-<div class="d-row"><span>إخفاء قائمة المتابعين</span><input type="checkbox" id="chkHideF" style="width:18px;height:18px;margin:0;accent-color:#0095f6"></div>
-<div style="margin-top:14px;font-size:12px;color:#8e8e8e;margin-bottom:6px">تعديل الملف الشخصي</div>
-<input id="pName" placeholder="الاسم">
-<input id="pBio" placeholder="السيرة الذاتية">
-<input type="password" id="pPass" placeholder="كلمة مرور جديدة (اختياري)">
-<button type="button" class="btn b-blue" onclick="saveProf()">حفظ التغييرات</button>
-<button type="button" class="btn b-red" style="margin-top:14px" onclick="logout()">تسجيل الخروج</button>
+<div id="editProfScr" class="full-scr">
+<div class="hdr"><div style="display:flex;align-items:center;gap:12px"><button type="button" class="icon-btn" onclick="closeFullScr('editProfScr')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button><b style="font-size:17px">تعديل الملف الشخصي</b></div><button type="button" class="icon-btn" style="color:#0095f6;font-weight:700;font-size:15px" onclick="saveProf()">حفظ</button></div>
+<div style="text-align:center;padding:20px 16px 10px">
+<label class="av-86" style="margin:0 auto 10px;cursor:pointer"><img id="epImg"><svg id="epSvg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><input type="file" accept="image/*" style="display:none" onchange="pickImg(this)"></label>
+<label style="color:#0095f6;font-size:13px;font-weight:600;cursor:pointer">تعديل الصورة<input type="file" accept="image/*" style="display:none" onchange="pickImg(this)"></label>
 </div>
+<div style="padding:10px 16px">
+<div class="ig-field"><label>الاسم</label><input id="pName" placeholder="الاسم"></div>
+<div class="ig-field"><label>اسم المستخدم</label><input id="epUser" dir="ltr" disabled style="color:#8e8e8e"></div>
+<div class="ig-field"><label>الضمائر</label><input id="pPronouns" placeholder="مثال: هو / هي"></div>
+<div class="ig-field"><label>السيرة الذاتية</label><textarea id="pBio" rows="2" placeholder="اكتب نبذة عنك..."></textarea></div>
+<div class="ig-field"><label>الروابط</label><input id="pLink" dir="ltr" placeholder="https://..."></div>
+<div class="ig-field"><label>الجنس</label><select id="pGender" style="width:100%;background:transparent;border:none;color:#fff;font-size:14px;outline:none;padding:4px 0"><option value="" style="background:#121212">غير محدد</option><option value="ذكر" style="background:#121212">ذكر</option><option value="أنثى" style="background:#121212">أنثى</option></select></div>
+<div class="ig-field"><label>تغيير كلمة المرور (اختياري)</label><input type="password" id="pPass" placeholder="اتركه فارغاً للإبقاء على الحالية"></div>
+</div>
+</div>
+
+<div id="settingsScr" class="full-scr">
+<div class="hdr"><div style="display:flex;align-items:center;gap:12px"><button type="button" class="icon-btn" onclick="closeFullScr('settingsScr')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button><b style="font-size:17px">الإعدادات والنشاط</b></div></div>
+<div class="search-wrap"><div class="search-in"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8e8e" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder="بحث في الإعدادات" oninput="filterSettings(this.value)"></div></div>
+<div id="settingsBody" style="padding-bottom:30px">
+<div class="set-sec">أدوات الأمان والتشفير</div>
+<div class="set-row" onclick="closeFullScr('settingsScr');tab(3)"><div style="display:flex;align-items:center;gap:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0095f6" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>أداة التشفير المستقلة (AES-256)</span></div><span style="color:#8e8e8e">‹</span></div>
+<div class="set-row" onclick="closeFullScr('settingsScr');openNotifs()"><div style="display:flex;align-items:center;gap:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span>صندوق الإشعارات ورموز فك التشفير</span></div><span style="color:#8e8e8e">‹</span></div>
+<div class="set-sec">من يمكنه رؤية المحتوى الخاص بك</div>
+<div class="set-row"><div style="display:flex;align-items:center;gap:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>خصوصية الحساب (حساب خاص)</span></div><input type="checkbox" id="chkPriv" style="width:18px;height:18px;margin:0;accent-color:#0095f6" onchange="quickSavePrivacy()"></div>
+<div class="set-row"><div style="display:flex;align-items:center;gap:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="8" x2="23" y2="14"/><line x1="23" y1="8" x2="17" y2="14"/></svg><span>إخفاء قائمة المتابعين</span></div><input type="checkbox" id="chkHideF" style="width:18px;height:18px;margin:0;accent-color:#0095f6" onchange="quickSavePrivacy()"></div>
+<div class="set-sec">الطريقة التي تستخدم بها CryptX</div>
+<div class="set-row" onclick="closeFullScr('settingsScr');openEditProf()"><div style="display:flex;align-items:center;gap:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>تعديل الملف الشخصي</span></div><span style="color:#8e8e8e">‹</span></div>
+<div class="set-row" onclick="shareMyProfile()"><div style="display:flex;align-items:center;gap:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>مشاركة رابط الحساب ودعوة الأصدقاء</span></div><span style="color:#8e8e8e">‹</span></div>
+<div class="set-sec">مزيد من المعلومات</div>
+<div class="set-row" onclick="pop('CryptX v2.0 - منصة التواصل المشفر')"><div style="display:flex;align-items:center;gap:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>حول تطبيق CryptX</span></div><span style="color:#8e8e8e">‹</span></div>
+<div class="set-sec">تسجيل الدخول</div>
+<div class="set-row" style="color:#ed4956;font-weight:600" onclick="logout()"><div style="display:flex;align-items:center;gap:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ed4956" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>تسجيل الخروج</span></div></div>
+</div>
+</div>
+
+<div id="peerOverlay" class="full-scr">
+<div class="hdr"><button type="button" class="icon-btn" onclick="closePeer()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button><b id="vpTopUser" dir="ltr" style="font-size:15px"></b><button type="button" class="icon-btn" onclick="shareProfile()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button></div>
+<div class="prof-top">
+<div class="av-86"><img id="vpImg"><svg id="vpSvg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+<div class="p-stats">
+<div><b id="vpPostsCount">0</b><span>منشورات</span></div>
+<div onclick="openPeerFollows('followers')"><b id="vpFollowers">0</b><span>المتابعون</span></div>
+<div onclick="openPeerFollows('following')"><b id="vpFollowing">0</b><span>متابعة</span></div>
+</div>
+</div>
+<div class="p-bio"><b id="vpName" style="display:block;margin-bottom:2px"></b><span id="vpPron" style="color:#8e8e8e;font-size:12px;display:block"></span><span id="vpBio" style="color:#e5e5e5;display:block"></span><a id="vpLink" target="_blank" style="color:#e0f1ff;font-size:12px;text-decoration:none;display:block;margin-top:2px"></a></div>
+<div class="p-btns">
+<button type="button" class="btn b-blue" id="vpFollowBtn" onclick="toggleFollow()">متابعة</button>
+<button type="button" class="btn b-dark" onclick="closePeer();openChatRoom()">مراسلة</button>
+</div>
+<div id="vpPrivateMsg" style="display:none;padding:36px 16px;text-align:center;color:#8e8e8e;font-size:13px;border-top:1px solid #1a1a1a">هذا الحساب خاص. قم بمتابعته لمشاهدة منشوراته.</div>
+<div id="vpGrid" class="grid"></div>
 </div>
 
 <div class="app">
@@ -119,24 +162,27 @@ body{background:#000;color:#fff;display:flex;justify-content:center;min-height:1
 <div id="t-search" style="display:none;flex-direction:column;flex:1">
 <div class="search-wrap"><div class="search-in"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8e8e" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="qInput" placeholder="بحث" oninput="liveSearch(this.value)" onfocus="liveSearch(this.value)"></div></div>
 <div id="liveResults"></div>
-<div id="peerCard" style="display:none;flex-direction:column">
-<div class="hdr"><button type="button" class="icon-btn" onclick="closePeer()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button><b id="vpTopUser" dir="ltr" style="font-size:15px"></b><button type="button" class="icon-btn" onclick="shareProfile()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button></div>
+</div>
+
+<div id="t-prof" style="display:none;flex-direction:column">
+<div class="hdr"><b id="myTopUser" dir="ltr" style="font-size:17px"></b><div style="display:flex;align-items:center;gap:12px"><button type="button" class="icon-btn" onclick="openNotifs()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span id="notifBadge2" class="badge">0</span></button><button type="button" class="icon-btn" onclick="openFullScr('settingsScr')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button></div></div>
 <div class="prof-top">
-<div class="av-86"><img id="vpImg"><svg id="vpSvg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+<div style="position:relative;width:86px;height:86px;flex-shrink:0">
+<label class="av-86" style="cursor:pointer"><img id="pImg"><svg id="pSvg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><input type="file" accept="image/*" style="display:none" onchange="pickImg(this)"></label>
+<div onclick="document.getElementById('newPostModal').style.display='flex'" style="position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:#0095f6;border:2.5px solid #000;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;cursor:pointer">+</div>
+</div>
 <div class="p-stats">
-<div><b id="vpPostsCount">0</b><span>منشورات</span></div>
-<div onclick="openPeerFollows('followers')"><b id="vpFollowers">0</b><span>المتابعون</span></div>
-<div onclick="openPeerFollows('following')"><b id="vpFollowing">0</b><span>متابعة</span></div>
+<div><b id="myPostsCount">0</b><span>منشورات</span></div>
+<div onclick="openMyFollows('followers')"><b id="myFollowers">0</b><span>المتابعون</span></div>
+<div onclick="openMyFollows('following')"><b id="myFollowing">0</b><span>متابعة</span></div>
 </div>
 </div>
-<div class="p-bio"><b id="vpName" style="display:block;margin-bottom:2px"></b><span id="vpBio" style="color:#e5e5e5"></span></div>
+<div class="p-bio"><b id="pTitle" style="display:block;margin-bottom:2px"></b><span id="myPronTxt" style="color:#8e8e8e;font-size:12px;display:block"></span><span id="myBioTxt" style="color:#e5e5e5;display:block"></span><a id="myLinkTxt" target="_blank" style="color:#e0f1ff;font-size:12px;text-decoration:none;display:block;margin-top:2px"></a></div>
 <div class="p-btns">
-<button type="button" class="btn b-blue" id="vpFollowBtn" onclick="toggleFollow()">متابعة</button>
-<button type="button" class="btn b-dark" onclick="openChatRoom()">مراسلة</button>
+<button type="button" class="btn" onclick="openEditProf()">تعديل الملف الشخصي</button>
+<button type="button" class="btn" onclick="shareMyProfile()">مشاركة الملف الشخصي</button>
 </div>
-<div id="vpPrivateMsg" style="display:none;padding:36px 16px;text-align:center;color:#8e8e8e;font-size:13px;border-top:1px solid #1a1a1a">هذا الحساب خاص. قم بمتابعته لمشاهدة منشوراته.</div>
-<div id="vpGrid" class="grid"></div>
-</div>
+<div id="myGrid" class="grid"></div>
 </div>
 
 <div id="t-tool" style="display:none;flex-direction:column;padding:16px">
@@ -162,24 +208,6 @@ body{background:#000;color:#fff;display:flex;justify-content:center;min-height:1
 <button type="button" class="c-act" style="background:#1e293b;color:#38bdf8;border:1px solid #38bdf8" title="إرسال مشفر" onclick="sendMsg(1)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button>
 </div>
 </div>
-</div>
-
-<div id="t-prof" style="display:none;flex-direction:column">
-<div class="hdr"><b id="myTopUser" dir="ltr" style="font-size:17px"></b><div style="display:flex;align-items:center;gap:12px"><button type="button" class="icon-btn" onclick="openNotifs()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span id="notifBadge2" class="badge">0</span></button><button type="button" class="icon-btn" onclick="document.getElementById('drawerBg').style.display='flex'"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button></div></div>
-<div class="prof-top">
-<label class="av-86" style="cursor:pointer"><img id="pImg"><svg id="pSvg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><input type="file" accept="image/*" style="display:none" onchange="pickImg(this)"></label>
-<div class="p-stats">
-<div><b id="myPostsCount">0</b><span>منشورات</span></div>
-<div onclick="openMyFollows('followers')"><b id="myFollowers">0</b><span>المتابعون</span></div>
-<div onclick="openMyFollows('following')"><b id="myFollowing">0</b><span>متابعة</span></div>
-</div>
-</div>
-<div class="p-bio"><b id="pTitle" style="display:block;margin-bottom:2px"></b><span id="myBioTxt" style="color:#e5e5e5"></span></div>
-<div class="p-btns">
-<button type="button" class="btn" onclick="document.getElementById('drawerBg').style.display='flex'">تعديل الملف الشخصي</button>
-<button type="button" class="btn" onclick="shareMyProfile()">مشاركة الملف الشخصي</button>
-</div>
-<div id="myGrid" class="grid"></div>
 </div>
 
 <div class="b-nav">
@@ -488,7 +516,7 @@ async function renderFollowRows(arr, isMine) {
     const av = info.av ? '<img src="' + info.av + '" style="display:block">' : '<span style="font-size:13px">' + u[0].toUpperCase() + '</span>';
     const actBtn = u === prof.user ? "" : '<button type="button" class="btn ' + (iFollow ? 'b-dark' : 'b-blue') + '" style="width:auto;margin:0;padding:6px 14px;font-size:12px" onclick="quickFollow(\'' + u + '\')">' + (iFollow ? 'تتابعه' : 'رد المتابعة') + '</button>';
     const rmBtn = (isMine && curFollowMode.includes("المتابعون")) ? '<span style="color:#8e8e8e;cursor:pointer;padding:4px 8px;font-size:15px" onclick="removeFollower(\'' + u + '\')">×</span>' : '';
-    row.innerHTML = '<div style="display:flex;align-items:center;gap:10px;cursor:pointer" onclick="document.getElementById(\'followModal\').style.display=\'none\';tab(2);viewProfile(\'' + u + '\')"><div class="av-36">' + av + '</div><div><b dir="ltr" style="font-size:13px">' + u + '</b><div style="font-size:11px;color:#8e8e8e">' + (info.name || "") + '</div></div></div><div style="display:flex;align-items:center;gap:6px">' + actBtn + rmBtn + '</div>';
+        row.innerHTML = '<div style="display:flex;align-items:center;gap:10px;cursor:pointer" onclick="document.getElementById(\'followModal\').style.display=\'none\';viewProfile(\'' + u + '\')"><div class="av-36">' + av + '</div><div><b dir="ltr" style="font-size:13px">' + u + '</b><div style="font-size:11px;color:#8e8e8e">' + (info.name || "") + '</div></div></div><div style="display:flex;align-items:center;gap:6px">' + actBtn + rmBtn + '</div>';
     b.appendChild(row);
   });
 }
@@ -722,6 +750,85 @@ async function runTool(isEnc) {
   catch (e) { pop("خطأ في البيانات", 1); }
 }
 function copyOut() { const v = document.getElementById("tOut").value; if (v) { navigator.clipboard.writeText(v); pop("تم النسخ"); } }
+function openFullScr(id) { document.getElementById(id).style.display = "flex"; }
+function closeFullScr(id) { document.getElementById(id).style.display = "none"; }
+
+function openEditProf() {
+  document.getElementById("pName").value = prof.name || "";
+  document.getElementById("epUser").value = prof.user || "";
+  document.getElementById("pPronouns").value = prof.pronouns || "";
+  document.getElementById("pBio").value = prof.bio || "";
+  document.getElementById("pLink").value = prof.link || "";
+  document.getElementById("pGender").value = prof.gender || "";
+  renderAv(prof.av, "epImg", "epSvg");
+  openFullScr("editProfScr");
+}
+
+function filterSettings(q) {
+  q = q.trim().toLowerCase();
+  document.querySelectorAll("#settingsBody .set-row").forEach(r => {
+    r.style.display = !q || r.innerText.toLowerCase().includes(q) ? "flex" : "none";
+  });
+}
+
+async function quickSavePrivacy() {
+  const me = await getUserData(prof.user);
+  me.priv = document.getElementById("chkPriv").checked;
+  me.hideF = document.getElementById("chkHideF").checked;
+  await setUserData(prof.user, me);
+  prof = { ...me, user: prof.user }; localStorage.setItem("cx_prof", JSON.stringify(prof));
+  pop("تم حفظ الخصوصية");
+}
+
+async function saveProf() {
+  const name = document.getElementById("pName").value.trim(), pass = document.getElementById("pPass").value;
+  if (!name) return pop("الاسم مطلوب", 1);
+  pop("جاري الحفظ...");
+  const me = await getUserData(prof.user);
+  me.name = name;
+  me.pronouns = document.getElementById("pPronouns").value.trim();
+  me.bio = document.getElementById("pBio").value.trim();
+  me.link = document.getElementById("pLink").value.trim();
+  me.gender = document.getElementById("pGender").value;
+  if (pass.length >= 4) me.pass = pass;
+  if (newAv !== null) { me.av = newAv; newAv = null; }
+  await setUserData(prof.user, me);
+  prof = { ...me, user: prof.user }; localStorage.setItem("cx_prof", JSON.stringify(prof));
+  document.getElementById("pPass").value = "";
+  closeFullScr("editProfScr");
+  openHome(); pop("تم حفظ التغييرات");
+}
+
+async function viewProfile(u) {
+  const d = await getUserData(u);
+  if (!d) return pop("المستخدم غير موجود", 1);
+  peer = { ...d, user: u };
+  document.getElementById("vpTopUser").innerText = u;
+  document.getElementById("vpName").innerText = d.name;
+  document.getElementById("vpPron").innerText = d.pronouns || "";
+  document.getElementById("vpBio").innerText = d.bio || "";
+  const lk = document.getElementById("vpLink");
+  lk.innerText = d.link || ""; lk.href = d.link ? (d.link.startsWith("http") ? d.link : "https://" + d.link) : "#";
+  renderAv(d.av, "vpImg", "vpSvg");
+  const flw = d.followers || [], flg = d.following || [], posts = d.posts || [];
+  const isF = flw.includes(prof.user);
+  document.getElementById("vpPostsCount").innerText = posts.length;
+  document.getElementById("vpFollowers").innerText = d.hideF ? "-" : flw.length;
+  document.getElementById("vpFollowing").innerText = d.hideF ? "-" : flg.length;
+  const fBtn = document.getElementById("vpFollowBtn");
+  fBtn.innerText = isF ? "تتابعه" : "متابعة";
+  fBtn.className = "btn " + (isF ? "b-dark" : "b-blue");
+  if (d.priv && !isF) {
+    document.getElementById("vpPrivateMsg").style.display = "block";
+    document.getElementById("vpGrid").innerHTML = "";
+  } else {
+    document.getElementById("vpPrivateMsg").style.display = "none";
+    renderGrid("vpGrid", posts, u);
+  }
+  openFullScr("peerOverlay");
+}
+function closePeer() { closeFullScr("peerOverlay"); peer = null; }
+
 </script>
 </body>
 </html>
