@@ -9,7 +9,7 @@
 input,textarea{user-select:text;width:100%;padding:14px;border-radius:14px;border:1px solid #1e293b;background:#0f172a;color:#fff;font-size:15px;margin-bottom:10px;outline:none;transition:.2s}
 input:focus,textarea:focus{border-color:#38bdf8}
 body{background:#050811;color:#f8fafc;display:flex;justify-content:center;min-height:100vh}
-.app{width:100%;max-width:480px;padding:20px 16px;display:flex;flex-direction:column;position:relative}
+.app{width:100%;max-width:480px;padding:20px 16px;display:flex;flex-direction:column;position:relative;min-height:100vh}
 .scr{display:none;flex-direction:column;flex:1}.scr.active{display:flex}
 .box{margin:auto 0;text-align:center}
 h1{font-size:38px;font-weight:900;margin-bottom:6px}h1 span{color:#38bdf8}
@@ -94,6 +94,22 @@ p.sub{color:#94a3b8;font-size:13px;margin-bottom:22px}
 <button type="button" class="btn b3" style="padding:10px;font-size:13px;margin:0;width:auto" onclick="resetAv()">أفاتار مجهول 🕵️</button>
 </div>
 </div>
+<span class="lbl">الاسم الظاهر في المحادثات</span>
+<input id="pName" placeholder="الاسم الظاهر">
+<span class="lbl">تغيير كلمة المرور</span>
+<input type="password" id="pPass" placeholder="اتركه فارغاً للإبقاء على الحالية">
+<button type="button" class="btn b1" onclick="saveProf()">حفظ التعديلات ✅</button>
+<button type="button" class="btn b3" style="margin-top:10px" onclick="logout()">تسجيل الخروج 🚪</button>
+</div>
+
+<div class="nav">
+<button type="button" class="btn b2" onclick="tab(1)">💬 المحادثات</button>
+<button type="button" class="btn b2" onclick="tab(2)">🔐 التشفير</button>
+<button type="button" class="btn b2" onclick="tab(3)">👤 حسابي</button>
+</div>
+</div>
+</div>
+
 <script>
 const RTDB = "https://firebaseio.com";
 let prof = null;
@@ -198,15 +214,14 @@ async function doLogin() {
   openHome();
   pop("👋 أهلاً بك يا " + u.name);
 }
-  function tab(n) {
 
+function tab(n) {
   document.getElementById("t-chat").style.display = n === 1 ? "flex" : "none";
   document.getElementById("t-tool").style.display = n === 2 ? "flex" : "none";
   document.getElementById("t-prof").style.display = n === 3 ? "flex" : "none";
 }
 function logout() { localStorage.clear(); location.reload(); }
 function copyHandle() { navigator.clipboard.writeText("@" + prof.user); pop("📋 تم نسخ اسم المستخدم!"); }
-
 function pickImg(inp) {
   const file = inp.files && inp.files;
   if (!file) return;
@@ -256,24 +271,31 @@ async function saveProf() {
   const pass = document.getElementById("pPass").value;
   if (!name) return pop("⚠️ الاسم الظاهر مطلوب", 1);
   pop("⏳ جاري حفظ الإعدادات...");
+  const finalAv = newAv !== null ? newAv : (prof.av || "");
   try {
-    const cur = await (await fetch(RTDB + "/users/" + prof.user + ".json")).json();
-    const finalAv = newAv !== null ? newAv : (prof.av || "");
-    const up = { name, pass: pass.length >= 4 ? pass : cur.pass, av: finalAv };
-    await fetch(RTDB + "/users/" + prof.user + ".json", { method: "PUT", body: JSON.stringify(up) });
-    prof.name = name; prof.av = finalAv; newAv = null;
-    document.getElementById("pPass").value = "";
-    localStorage.setItem("cx_prof", JSON.stringify(prof));
-    openHome();
-    pop("✅ تم تحديث صورتك وبياناتك بنجاح!");
-  } catch (e) { pop("❌ تعذر حفظ التعديلات", 1); }
+    const cur = await (await fastFetch(RTDB + "/users/" + prof.user + ".json")).json();
+    const up = { name, pass: pass.length >= 4 ? pass : (cur ? cur.pass : "1234"), av: finalAv };
+    await fastFetch(RTDB + "/users/" + prof.user + ".json", { method: "PUT", body: JSON.stringify(up) });
+  } catch (e) {
+    const db = getLocalUsers();
+    const oldPass = db[prof.user] ? db[prof.user].pass : "1234";
+    db[prof.user] = { name, pass: pass.length >= 4 ? pass : oldPass, av: finalAv };
+    saveLocalUsers(db);
+  }
+  prof.name = name; prof.av = finalAv; newAv = null;
+  document.getElementById("pPass").value = "";
+  localStorage.setItem("cx_prof", JSON.stringify(prof));
+  openHome();
+  pop("✅ تم تحديث صورتك وبياناتك بنجاح!");
 }
 
 async function findPeer() {
   const u = document.getElementById("qInput").value.trim().toLowerCase().replace("@", "");
   if (!u || u === prof.user) return;
   pop("⏳ جاري البحث...");
-  const d = await (await fetch(RTDB + "/users/" + u + ".json")).json();
+  let d = null;
+  try { d = await (await fastFetch(RTDB + "/users/" + u + ".json")).json(); }
+  catch (e) { d = getLocalUsers()[u] || null; }
   if (!d) return pop("❌ المستخدم غير موجود", 1);
   peer = { user: u, name: d.name };
   document.getElementById("roomBox").style.display = "flex";
@@ -309,7 +331,7 @@ async function sendMsg() {
   document.getElementById("lastPinVal").innerText = pin;
   document.getElementById("lastPinBox").style.display = "flex";
   pop("🔒 تم الإرسال! الرمز السري للرسالة: " + pin);
-  await fetch(RTDB + "/chats/" + rid + ".json", { method: "POST", body: JSON.stringify({ s: prof.user, c }) });
+  try { await fastFetch(RTDB + "/chats/" + rid + ".json", { method: "POST", body: JSON.stringify({ s: prof.user, c }) }); } catch(e) {}
   loadMsgs();
 }
 function copyPin() { navigator.clipboard.writeText(document.getElementById("lastPinVal").innerText); pop("📋 تم نسخ الرمز السري!"); }
@@ -317,7 +339,8 @@ function copyPin() { navigator.clipboard.writeText(document.getElementById("last
 async function loadMsgs() {
   if (!peer) return;
   const rid = [prof.user, peer.user].sort().join("_"), st = document.getElementById("stream");
-  const data = await (await fetch(RTDB + "/chats/" + rid + ".json")).json();
+  let data = null;
+  try { data = await (await fastFetch(RTDB + "/chats/" + rid + ".json")).json(); } catch(e) {}
   st.innerHTML = "";
   if (!data) return;
   Object.values(data).forEach(m => {
