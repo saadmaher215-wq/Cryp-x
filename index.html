@@ -103,7 +103,6 @@ body{background:#000;color:#fff;display:flex;justify-content:center;min-height:1
 <div class="app">
 <div id="s-login" class="scr active"><div class="auth-box"><div class="brand">Crypt<span>X</span></div><p class="sub">منصة التواصل المشفر والخصوصية</p><input id="lUser" placeholder="اسم المستخدم"><input type="password" id="lPass" placeholder="كلمة المرور"><button type="button" class="btn b-blue" onclick="doLogin()">تسجيل الدخول</button><button type="button" class="btn b-dark" onclick="go('s-signup')">إنشاء حساب جديد</button></div></div>
 <div id="s-signup" class="scr"><div class="auth-box"><div class="brand">Crypt<span>X</span></div><p class="sub">إنشاء حساب جديد</p><input id="sName" placeholder="الاسم الظاهر"><input id="sUser" placeholder="اسم المستخدم بالإنجليزية"><input type="password" id="sPass" placeholder="كلمة المرور (4 أحرف على الأقل)"><button type="button" class="btn b-blue" onclick="doSignup()">إنشاء الحساب</button><button type="button" class="btn b-dark" onclick="go('s-login')">العودة لتسجيل الدخول</button></div></div>
-
 <div id="s-home" class="scr" style="padding:0">
 <div id="t-feed" style="display:flex;flex-direction:column;flex:1">
 <div class="hdr">
@@ -148,7 +147,6 @@ body{background:#000;color:#fff;display:flex;justify-content:center;min-height:1
 <textarea id="tOut" rows="3" readonly placeholder="النتيجة..." style="margin-top:10px"></textarea>
 <div style="display:flex;gap:8px"><button type="button" class="btn b-dark" onclick="copyOut()">نسخ النتيجة</button><button type="button" class="btn b-red" style="width:auto;padding:0 16px" onclick="document.getElementById('tIn').value='';document.getElementById('tOut').value=''">مسح</button></div>
 </div>
-
 <div id="t-dm" style="display:none;flex-direction:column;flex:1">
 <div id="dmListBox" style="display:flex;flex-direction:column;flex:1">
 <div class="hdr"><b id="dmMyUser" dir="ltr" style="font-size:16px"></b><span style="font-size:12px;color:#0095f6">الرسائل المباشرة</span></div>
@@ -194,7 +192,7 @@ body{background:#000;color:#fff;display:flex;justify-content:center;min-height:1
 </div>
 </div>
 <script>
-const RTDB = "https://firebaseio.com";
+  const RTDB = "https://cryptx-app-default-rtdb" + ".firebaseio.com";
 let prof = null;
 try { prof = JSON.parse(localStorage.getItem("cx_prof") || "null"); } catch(e) {}
 let peer = null, tmr = null, newAv = null, targetMsg = null, activePost = null;
@@ -253,7 +251,6 @@ function renderAv(src, imgId, svgId) {
   if (im) { im.style.display = has ? "block" : "none"; if (has) im.src = src; }
   if (sv) { sv.style.display = has ? "none" : "block"; }
 }
-
 async function getAllUsers() {
   let all = getDB();
   try {
@@ -307,7 +304,6 @@ async function checkNotifBadge() {
     });
   } catch(e) {}
 }
-
 async function openNotifs() {
   document.getElementById("notifModal").style.display = "flex";
   const box = document.getElementById("notifList");
@@ -363,7 +359,7 @@ async function loadFeed() {
     stream.appendChild(card);
   });
 }
-  async function doSignup() {
+async function doSignup() {
   const name = document.getElementById("sName").value.trim();
   const user = document.getElementById("sUser").value.trim().toLowerCase().replace(/[^a-z0-9_]/g, "");
   const pass = document.getElementById("sPass").value;
@@ -413,14 +409,13 @@ async function liveSearch(q) {
     const item = all[u];
     if (!q || u.includes(q) || (item.name && item.name.toLowerCase().includes(q))) {
       const div = document.createElement("div"); div.className = "row-item"; div.style.cursor = "pointer";
-      const av = item.av ? '<img src="' + item.av + '" style="display:block">' : '<span style="font-size:14px">' + u.toUpperCase() + '</span>';
+      const av = item.av ? '<img src="' + item.av + '" style="display:block">' : '<span style="font-size:14px">' + u[0].toUpperCase() + '</span>';
       div.innerHTML = '<div style="display:flex;align-items:center;gap:12px"><div class="av-48">' + av + '</div><div><b dir="ltr" style="font-size:14px">' + u + '</b><div style="font-size:13px;color:#8e8e8e">' + (item.name || "") + '</div></div></div>';
       div.onclick = () => viewProfile(u);
       box.appendChild(div);
     }
   });
 }
-
 async function viewProfile(u) {
   const d = await getUserData(u);
   if (!d) return pop("المستخدم غير موجود", 1);
@@ -490,7 +485,7 @@ async function renderFollowRows(arr, isMine) {
     const info = all[u] || { name: u };
     const iFollow = (prof.following || []).includes(u);
     const row = document.createElement("div"); row.className = "row-item"; row.style.padding = "8px 0";
-    const av = info.av ? '<img src="' + info.av + '" style="display:block">' : '<span style="font-size:13px">' + u.toUpperCase() + '</span>';
+    const av = info.av ? '<img src="' + info.av + '" style="display:block">' : '<span style="font-size:13px">' + u[0].toUpperCase() + '</span>';
     const actBtn = u === prof.user ? "" : '<button type="button" class="btn ' + (iFollow ? 'b-dark' : 'b-blue') + '" style="width:auto;margin:0;padding:6px 14px;font-size:12px" onclick="quickFollow(\'' + u + '\')">' + (iFollow ? 'تتابعه' : 'رد المتابعة') + '</button>';
     const rmBtn = (isMine && curFollowMode.includes("المتابعون")) ? '<span style="color:#8e8e8e;cursor:pointer;padding:4px 8px;font-size:15px" onclick="removeFollower(\'' + u + '\')">×</span>' : '';
     row.innerHTML = '<div style="display:flex;align-items:center;gap:10px;cursor:pointer" onclick="document.getElementById(\'followModal\').style.display=\'none\';tab(2);viewProfile(\'' + u + '\')"><div class="av-36">' + av + '</div><div><b dir="ltr" style="font-size:13px">' + u + '</b><div style="font-size:11px;color:#8e8e8e">' + (info.name || "") + '</div></div></div><div style="display:flex;align-items:center;gap:6px">' + actBtn + rmBtn + '</div>';
@@ -515,7 +510,7 @@ async function removeFollower(u) {
   prof = { ...me, user: prof.user }; localStorage.setItem("cx_prof", JSON.stringify(prof));
   curFollowArr = me.followers; renderFollowRows(curFollowArr, true);
 }
-</script>
+
 function renderGrid(gridId, posts, ownerUser) {
   const g = document.getElementById(gridId); g.innerHTML = "";
   posts.slice().reverse().forEach((p, revIdx) => {
@@ -546,7 +541,6 @@ async function publishPost() {
   if (file) { const r = new FileReader(); r.onload = e => finish(e.target.result); r.readAsDataURL(file); }
   else finish("");
 }
-
 async function openPostModal(ownerUser, idx) {
   const uData = await getUserData(ownerUser);
   const post = uData.posts[idx];
@@ -558,12 +552,11 @@ async function openPostModal(ownerUser, idx) {
   document.getElementById("pmLikeBtn").innerText = (likes.includes(prof.user) ? "إلغاء الإعجاب (" : "إعجاب (") + likes.length + ")";
   const cBox = document.getElementById("pmCommentsArea");
   const cmList = (post.comments || []).map(c => '<div style="background:#000;padding:8px 10px;border-radius:8px;margin-bottom:5px;font-size:12px"><b>' + c.u + '</b> ' + c.t + '</div>').join("");
-  cBox.innerHTML = '<div style="max-height:110px;overflow-y:auto;margin-bottom:8px">' + (cmList || "<span style='font-size:12px;color:#8e8e8e'>لا توجد تعليقات</span>") + '</div><div style="display:flex;gap:6px"><input id="cmInp" placeholder="أضف تعليقاً..." style="margin:0;padding:8px;font-size:12px"><button type="button" class="btn b-blue" style="width:auto;margin:0;padding:0 12px;font-size:12px" onclick="addComment()">نشر</button></div>';
+  cBox.innerHTML = '<div style="max-height:110px;overflow-y:auto;margin-bottom:8px">' + (cmList || '<span style="font-size:12px;color:#8e8e8e">لا توجد تعليقات</span>') + '</div><div style="display:flex;gap:6px"><input id="cmInp" placeholder="أضف تعليقاً..." style="margin:0;padding:8px;font-size:12px"><button type="button" class="btn b-blue" style="width:auto;margin:0;padding:0 12px;font-size:12px" onclick="addComment()">نشر</button></div>';
   document.getElementById("postModal").style.display = "flex";
 }
 
-  cBox.innerHTML = '<div style="max-height:110px;overflow-y:auto;margin-bottom:8px">' + (cmList || '<span style="font-size:12px;color:#8e8e8e">لا توجد تعليقات</span>') + '</div><div style="display:flex;gap:6px"><input id="cmInp" placeholder="أضف تعليقاً..." style="margin:0;padding:8px;font-size:12px"><button type="button" class="btn b-blue" style="width:auto;margin:0;padding:0 12px;font-size:12px" onclick="addComment()">نشر</button></div>';
-
+async function toggleLike() {
   if (!activePost) return;
   const uData = await getUserData(activePost.ownerUser);
   const post = uData.posts[activePost.idx];
@@ -593,7 +586,7 @@ function shareProfile() { if (peer) { navigator.clipboard.writeText("@" + peer.u
 function shareMyProfile() { navigator.clipboard.writeText("@" + prof.user + " - https://github.io"); pop("تم نسخ رابط حسابك"); }
 
 function pickImg(inp) {
-  const file = inp.files && inp.files[0]; if (!file) return;
+  const file = inp.files && inp.files; if (!file) return;
   const r = new FileReader(); r.onload = e => {
     cImg = new Image(); cImg.onload = () => { cx = 0; cy = 0; document.getElementById("zoomRng").value = 1; document.getElementById("cropModal").style.display = "flex"; drawCrop(); };
     cImg.src = e.target.result;
@@ -617,7 +610,6 @@ function applyCrop() {
   renderAv(newAv, "pImg", "pSvg"); document.getElementById("cropModal").style.display = "none";
   pop("افتح القائمة واضغط حفظ التغييرات");
 }
-
 async function saveProf() {
   const name = document.getElementById("pName").value.trim(), pass = document.getElementById("pPass").value;
   if (!name) return pop("الاسم مطلوب", 1);
@@ -641,7 +633,7 @@ async function renderDmList(q) {
   Object.keys(all).filter(u => u !== prof.user && (!q || u.includes(q) || (all[u].name || "").toLowerCase().includes(q))).forEach(u => {
     const info = all[u];
     const row = document.createElement("div"); row.className = "row-item"; row.style.cursor = "pointer";
-    const av = info.av ? '<img src="' + info.av + '" style="display:block">' : '<span style="font-size:14px">' + u[0].toUpperCase() + '</span>';
+    const av = info.av ? '<img src="' + info.av + '" style="display:block">' : '<span style="font-size:14px">' + u.toUpperCase() + '</span>';
     row.innerHTML = '<div style="display:flex;align-items:center;gap:12px"><div class="av-48">' + av + '</div><div><b style="font-size:14px">' + (info.name || u) + '</b><div dir="ltr" style="font-size:12px;color:#8e8e8e">@' + u + '</div></div></div><span style="font-size:12px;color:#0095f6">مراسلة</span>';
     row.onclick = () => { peer = { ...info, user: u }; openChatRoom(); };
     box.appendChild(row);
@@ -691,7 +683,6 @@ async function sendMsg(isEnc) {
   try { await fastFetch(RTDB + "/chats/" + rid + ".json", { method: "POST", body: JSON.stringify(msgObj) }); } catch(e) {}
   loadMsgs();
 }
-
 async function loadMsgs() {
   if (!peer) return;
   const rid = [prof.user, peer.user].sort().join("_"), st = document.getElementById("stream");
@@ -734,4 +725,3 @@ function copyOut() { const v = document.getElementById("tOut").value; if (v) { n
 </script>
 </body>
 </html>
-
