@@ -470,3 +470,102 @@ if (cb) {
   cb.onpointermove = e => { if (!drag) return; cx += e.clientX - lx; cy += e.clientY - ly; lx = e.clientX; ly = e.clientY; drawCrop(); };
   cb.onpointerup = () => { drag = false; };
 }
+}
+function applyCrop() {
+  newAv = document.getElementById("cropCvs").toDataURL("image/jpeg", 0.85);
+  renderAv(newAv, "pImg", "pSvg"); document.getElementById("cropModal").style.display = "none";
+  pop("✂️ تم قص الصورة! اضغط حفظ الإعدادات");
+}
+
+async function saveProf() {
+  const name = document.getElementById("pName").value.trim(), pass = document.getElementById("pPass").value;
+  if (!name) return pop("⚠️ الاسم الظاهر مطلوب", 1);
+  pop("⏳ جاري الحفظ...");
+  const me = await getUserData(prof.user);
+  me.name = name;
+  if (pass.length >= 4) me.pass = pass;
+  if (newAv !== null) { me.av = newAv; newAv = null; }
+  me.priv = document.getElementById("chkPriv").checked;
+  me.hideF = document.getElementById("chkHideF").checked;
+  await setUserData(prof.user, me);
+  prof = { ...me, user: prof.user };
+  localStorage.setItem("cx_prof", JSON.stringify(prof));
+  document.getElementById("pPass").value = "";
+  openHome(); pop("✅ تم حفظ الإعدادات والخصوصية!");
+}
+
+function openChatRoom() {
+  if (!peer) return;
+  document.getElementById("peerCard").style.display = "none";
+  document.getElementById("roomBox").style.display = "flex";
+  document.getElementById("peerTitle").innerText = peer.name + " (@" + peer.user + ")";
+  loadMsgs(); if (tmr) clearInterval(tmr); tmr = setInterval(loadMsgs, 3500);
+}
+function closeRoom() { clearInterval(tmr); document.getElementById("roomBox").style.display = "none"; document.getElementById("peerCard").style.display = "block"; }
+
+async function enc(t, p) {
+  const s = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const km = await crypto.subtle.importKey("raw", new TextEncoder().encode(p), "PBKDF2", false, ["deriveKey"]);
+  const k = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: s, iterations: 100000, hash: "SHA-256" }, km, { name: "AES-GCM", length: 256 }, false, ["encrypt"]);
+  const c = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, k, new TextEncoder().encode(t)));
+  const b = new Uint8Array(28 + c.length); b.set(s); b.set(iv, 16); b.set(c, 28); return btoa(String.fromCharCode(...b));
+}
+async function dec(b64, p) {
+  const b = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const km = await crypto.subtle.importKey("raw", new TextEncoder().encode(p), "PBKDF2", false, ["deriveKey"]);
+  const k = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: b.slice(0, 16), iterations: 100000, hash: "SHA-256" }, km, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+  return new TextDecoder().decode(await crypto.subtle.decrypt({ name: "AES-GCM", iv: b.slice(16, 28) }, k, b.slice(28)));
+}
+
+async function sendMsg() {
+  const t = document.getElementById("draft").value.trim();
+  if (!t) return pop("⚠️ اكتب رسالتك أولاً!", 1);
+  const pin = String(Math.floor(1000 + Math.random() * 9000));
+  const rid = [prof.user, peer.user].sort().join("_"), c = await enc(t, pin);
+  document.getElementById("draft").value = "";
+  document.getElementById("lastPinVal").innerText = pin;
+  document.getElementById("lastPinBox").style.display = "flex";
+  pop("🔒 تم الإرسال! الرمز السري: " + pin);
+  const key = "cx_chat_" + rid;
+  const arr = JSON.parse(localStorage.getItem(key) || "[]");
+  arr.push({ s: prof.user, c }); localStorage.setItem(key, JSON.stringify(arr));
+  try { await fastFetch(RTDB + "/chats/" + rid + ".json", { method: "POST", body: JSON.stringify({ s: prof.user, c }) }); } catch(e) {}
+  loadMsgs();
+}
+function copyPin() { navigator.clipboard.writeText(document.getElementById("lastPinVal").innerText); pop("📋 تم نسخ الرمز!"); }
+
+async function loadMsgs() {
+  if (!peer) return;
+  const rid = [prof.user, peer.user].sort().join("_"), st = document.getElementById("stream");
+  let list = JSON.parse(localStorage.getItem("cx_chat_" + rid) || "[]");
+  try {
+    const d = await (await fastFetch(RTDB + "/chats/" + rid + ".json")).json();
+    if (d) list = Object.values(d);
+  } catch(e) {}
+  st.innerHTML = "";
+  list.forEach(m => {
+    const div = document.createElement("div"); div.className = "bbl" + (m.s === prof.user ? " me" : "");
+    div.innerHTML = "<div style='font-size:10px;color:#94a3b8'>@" + m.s + "</div><div>" + m.c + "</div>";
+    const btn = document.createElement("button"); btn.innerText = "فك التشفير 🔓";
+    btn.style.cssText = "margin-top:6px;padding:5px 12px;border-radius:8px;border:1px solid #38bdf8;background:#050811;color:#38bdf8;font-size:11px;font-weight:700";
+    btn.onclick = () => { targetMsg = { el: btn.previousElementSibling, btn, cipher: m.c }; document.getElementById("pinInp").value = ""; document.getElementById("pinModal").style.display = "flex"; document.getElementById("pinInp").focus(); };
+    div.appendChild(btn); st.appendChild(div);
+  });
+}
+function closePin() { document.getElementById("pinModal").style.display = "none"; }
+async function confirmPin() {
+  const k = document.getElementById("pinInp").value.trim(); if (k.length < 4) return pop("⚠️ أدخل 4 أرقام", 1);
+  try { targetMsg.el.innerText = await dec(targetMsg.cipher, k); targetMsg.btn.remove(); closePin(); pop("🔓 تم فك التشفير!"); }
+  catch (e) { pop("❌ الرمز السري غير صحيح!", 1); }
+}
+
+async function runTool(isEnc) {
+  const t = document.getElementById("tIn").value.trim(), k = document.getElementById("tKey").value;
+  if (!t || !k) return pop("⚠️ أدخل النص وكلمة السر", 1);
+  try { document.getElementById("tOut").value = isEnc ? await enc(t, k) : await dec(t, k); pop(isEnc ? "🔒 تم التشفير" : "🔓 تم فك التشفير"); }
+  catch (e) { pop("❌ خطأ في البيانات أو كلمة السر", 1); }
+}
+function copyOut() { const v = document.getElementById("tOut").value; if (v) { navigator.clipboard.writeText(v); pop("📋 تم النسخ!"); } }
+</script>
+</body>
+</html>
