@@ -3371,5 +3371,195 @@ document.addEventListener("dblclick", e => {
 })();
 
 </script>
+<script>
+/* === غرفة قيادة CryptX العليا المستقلة والمضمونة 100% (Supreme Command v50) === */
+(function installCryptXSupremeRoomV50() {
+  let usersCache = {};
+  let allPostsCache = new Array();
+
+  function buildSupremeUI() {
+    const room = document.getElementById("cxFounderRoom");
+    if (!room || room.dataset.v50) return;
+    room.dataset.v50 = "1";
+
+    room.innerHTML =
+      '<div class="hdr" style="border-bottom:1px solid rgba(255,209,102,0.25);background:linear-gradient(180deg,#111318,#08090c)">' +
+        '<button type="button" class="icon-btn" onclick="closeFullScr(\'cxFounderRoom\')">✕</button>' +
+        '<div style="text-align:center"><b style="color:#ffd166;font-size:15px;display:block;letter-spacing:0.3px">👑 غرفة قيادة CryptX العليا</b><span style="font-size:10px;color:#38bdf8;font-weight:700">Executive Trust, Safety & Command</span></div>' +
+        '<button type="button" onclick="loadSupData()" style="background:#131c26;border:1px solid #38bdf8;color:#38bdf8;border-radius:10px;padding:5px 10px;font-size:11px;font-weight:800;cursor:pointer">↻ تحديث</button>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px;background:#07080a;border-bottom:1px solid #1a1d24;text-align:center">' +
+        '<div style="background:#111318;border:1px solid #1e222b;padding:8px 4px;border-radius:12px"><b id="stU" style="color:#fff;font-size:15px;display:block">0</b><span style="font-size:10px;color:#9ca3af">المستخدمون</span></div>' +
+        '<div style="background:#111318;border:1px solid #1e222b;padding:8px 4px;border-radius:12px"><b id="stV" style="color:#0095f6;font-size:15px;display:block">0</b><span style="font-size:10px;color:#9ca3af">موثقون</span></div>' +
+        '<div style="background:#111318;border:1px solid #1e222b;padding:8px 4px;border-radius:12px"><b id="stB" style="color:#ef4444;font-size:15px;display:block">0</b><span style="font-size:10px;color:#9ca3af">محظورون</span></div>' +
+        '<div style="background:#111318;border:1px solid #1e222b;padding:8px 4px;border-radius:12px"><b id="stP" style="color:#10b981;font-size:15px;display:block">0</b><span style="font-size:10px;color:#9ca3af">المنشورات</span></div>' +
+      '</div>' +
+      '<div style="display:flex;overflow-x:auto;border-bottom:1px solid #1e222b;background:#0b0c10">' +
+        '<button type="button" id="tbUsers" onclick="showSupTab(\'Users\')" style="flex:1;min-width:85px;padding:11px 4px;background:none;border:none;border-bottom:2px solid #ffd166;color:#ffd166;font-weight:800;font-size:11px;cursor:pointer">👤 الحسابات</button>' +
+        '<button type="button" id="tbPosts" onclick="showSupTab(\'Posts\')" style="flex:1;min-width:85px;padding:11px 4px;background:none;border:none;border-bottom:2px solid transparent;color:#8e8e8e;font-weight:800;font-size:11px;cursor:pointer">🖼️ المنشورات</button>' +
+        '<button type="button" id="tbPolicy" onclick="showSupTab(\'Policy\')" style="flex:1;min-width:85px;padding:11px 4px;background:none;border:none;border-bottom:2px solid transparent;color:#8e8e8e;font-weight:800;font-size:11px;cursor:pointer">⚖️ السياسات</button>' +
+        '<button type="button" id="tbAudit" onclick="showSupTab(\'Audit\')" style="flex:1;min-width:85px;padding:11px 4px;background:none;border:none;border-bottom:2px solid transparent;color:#8e8e8e;font-weight:800;font-size:11px;cursor:pointer">📜 التدقيق</button>' +
+      '</div>' +
+      '<div id="pnUsers" style="flex:1;overflow-y:auto;padding:12px 14px 90px"><input id="supSearch" placeholder="بحث باسم الحساب أو الاسم..." oninput="renderSupUsers(this.value)" style="margin:0 0 12px;border-radius:12px"><div id="supUsersList"></div></div>' +
+      '<div id="pnPosts" style="display:none;flex:1;overflow-y:auto;padding:12px 14px 90px"></div>' +
+      '<div id="pnPolicy" style="display:none;flex:1;overflow-y:auto;padding:14px 14px 90px">' +
+        '<div style="background:#111318;border:1px solid rgba(255,209,102,0.2);border-radius:14px;padding:12px;margin-bottom:10px"><b style="color:#ffd166;font-size:13px">🛡️ سياسة الخصوصية وحماية البيانات</b><p style="font-size:12px;color:#ccc;margin:6px 0 0;line-height:1.6">يُمنع نشر صور أو معلومات شخصية دون إذن صاحبها. أي مخالفة تعرض الحساب للإنذار الرسمي أو التجميد أو الحظر النهائي.</p></div>' +
+        '<div style="background:#111318;border:1px solid #1e222b;border-radius:14px;padding:12px;margin-bottom:10px"><b style="color:#38bdf8;font-size:13px">❄️ تجميد حساب مؤقت (24 ساعة / 7 أيام)</b><input id="frzInp" placeholder="اكتب اسم المستخدم..." style="margin:8px 0"><div style="display:flex;gap:8px"><button type="button" onclick="frzUser(24)" style="flex:1;padding:9px;background:#f59e0b;color:#000;border:none;border-radius:10px;font-weight:800;cursor:pointer">تجميد 24 ساعة ❄️</button><button type="button" onclick="frzUser(168)" style="flex:1;padding:9px;background:#ef4444;color:#fff;border:none;border-radius:10px;font-weight:800;cursor:pointer">تجميد 7 أيام ⛔</button></div></div>' +
+        '<div style="background:#111318;border:1px solid #1e222b;border-radius:14px;padding:12px"><b style="color:#10b981;font-size:13px">📢 إشعار إداري عام لجميع المستخدمين</b><input id="bcInp" placeholder="اكتب نص الإعلان الرسمي..." style="margin:8px 0"><button type="button" onclick="sendBcNotice()" class="btn-main">إرسال للجميع الآن</button></div>' +
+      '</div>' +
+      '<div id="pnAudit" style="display:none;flex:1;overflow-y:auto;padding:12px 14px 90px"></div>';
+  }
+
+  window.showSupTab = name => {
+    "Users,Posts,Policy,Audit".split(",").forEach(t => {
+      const p = document.getElementById("pn" + t);
+      const b = document.getElementById("tb" + t);
+      if (p) p.style.display = t === name ? "block" : "none";
+      if (b) {
+        b.style.color = t === name ? "#ffd166" : "#8e8e8e";
+        b.style.borderBottomColor = t === name ? "#ffd166" : "transparent";
+      }
+    });
+    if (name === "Audit") loadAuditLog();
+  };
+
+  window.loadSupData = async () => {
+    buildSupremeUI();
+    try {
+      const uRes = await fastFetch(RTDB + "/users.json");
+      usersCache = (await uRes.json()) || {};
+      const pRes = await fastFetch(RTDB + "/posts.json");
+      const gPosts = (await pRes.json()) || {};
+      allPostsCache = new Array();
+
+      Object.keys(gPosts).forEach(pid => {
+        const p = gPosts[pid];
+        if (p && (p.user || p.from)) allPostsCache.push({ id: pid, user: p.user || p.from, img: p.img || "", cap: p.cap || p.txt || "" });
+      });
+
+      const uKeys = Object.keys(usersCache);
+      document.getElementById("stU").innerText = uKeys.length;
+      document.getElementById("stV").innerText = uKeys.filter(k => usersCache[k] && usersCache[k].verified).length;
+      document.getElementById("stB").innerText = uKeys.filter(k => usersCache[k] && usersCache[k].banned).length;
+      document.getElementById("stP").innerText = allPostsCache.length;
+
+      renderSupUsers("");
+      renderSupPosts();
+    } catch (e) {}
+  };
+
+  window.renderSupUsers = q => {
+    q = (q || "").trim().toLowerCase();
+    const box = document.getElementById("supUsersList");
+    if (!box) return;
+    const keys = Object.keys(usersCache).filter(u => u.toLowerCase().includes(q));
+    box.innerHTML = keys.map(u => {
+      const o = usersCache[u] || {};
+      const isV = !!o.verified, isB = !!o.banned;
+      return `<div style="background:#111318;border:1px solid ${isB ? '#ef4444' : '#1e222b'};border-radius:14px;padding:12px;margin-bottom:10px">` +
+        `<div onclick="openProfAdmin('${u}')" style="display:flex;align-items:center;gap:10px;margin-bottom:10px;cursor:pointer">` +
+          `<div class="av-48" style="width:40px;height:40px;font-size:13px">${u.slice(0, 2).toUpperCase()}</div>` +
+          `<div><b style="color:#fff;font-size:14px">${u} ${isV ? '☑️' : ''}</b><span style="display:block;font-size:11px;color:#38bdf8">${o.name || "عضو CryptX"} • فتح الملف الشخصي ↗</span></div>` +
+        `</div>` +
+        `<div style="display:flex;gap:6px">` +
+          `<button type="button" onclick="supVerify('${u}',${!isV})" style="flex:1;padding:7px;border:none;border-radius:9px;background:${isV ? '#262626' : '#0095f6'};color:#fff;font-size:11px;font-weight:800;cursor:pointer">${isV ? 'إلغاء التوثيق' : 'توثيق ☑️'}</button>` +
+          `<button type="button" onclick="supWarn('${u}')" style="flex:1;padding:7px;border:1px solid #f59e0b;border-radius:9px;background:rgba(245,158,11,0.15);color:#fbbf24;font-size:11px;font-weight:800;cursor:pointer">إنذار ⚠️</button>` +
+          `<button type="button" onclick="supBan('${u}',${!isB})" style="flex:1;padding:7px;border:none;border-radius:9px;background:${isB ? '#10b981' : '#ef4444'};color:#fff;font-size:11px;font-weight:800;cursor:pointer">${isB ? 'فك الحظر' : 'حظر ⛔'}</button>` +
+        `</div>` +
+      `</div>`;
+    }).join("") || '<div style="text-align:center;color:#888;padding:20px">لا توجد حسابات مطابقة</div>';
+  };
+
+  function renderSupPosts() {
+    const box = document.getElementById("pnPosts");
+    if (!box) return;
+    box.innerHTML = allPostsCache.map(p =>
+      `<div style="display:flex;align-items:center;justify-content:space-between;background:#111318;border:1px solid #1e222b;padding:10px;border-radius:12px;margin-bottom:8px">` +
+        `<div style="display:flex;align-items:center;gap:10px">` +
+          (p.img ? `<img src="${p.img}" style="width:48px;height:48px;border-radius:8px;object-fit:cover">` : `<span>📝</span>`) +
+          `<div><b style="color:#38bdf8;font-size:12px">@${p.user}</b><span style="display:block;color:#ccc;font-size:12px">${p.cap || ""}</span></div>` +
+        `</div>` +
+        `<button type="button" onclick="delSupPost('${p.id}')" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer">حذف</button>` +
+      `</div>`
+    ).join("") || '<div style="text-align:center;color:#888;padding:30px">لا توجد منشورات</div>';
+  }
+
+  window.openProfAdmin = u => {
+    closeFullScr("cxFounderRoom");
+    if (typeof openUser === "function") openUser(u);
+    else if (typeof viewUser === "function") viewUser(u);
+  };
+
+  window.delSupPost = async id => {
+    await fastFetch(RTDB + "/posts/" + id + ".json", { method: "DELETE" });
+    await addAudit("حذف منشور مخالف", id);
+    pop("تم حذف المنشور");
+    loadSupData();
+  };
+
+  window.supVerify = async (u, s) => {
+    await fastFetch(RTDB + "/users/" + u + "/verified.json", { method: "PUT", body: JSON.stringify(s) });
+    await addAudit(s ? "توثيق حساب بالشارة الزرقاء ☑️" : "سحب شارة التوثيق", u);
+    pop(s ? "تم توثيق @" + u : "تم إلغاء التوثيق");
+    loadSupData();
+  };
+
+  window.supWarn = async u => {
+    await fastFetch(RTDB + "/notifs/" + u + ".json", { method: "POST", body: JSON.stringify({ from: "إدارة CryptX العليا", type: "admin", text: "⚠️ إنذار رسمي: رُصد انتهاك لسياسة الخصوصية ومعايير المجتمع.", ts: Date.now() }) });
+    await addAudit("إرسال إنذار انتهاك خصوصية ⚠️", u);
+    pop("تم إرسال الإنذار الرسمي إلى @" + u);
+  };
+
+  window.supBan = async (u, s) => {
+    await fastFetch(RTDB + "/users/" + u + "/banned.json", { method: "PUT", body: JSON.stringify(s) });
+    await addAudit(s ? "حظر حساب نهائي ⛔" : "فك حظر حساب ✅", u);
+    pop(s ? "تم حظر @" + u : "تم فك حظر @" + u);
+    loadSupData();
+  };
+
+  window.frzUser = async h => {
+    const u = document.getElementById("frzInp").value.trim();
+    if (!u) return pop("اكتب اسم المستخدم أولاً", 1);
+    await fastFetch(RTDB + "/users/" + u + "/frozenUntil.json", { method: "PUT", body: JSON.stringify(Date.now() + h * 3600000) });
+    await addAudit("تجميد مؤقت (" + h + " ساعة)", u);
+    document.getElementById("frzInp").value = "";
+    pop("❄️ تم تجميد @" + u + " لمدة " + h + " ساعة");
+  };
+
+  window.sendBcNotice = async () => {
+    const t = document.getElementById("bcInp").value.trim();
+    if (!t) return pop("اكتب نص الإشعار أولاً", 1);
+    document.getElementById("bcInp").value = "";
+    const keys = Object.keys(usersCache);
+    for (const u of keys) {
+      await fastFetch(RTDB + "/notifs/" + u + ".json", { method: "POST", body: JSON.stringify({ from: "إدارة CryptX العليا", type: "admin", text: "📢 " + t, ts: Date.now() }) });
+    }
+    await addAudit("إرسال إشعار عام للجميع", keys.length + " مستخدم");
+    pop("📢 تم إرسال الإعلان للجميع");
+  };
+
+  async function addAudit(act, target) {
+    try {
+      await fastFetch(RTDB + "/admin_audit_log.json", { method: "POST", body: JSON.stringify({ act, target, ts: Date.now() }) });
+    } catch (e) {}
+  }
+
+  async function loadAuditLog() {
+    const box = document.getElementById("pnAudit");
+    if (!box) return;
+    try {
+      const res = await fastFetch(RTDB + "/admin_audit_log.json");
+      const d = (await res.json()) || {};
+      box.innerHTML = Object.values(d).reverse().map(a =>
+        `<div style="background:#111318;border-right:3px solid #ffd166;padding:10px;border-radius:10px;margin-bottom:8px;font-size:12px"><b style="color:#ffd166">${a.act}</b> — <span style="color:#fff">@${a.target}</span></div>`
+      ).join("") || '<div style="text-align:center;color:#888;padding:30px">سجل القرارات الإدارية جاهز</div>';
+    } catch (e) {}
+  }
+
+  window.openCxFounderRoom = () => { openFullScr("cxFounderRoom"); loadSupData(); };
+  window.loadCxFounderData = () => loadSupData();
+})();
+</script>
+
 </body>
 </html>
