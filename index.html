@@ -3372,7 +3372,7 @@ document.addEventListener("dblclick", e => {
 /* === ترقية غرفة المؤسس إلى مركز إدارة الشركات الكبرى (Enterprise Trust & Safety Console v28) === */
 (function upgradeToEnterpriseFounderConsole() {
   let usersCache = {};
-  let allPostsCache = [];
+  let allPostsCache = new Array();
 
   // 1. إعادة بناء غرفة تحكم المؤسس بـ 3 تبويبات شاملة وإحصائيات حية
   function rebuildEnterpriseConsoleUI() {
@@ -3595,8 +3595,7 @@ document.addEventListener("dblclick", e => {
       await fastFetch(RTDB + "/posts/" + p.id + ".json", { method: "DELETE" });
     } else if (p.source === "user_obj") {
       await fastFetch(RTDB + "/users/" + p.user + "/posts/" + p.id + ".json", { method: "DELETE" });
-    } else if (p.source === "user_arr") {
-      const arr = (usersCache[p.user] && usersCache[p.user].posts) || [];
+          const arr = (usersCache[p.user] && usersCache[p.user].posts) || new Array();
       arr.splice(p.id, 1);
       await fastFetch(RTDB + "/users/" + p.user + "/posts.json", { method: "PUT", body: JSON.stringify(arr) });
     }
@@ -3853,109 +3852,6 @@ document.addEventListener("dblclick", e => {
     await logCxAdminAudit(s ? "حظر حساب نهائي" : "فك حظر حساب", u, "إجراء إداري مباشر");
     if (origBan) await origBan(u, s);
   };
-})();
-/* === إصلاح فوري لأزرار الدخول وبوابة المدير وغرفة القيادة (v34 Safe Patch) === */
-(function fixAllButtonsNow() {
-  const F_USER = "CX_FND#99482_SAAD";
-  const F_PASS = "CryptX_Founder_2026_Saad";
-
-  function handleLoginPress(e) {
-    const uInp = document.querySelector("#loginBox input:not([type='password'])") || document.querySelector("input:not([type='password'])");
-    const pInp = document.querySelector("#loginBox input[type='password']") || document.querySelector("input[type='password']");
-    if (!uInp) return;
-
-    if (uInp.value.trim() === F_USER) {
-      if (e) { e.stopImmediatePropagation(); e.preventDefault(); }
-      if (pInp && pInp.value.trim() === F_PASS) {
-        const modal = document.getElementById("cxFounder3FA");
-        if (modal) modal.style.display = "flex";
-        else if (typeof openCxFounderRoom === "function") openCxFounderRoom();
-      } else {
-        alert("كلمة مرور المدير غير صحيحة");
-      }
-    }
-  }
-
-  document.addEventListener("click", function(e) {
-    const btn = e.target.closest("button");
-    if (btn && btn.innerText.indexOf("تسجيل الدخول") !== -1) handleLoginPress(e);
-  }, true);
-})();
-
-</script>
-<script>
-(function fullEmergencyEngine() {
-      const DB = (typeof RTDB !== "undefined") ? RTDB : "";
-  const F_USER = "CX_FND#99482_SAAD";
-  const F_PASS = "CryptX_Founder_2026_Saad";
-
-  window.onerror = function(msg, url, line) {
-    console.warn("CryptX Line " + line + ": " + msg);
-  };
-
-  document.addEventListener("click", async function(e) {
-    const btn = e.target.closest("button");
-    if (!btn) return;
-    const txt = (btn.innerText || "").trim();
-
-    if (txt === "تسجيل الدخول") {
-      const inputs = Array.from(document.querySelectorAll("input")).filter(i => i.offsetParent !== null);
-      const uInp = inputs.find(i => i.type !== "password");
-      const pInp = inputs.find(i => i.type === "password");
-      const u = uInp ? uInp.value.trim() : "";
-      const p = pInp ? pInp.value.trim() : "";
-
-      if (!u || !p) return alert("يرجى إدخال اسم المستخدم وكلمة المرور");
-
-      if (u === F_USER) {
-        e.stopImmediatePropagation();
-        e.preventDefault();
-        if (p === F_PASS) {
-          const m = document.getElementById("cxFounder3FA");
-          if (m) m.style.display = "flex";
-          else if (typeof openCxFounderRoom === "function") openCxFounderRoom();
-        } else {
-          alert("كلمة مرور المدير غير صحيحة");
-        }
-        return;
-      }
-
-      if (typeof doLogin !== "function") {
-        e.stopImmediatePropagation();
-        e.preventDefault();
-        btn.innerText = "جاري الدخول...";
-        try {
-          const r = await fetch(DB + "/users/" + encodeURIComponent(u) + ".json");
-          const data = await r.json();
-          btn.innerText = "تسجيل الدخول";
-          if (!data || data.pass !== p) return alert("بيانات الدخول غير صحيحة");
-          if (data.banned) return alert("هذا الحساب محظور لمخالفة سياسات CryptX");
-          localStorage.setItem("cx_prof", JSON.stringify({ user: u, name: data.name || u, bio: data.bio || "", verified: !!data.verified }));
-          location.reload();
-        } catch (err) {
-          btn.innerText = "تسجيل الدخول";
-          alert("تعذر الاتصال بالخادم، تحقق من الإنترنت");
-        }
-      }
-    }
-
-    if (txt === "إنشاء حساب جديد" && typeof toggleReg !== "function") {
-      e.stopImmediatePropagation();
-      e.preventDefault();
-      const newU = prompt("اختر اسم مستخدم جديد (بدون مسافات):");
-      if (!newU) return;
-      const newP = prompt("اختر كلمة مرور لحسابك:");
-      if (!newP) return;
-      const cleanU = newU.trim();
-      const chk = await fetch(DB + "/users/" + encodeURIComponent(cleanU) + ".json");
-      if (await chk.json()) return alert("اسم المستخدم مستخدم بالفعل!");
-      await fetch(DB + "/users/" + encodeURIComponent(cleanU) + ".json", {
-        method: "PUT",
-        body: JSON.stringify({ name: cleanU, pass: newP.trim(), bio: "عضو جديد في CryptX", ts: Date.now() })
-      });
-      alert("تم إنشاء الحساب بنجاح! يمكنك تسجيل الدخول الآن.");
-    }
-  }, true);
 })();
 </script>
 </body>
