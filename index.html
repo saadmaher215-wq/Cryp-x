@@ -3296,6 +3296,48 @@ document.addEventListener("dblclick", e => {
 
   setInterval(() => window.renderCxProMessages(false), 1800);
 })();
+/* === إصلاح أولوية دخول المدير ثلاثي التشفير قبل فحص قاعدة البيانات === */
+(function fixFounderLoginPriority() {
+  const F_USER = "CX_FND#99482_SAAD";
+  const F_PASS = "CrYpTx@2026$M@hEr!91";
+
+  function interceptFounderSubmit(e) {
+    const uInp = document.getElementById("loginUser") || document.querySelector("#loginBox input:not([type='password'])");
+    const pInp = document.getElementById("loginPass") || document.querySelector("#loginBox input[type='password']");
+    if (!uInp || !pInp) return;
+
+    if (uInp.value.trim() === F_USER) {
+      if (e) { e.stopImmediatePropagation(); e.preventDefault(); }
+      if (pInp.value.trim() === F_PASS) {
+        const modal = document.getElementById("cxFounder3FA");
+        if (modal) modal.style.display = "flex";
+      } else {
+        pop("كلمة مرور المدير غير صحيحة", 1);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  document.addEventListener("click", e => {
+    const btn = e.target.closest("button");
+    if (btn && btn.closest("#loginBox") && btn.innerText.includes("تسجيل الدخول")) {
+      interceptFounderSubmit(e);
+    }
+  }, true);
+
+  setInterval(() => {
+    const loginBtn = Array.from(document.querySelectorAll("#loginBox button")).find(b => b.innerText.includes("تسجيل الدخول"));
+    if (loginBtn && !loginBtn.dataset.founderHooked) {
+      loginBtn.dataset.founderHooked = "1";
+      const origOnclick = loginBtn.onclick;
+      loginBtn.onclick = function(ev) {
+        if (interceptFounderSubmit(ev)) return false;
+        if (origOnclick) return origOnclick.apply(this, arguments);
+      };
+    }
+  }, 500);
+})();
 
 </script>
 </body>
