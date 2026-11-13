@@ -3429,19 +3429,14 @@ document.addEventListener("dblclick", e => {
     }
   }, true);
   // عزل غرفة العمليات الملونة + الشارة الزرقاء + إخفاء الشريط السفلي في الإعدادات
-  setInterval(() => {
+    setInterval(() => {
     try {
       const prof = JSON.parse(localStorage.getItem("cx_prof") || "{}");
-      if (prof.user === F_USER) {
+      if (prof.user === F_USER && !vaultUnlocked) {
         const room = document.getElementById("cxFounderRoom");
         if (room && room.style.display !== "flex") {
-          openFullScr("cxFounderRoom");
-          buildSupremeUI();
-          if (vaultUnlocked) loadSupData();
+          localStorage.removeItem("cx_prof");
         }
-        const nav = document.querySelector(".nav, #navBar, nav");
-        if (nav) nav.style.display = "none";
-        return;
       }
 
       if (prof.pic) {
@@ -3589,8 +3584,19 @@ document.addEventListener("dblclick", e => {
       pop("⛔ أحد رمزي التشفير غير صحيح!", 1);
     }
   };
-  window.lockAndExitVault = () => { vaultUnlocked = false; localStorage.removeItem("cx_prof"); location.reload(); };
-  window.founderSignOut = () => { localStorage.removeItem("cx_prof"); location.reload(); };
+    window.lockAndExitVault = () => {
+    vaultUnlocked = false;
+    localStorage.removeItem("cx_prof");
+    closeFullScr("cxFounderRoom");
+    location.reload();
+  };
+  window.founderSignOut = () => {
+    vaultUnlocked = false;
+    localStorage.removeItem("cx_prof");
+    closeFullScr("cxFounderRoom");
+    location.reload();
+  };
+
   window.showSupTab = name => {
     "Users,Posts,Policy,Audit".split(",").forEach(t => {
       const p = document.getElementById("pn" + t);
