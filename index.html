@@ -2910,6 +2910,91 @@ document.addEventListener("dblclick", e => {
     }
   }, 2000);
 })();
+/* === ترقية شريط المحادثة والتسجيل الصوتي إلى أيقونات SVG حقيقية + إرسال صور فوري === */
+(function upgradeToRealProChatBar() {
+  // 1. ترقية شريط المحادثة السفلي إلى أيقونات SVG خطية حقيقية 100%
+  setInterval(() => {
+    const normDock = document.getElementById("cxNormalDock");
+    if (normDock && !normDock.dataset.realSvg) {
+      normDock.dataset.realSvg = "1";
+      normDock.innerHTML =
+        '<div style="flex:1;display:flex;align-items:center;background:#1c1c1c;border-radius:26px;padding:5px 8px;gap:10px">' +
+          '<button type="button" onclick="openCxRealStudio()" style="width:36px;height:36px;border-radius:50%;background:#0095f6;border:none;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer">' +
+            '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' +
+          '</button>' +
+          '<input id="msgInp" placeholder="مراسلة..." oninput="toggleCxInputIcons(this.value)" onkeydown="if(event.key===\'Enter\')sendCxTextNow()" style="flex:1;background:transparent!important;border:none!important;margin:0!important;padding:6px 0!important;color:#fff!important;font-size:15px!important;outline:none!important">' +
+          '<div id="cxMediaIconsGrp" style="display:flex;align-items:center;gap:12px;padding-left:6px">' +
+            '<button type="button" onclick="startCxStudioVoiceRec()" title="تسجيل صوتي" style="background:none;border:none;color:#fff;display:flex;align-items:center;cursor:pointer;padding:2px">' +
+              '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>' +
+            '</button>' +
+            '<button type="button" onclick="triggerCxFastChatImg()" title="إرسال صورة" style="background:none;border:none;color:#fff;display:flex;align-items:center;cursor:pointer;padding:2px">' +
+              '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
+            '</button>' +
+          '</div>' +
+          '<button type="button" id="cxSendBtn" onclick="sendCxTextNow()" style="display:none;background:#0095f6;border:none;color:#fff;font-weight:800;font-size:13px;padding:6px 14px;border-radius:18px;cursor:pointer">إرسال</button>' +
+        '</div>';
+    }
+
+    const voiceDock = document.getElementById("cxVoiceDock");
+    if (voiceDock && !voiceDock.dataset.realSvg) {
+      voiceDock.dataset.realSvg = "1";
+      voiceDock.style.cssText = "display:none;align-items:center;justify-content:space-between;width:100%;background:linear-gradient(90deg,#6d28d9,#4f46e5,#2563eb);border-radius:28px;padding:6px 10px;gap:10px";
+      voiceDock.innerHTML =
+        '<button type="button" onclick="sendCxStudioVoiceRec()" style="width:38px;height:38px;border-radius:50%;background:#fff;border:none;color:#4f46e5;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer">' +
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>' +
+        '</button>' +
+        '<div style="display:flex;align-items:center;gap:4px;flex:1;justify-content:center">' +
+          '<span id="cxRecTimer" style="font-size:13px;font-weight:800;color:#fff;margin-left:8px;font-variant-numeric:tabular-nums">00:00</span>' +
+          '<span class="cx-wave-bar" style="animation-delay:0s"></span><span class="cx-wave-bar" style="animation-delay:0.12s"></span><span class="cx-wave-bar" style="animation-delay:0.24s"></span><span class="cx-wave-bar" style="animation-delay:0.08s"></span><span class="cx-wave-bar" style="animation-delay:0.2s"></span><span class="cx-wave-bar" style="animation-delay:0.32s"></span><span class="cx-wave-bar" style="animation-delay:0.16s"></span><span class="cx-wave-bar" style="animation-delay:0.28s"></span>' +
+        '</div>' +
+        '<button type="button" onclick="cancelCxStudioVoiceRec()" style="width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,0.28);border:none;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer">' +
+          '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+        '</button>';
+    }
+  }, 500);
+
+  window.toggleCxInputIcons = val => {
+    const hasTxt = !!(val && val.trim());
+    const grp = document.getElementById("cxMediaIconsGrp");
+    const btn = document.getElementById("cxSendBtn");
+    if (grp) grp.style.display = hasTxt ? "none" : "flex";
+    if (btn) btn.style.display = hasTxt ? "inline-block" : "none";
+  };
+
+  // 2. ضغط وإرسال الصور داخل المحادثة في أقل من ثانية واحدة بدون تعليق
+  const fastFileInp = document.createElement("input");
+  fastFileInp.type = "file";
+  fastFileInp.accept = "image/*";
+  fastFileInp.style.display = "none";
+  document.body.appendChild(fastFileInp);
+
+  window.triggerCxFastChatImg = () => fastFileInp.click();
+
+  fastFileInp.onchange = () => {
+        const file = fastFileInp.files && fastFileInp.files[0];
+    if (!file || !curChatId) return;
+    pop("جاري إرسال الصورة...");
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = async () => {
+      const canvas = document.createElement("canvas");
+      const maxW = 900;
+      const scale = img.width > maxW ? maxW / img.width : 1;
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      const compressedData = canvas.toDataURL("image/jpeg", 0.78);
+      URL.revokeObjectURL(url);
+      await fastFetch(RTDB + "/chats/" + curChatId + ".json", {
+        method: "POST",
+        body: JSON.stringify({ from: prof.user, img: compressedData, ts: Date.now(), seen: false })
+      });
+      if (typeof loadChatMsgs === "function") loadChatMsgs();
+    };
+    img.src = url;
+    fastFileInp.value = "";
+  };
+})();
 
 </script>
 </body>
