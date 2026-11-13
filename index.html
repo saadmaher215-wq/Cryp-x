@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>CryptX</title>
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CryptX">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://w3.org' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0a0a'/><text x='50' y='66' font-size='52' font-weight='900' font-family='sans-serif' fill='%230095f6' text-anchor='middle'>CX</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://w3.org' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230a0a0a'/><text x='50' y='66' font-size='52' font-weight='900' font-family='sans-serif' fill='%230095f6' text-anchor='middle'>CX</text></svg>">
+
+  <title>CryptX</title>
 <style>
 *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin:0;padding:0;user-select:none;-webkit-tap-highlight-color:transparent}
 input,textarea{user-select:text;width:100%;padding:12px 14px;border-radius:10px;border:1px solid #262626;background:#121212;color:#fff;font-size:14px;margin-bottom:10px;outline:none}
@@ -99,10 +106,16 @@ body{background:#000;color:#fff;display:flex;justify-content:center;min-height:1
 <div class="ig-field"><label>الضمائر</label><input id="pPronouns" placeholder="مثال: هو / هي"></div>
 <div class="ig-field"><label>السيرة الذاتية</label><textarea id="pBio" rows="2" placeholder="اكتب نبذة عنك..."></textarea></div>
 <div class="ig-field"><label>الروابط</label><input id="pLink" dir="ltr" placeholder="https://..."></div>
-<div class="ig-field"><label>الجنس</label><select id="pGender" style="width:100%;background:transparent;border:none;color:#fff;font-size:14px;outline:none;padding:4px 0"><option value="" style="background:#121212">غير محدد</option><option value="ذكر" style="background:#121212">ذكر</option><option value="أنثى" style="background:#121212">أنثى</option></select></div>
+<div class="ig-field" style="cursor:pointer" onclick="openGenderSheet()"><label>الجنس</label><div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0"><span id="pGenderTxt" style="font-size:14px;color:#fff">غير محدد</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8e8e" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div><input type="hidden" id="pGender" value=""></div>
+
 <div class="ig-field"><label>تغيير كلمة المرور (اختياري)</label><input type="password" id="pPass" placeholder="اتركه فارغاً للإبقاء على الحالية"></div>
 </div>
 </div>
+<div id="genderSheet" class="modal" style="align-items:flex-end;padding:0" onclick="if(event.target===this)this.style.display='none'"><div style="width:100%;max-width:480px;background:#161616;border-top-left-radius:20px;border-top-right-radius:20px;padding:12px 16px 26px;border-top:1px solid #262626"><div style="width:38px;height:4px;background:#444;border-radius:4px;margin:0 auto 14px"></div><b style="display:block;text-align:center;font-size:15px;margin-bottom:14px">تحديد الجنس</b><div class="set-row" style="border-radius:12px" onclick="setGenderVal('ذكر')"><span>ذكر</span><span id="gChk_ذكر" style="color:#0095f6;font-weight:700;display:none">✓</span></div><div class="set-row" style="border-radius:12px" onclick="setGenderVal('أنثى')"><span>أنثى</span><span id="gChk_أنثى" style="color:#0095f6;font-weight:700;display:none">✓</span></div><div class="set-row" style="border-radius:12px" onclick="setGenderVal('')"><span>أفضل عدم التحديد</span><span id="gChk_" style="color:#0095f6;font-weight:700;display:none">✓</span></div></div></div>
+<div id="addChoiceModal" class="modal" onclick="if(event.target===this)this.style.display='none'"><div class="m-card" style="padding:14px"><h3 style="margin-bottom:12px;font-size:16px">إنشاء</h3><button type="button" class="btn b-blue" onclick="document.getElementById('addChoiceModal').style.display='none';document.getElementById('newStoryModal').style.display='flex'">إضافة إلى قصتك (24 ساعة)</button><button type="button" class="btn b-dark" onclick="document.getElementById('addChoiceModal').style.display='none';document.getElementById('newPostModal').style.display='flex'">منشور جديد</button><button type="button" class="btn" style="background:transparent;color:#8e8e8e" onclick="document.getElementById('addChoiceModal').style.display='none'">إلغاء</button></div></div>
+<div id="newStoryModal" class="modal"><div class="m-card"><h3 style="margin-bottom:6px;font-size:16px">قصة جديدة (24 ساعة)</h3><p style="font-size:12px;color:#8e8e8e;margin-bottom:10px">اختر صورة أو فيديو قصير للنشر في قصتك</p><input type="file" id="storyFile" accept="image/*,video/*" style="font-size:12px;padding:8px"><input id="storyCap" placeholder="أضف تعليقاً على القصة (اختياري)..."><div style="display:flex;gap:8px"><button type="button" class="btn b-blue" onclick="publishStory()">مشاركة في قصتك</button><button type="button" class="btn b-dark" onclick="document.getElementById('newStoryModal').style.display='none'">إلغاء</button></div></div></div>
+<div id="savedScr" class="full-scr"><div class="hdr"><button type="button" class="icon-btn" onclick="closeFullScr('savedScr')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button><b style="font-size:16px">العناصر المحفوظة</b><span style="width:24px"></span></div><div id="savedGrid" class="grid" style="margin-top:4px"></div></div>
+<div id="storyViewer" class="full-scr" style="z-index:960;background:#000;justify-content:space-between;transition:transform .2s ease"><div style="padding:10px 12px;background:linear-gradient(to bottom,rgba(0,0,0,.75),transparent);z-index:5"><div id="svBars" style="display:flex;gap:4px;margin-bottom:10px"></div><div style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px"><div class="av-36" style="width:32px;height:32px"><img id="svAvImg"><span id="svAvTxt" style="font-size:12px"></span></div><div><b id="svUser" dir="ltr" style="font-size:13px"></b><span id="svTime" style="font-size:11px;color:#ccc;margin-right:6px"></span></div></div><button type="button" class="icon-btn" onclick="closeStoryViewer()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div></div><div id="svMediaWrap" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#000" onpointerdown="storyDown(event)" onpointermove="storyMove(event)" onpointerup="storyUp(event)"><img id="svImg" style="max-width:100%;max-height:100%;object-fit:contain;display:none"><video id="svVid" playsinline style="max-width:100%;max-height:100%;object-fit:contain;display:none"></video><div id="svCapOverlay" style="position:absolute;bottom:84px;left:16px;right:16px;text-align:center;background:rgba(0,0,0,.6);padding:8px 14px;border-radius:12px;font-size:14px;display:none"></div></div><div id="svQuickEmojis" style="display:none;position:relative;z-index:6;padding:12px 24px;justify-content:center;gap:22px;flex-wrap:wrap;font-size:32px;background:rgba(0,0,0,.45)"><span style="cursor:pointer" onclick="sendStoryEmoji('😍')">😍</span><span style="cursor:pointer" onclick="sendStoryEmoji('😮')">😮</span><span style="cursor:pointer" onclick="sendStoryEmoji('😂')">😂</span><span style="cursor:pointer" onclick="sendStoryEmoji('🔥')">🔥</span><span style="cursor:pointer" onclick="sendStoryEmoji('👏')">👏</span><span style="cursor:pointer" onclick="sendStoryEmoji('😢')">😢</span></div><div id="svFriendFooter" style="padding:10px 12px;background:linear-gradient(to top,rgba(0,0,0,.9),transparent);z-index:5;display:flex;align-items:center;gap:10px"><input id="svReplyInp" placeholder="إرسال رسالة..." style="margin:0;border-radius:24px;background:transparent;border:1px solid rgba(255,255,255,.45);color:#fff;padding:10px 16px;font-size:13px" onfocus="showStoryEmojis(true)" onblur="setTimeout(()=>showStoryEmojis(false),200)" onkeydown="if(event.key==='Enter')replyToStory()"><button type="button" class="icon-btn" id="svHeartBtn" onclick="likeCurrentStory()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button><button type="button" class="icon-btn" onclick="shareCurrentStory()"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div><div id="svOwnerFooter" style="padding:12px 16px;background:linear-gradient(to top,rgba(0,0,0,.9),transparent);z-index:5;display:none;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="openStoryViewersList()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><b id="svViewCount" style="font-size:13px">0 مشاهدة</b></div><div style="display:flex;align-items:center;gap:14px"><button type="button" class="icon-btn" onclick="document.getElementById('newStoryModal').style.display='flex';closeStoryViewer()"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button><button type="button" class="icon-btn" onclick="deleteCurrentStory()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ed4956" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div></div></div>
 
 <div id="settingsScr" class="full-scr">
 <div class="hdr"><div style="display:flex;align-items:center;gap:12px"><button type="button" class="icon-btn" onclick="closeFullScr('settingsScr')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button><b style="font-size:17px">الإعدادات والنشاط</b></div></div>
@@ -115,7 +128,7 @@ body{background:#000;color:#fff;display:flex;justify-content:center;min-height:1
 <div class="set-row"><div style="display:flex;align-items:center;gap:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>خصوصية الحساب (حساب خاص)</span></div><input type="checkbox" id="chkPriv" style="width:18px;height:18px;margin:0;accent-color:#0095f6" onchange="quickSavePrivacy()"></div>
 <div class="set-row"><div style="display:flex;align-items:center;gap:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="8" x2="23" y2="14"/><line x1="23" y1="8" x2="17" y2="14"/></svg><span>إخفاء قائمة المتابعين</span></div><input type="checkbox" id="chkHideF" style="width:18px;height:18px;margin:0;accent-color:#0095f6" onchange="quickSavePrivacy()"></div>
 <div class="set-sec">الطريقة التي تستخدم بها CryptX</div>
-<div class="set-row" onclick="closeFullScr('settingsScr');openEditProf()"><div style="display:flex;align-items:center;gap:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>تعديل الملف الشخصي</span></div><span style="color:#8e8e8e">‹</span></div>
+<div class="set-row" onclick="closeFullScr('settingsScr');openEditProf()"><div style="display:flex;align-items:center;gap:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>تعديل الملف الشخصي</span></div><span style="color:#8e8e8e">‹</span></div> <div class="set-row" onclick="closeFullScr('settingsScr');openSavedPosts()"><div style="display:flex;align-items:center;gap:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg><span>العناصر المحفوظة</span></div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8e8e" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></div>
 <div class="set-row" onclick="shareMyProfile()"><div style="display:flex;align-items:center;gap:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg><span>مشاركة رابط الحساب ودعوة الأصدقاء</span></div><span style="color:#8e8e8e">‹</span></div>
 <div class="set-sec">مزيد من المعلومات</div>
 <div class="set-row" onclick="pop('CryptX v2.0 - منصة التواصل المشفر')"><div style="display:flex;align-items:center;gap:12px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>حول تطبيق CryptX</span></div><span style="color:#8e8e8e">‹</span></div>
@@ -156,6 +169,8 @@ body{background:#000;color:#fff;display:flex;justify-content:center;min-height:1
 </div>
 </div>
 <div id="storiesRow" class="stories"></div>
+<div id="uploadProgBox" style="display:none;padding:10px 14px;background:#121212;border-bottom:1px solid #262626"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span>جاري النشر...</span><b id="uploadPct" style="color:#0095f6">1%</b></div><div style="width:100%;height:4px;background:#262626;border-radius:4px;overflow:hidden"><div id="uploadBar" style="width:1%;height:100%;background:#0095f6;transition:width .15s linear"></div></div></div>
+
 <div id="feedStream"></div>
 </div>
 
@@ -169,7 +184,7 @@ body{background:#000;color:#fff;display:flex;justify-content:center;min-height:1
 <div class="prof-top">
 <div style="position:relative;width:86px;height:86px;flex-shrink:0">
 <label class="av-86" style="cursor:pointer"><img id="pImg"><svg id="pSvg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><input type="file" accept="image/*" style="display:none" onchange="pickImg(this)"></label>
-<div onclick="document.getElementById('newPostModal').style.display='flex'" style="position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:#0095f6;border:2.5px solid #000;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;cursor:pointer">+</div>
+<div onclick="document.getElementById('addChoiceModal').style.display='flex'" style="position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:#0095f6;border:2.5px solid #000;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;cursor:pointer">+</div>
 </div>
 <div class="p-stats">
 <div><b id="myPostsCount">0</b><span>منشورات</span></div>
@@ -828,6 +843,298 @@ async function viewProfile(u) {
   openFullScr("peerOverlay");
 }
 function closePeer() { closeFullScr("peerOverlay"); peer = null; }
+(function initPWA() {
+  const mf = { name: "CryptX", short_name: "CryptX", start_url: "./", display: "standalone", background_color: "#000000", theme_color: "#000000", icons: [{ src: "data:image/svg+xml,<svg xmlns='http://w3.org' viewBox='0 0 512 512'><rect width='512' height='512' rx='110' fill='%230a0a0a'/><circle cx='256' cy='256' r='210' fill='none' stroke='%230095f6' stroke-width='18'/><text x='256' y='315' font-size='210' font-weight='900' font-family='sans-serif' fill='%23ffffff' text-anchor='middle'>C<tspan fill='%230095f6'>X</tspan></text></svg>", sizes: "512x512", type: "image/svg+xml" }] };
+  const l = document.createElement("link"); l.rel = "manifest"; l.href = "data:application/manifest+json," + encodeURIComponent(JSON.stringify(mf)); document.head.appendChild(l);
+})();
+
+function openGenderSheet() { const cur = document.getElementById("pGender").value || ""; ["ذكر", "أنثى", ""].forEach(v => { const el = document.getElementById("gChk_" + v); if (el) el.style.display = cur === v ? "inline" : "none"; }); document.getElementById("genderSheet").style.display = "flex"; }
+function setGenderVal(v, silent) { document.getElementById("pGender").value = v; document.getElementById("pGenderTxt").innerText = v || "غير محدد"; if (!silent) document.getElementById("genderSheet").style.display = "none"; }
+function openEditProf() { document.getElementById("pName").value = prof.name || ""; document.getElementById("epUser").value = prof.user || ""; document.getElementById("pPronouns").value = prof.pronouns || ""; document.getElementById("pBio").value = prof.bio || ""; document.getElementById("pLink").value = prof.link || ""; setGenderVal(prof.gender || "", true); renderAv(prof.av, "epImg", "epSvg"); openFullScr("editProfScr"); }
+
+let activeStories = [], svIdx = 0, svTimer = null, svProg = 0, svPaused = false, svOwner = "", svStartY = 0, svStartX = 0, svMoved = false;
+
+function startUploadProgress(onDone) {
+  const box = document.getElementById("uploadProgBox"), bar = document.getElementById("uploadBar"), pct = document.getElementById("uploadPct");
+  box.style.display = "block"; let p = 1; bar.style.width = "1%"; pct.innerText = "1%";
+  const iv = setInterval(() => {
+    p += Math.floor(Math.random() * 14) + 8;
+    if (p >= 100) { p = 100; bar.style.width = "100%"; pct.innerText = "100%"; clearInterval(iv); setTimeout(() => { box.style.display = "none"; if (onDone) onDone(); }, 450); }
+    else { bar.style.width = p + "%"; pct.innerText = p + "%"; }
+  }, 160);
+}
+
+async function publishStory() {
+  const fileInp = document.getElementById("storyFile"), file = fileInp.files && fileInp.files[0], cap = document.getElementById("storyCap").value.trim();
+  if (!file) return pop("اختر صورة أو فيديو أولاً", 1);
+  if (file.size > 6 * 1024 * 1024) return pop("حجم الفيديو كبير، اختر فيديو أقصر من 6 ميجا", 1);
+  document.getElementById("newStoryModal").style.display = "none"; tab(1);
+  const isVid = file.type.startsWith("video"), r = new FileReader();
+  r.onload = e => {
+    const mediaData = e.target.result;
+    startUploadProgress(async () => {
+      const me = await getUserData(prof.user), now = Date.now();
+      me.stories = (me.stories || []).filter(s => now - s.ts < 86400000);
+      me.stories.push({ type: isVid ? "video" : "image", src: mediaData, cap, ts: now, views: [] });
+      await setUserData(prof.user, me);
+      prof = { ...me, user: prof.user }; localStorage.setItem("cx_prof", JSON.stringify(prof));
+      fileInp.value = ""; document.getElementById("storyCap").value = "";
+      loadFeed(); pop("تمت إضافة القصة لمدة 24 ساعة");
+    });
+  };
+  r.readAsDataURL(file);
+}
+
+async function loadFeed() {
+  const all = await getAllUsers(), now = Date.now(), sRow = document.getElementById("storiesRow");
+  const myActive = (prof.stories || []).filter(s => now - s.ts < 86400000);
+  sRow.innerHTML = '<div class="st-item" onclick="' + (myActive.length ? 'openUserStories(\'' + prof.user + '\')' : 'document.getElementById(\'newStoryModal\').style.display=\'flex\'') + '"><div class="st-ring ' + (myActive.length ? '' : 'me') + '" style="position:relative"><div class="st-in">' + (prof.av ? '<img src="' + prof.av + '" style="display:block">' : '<span style="font-size:18px;color:#8e8e8e">+</span>') + '</div>' + (!myActive.length ? '<div style="position:absolute;bottom:-2px;right:-2px;width:20px;height:20px;border-radius:50%;background:#0095f6;border:2px solid #000;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;font-weight:700">+</div>' : '') + '</div><span class="st-name">قصتك</span></div>';
+  const feedPosts = [];
+  Object.keys(all).forEach(u => {
+    const uObj = all[u], uStories = (uObj.stories || []).filter(s => now - s.ts < 86400000);
+    if (u !== prof.user && uStories.length > 0 && (!uObj.priv || (uObj.followers || []).includes(prof.user))) {
+      sRow.innerHTML += '<div class="st-item" onclick="openUserStories(\'' + u + '\')"><div class="st-ring"><div class="st-in">' + (uObj.av ? '<img src="' + uObj.av + '" style="display:block">' : '<span style="font-size:13px;color:#fff">' + u.toUpperCase() + '</span>') + '</div></div><span class="st-name">' + u + '</span></div>';
+    }
+    if (!uObj.priv || u === prof.user || (uObj.followers || []).includes(prof.user)) {
+      (uObj.posts || []).forEach((p, idx) => feedPosts.push({ ...p, owner: u, ownerName: uObj.name || u, ownerAv: uObj.av || "", idx }));
+    }
+  });
+  const stream = document.getElementById("feedStream");
+  if (!feedPosts.length) { stream.innerHTML = "<div style='text-align:center;color:#8e8e8e;padding:40px 16px;font-size:13px'>لا توجد منشورات بعد. انشر أول منشور أو قصة!</div>"; return; }
+  stream.innerHTML = "";
+  feedPosts.reverse().forEach(p => {
+    const card = document.createElement("div"); card.className = "feed-post";
+    const avHtml = p.ownerAv ? '<img src="' + p.ownerAv + '" style="display:block">' : '<span style="font-size:13px">' + p.owner.toUpperCase() + '</span>';
+    const media = p.img ? '<img class="fp-img" src="' + p.img + '" onclick="openPostModal(\'' + p.owner + '\',' + p.idx + ')">' : '<div class="fp-txt-card" onclick="openPostModal(\'' + p.owner + '\',' + p.idx + ')">' + p.cap + '</div>';
+    const lk = (p.likes || []).length, cm = (p.comments || []).length, isSaved = (prof.saved || []).includes(p.owner + ":" + p.idx);
+    card.innerHTML = '<div class="fp-hdr"><div class="fp-user" onclick="viewProfile(\'' + p.owner + '\')"><div class="av-36">' + avHtml + '</div><b style="font-size:13px">' + p.owner + '</b></div></div>' + media + '<div class="fp-acts"><button type="button" class="icon-btn" onclick="openPostModal(\'' + p.owner + '\',' + p.idx + ')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button><button type="button" class="icon-btn" onclick="openPostModal(\'' + p.owner + '\',' + p.idx + ')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></button><button type="button" class="icon-btn" style="margin-right:auto" onclick="toggleSavePost(\'' + p.owner + '\',' + p.idx + ')"><svg width="22" height="22" viewBox="0 0 24 24" fill="' + (isSaved ? '#fff' : 'none') + '" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button></div><div class="fp-meta"><b>' + lk + ' تسجيل إعجاب</b>' + (p.img && p.cap ? '<div><b>' + p.owner + '</b> ' + p.cap + '</div>' : '') + '<div style="color:#8e8e8e;font-size:12px;cursor:pointer" onclick="openPostModal(\'' + p.owner + '\',' + p.idx + ')">عرض جميع التعليقات (' + cm + ')</div></div>';
+    stream.appendChild(card);
+  });
+}
+
+async function openUserStories(u) {
+  const d = await getUserData(u), now = Date.now(), list = (d && d.stories ? d.stories : []).filter(s => now - s.ts < 86400000);
+  if (!list.length) return pop("لا توجد قصص نشطة حالياً", 1);
+  activeStories = list; svOwner = u; svIdx = 0; document.getElementById("svUser").innerText = u;
+  const avIm = document.getElementById("svAvImg"), avTx = document.getElementById("svAvTxt");
+  if (d.av) { avIm.src = d.av; avIm.style.display = "block"; avTx.style.display = "none"; } else { avIm.style.display = "none"; avTx.style.display = "block"; avTx.innerText = u.toUpperCase(); }
+  document.getElementById("storyViewer").style.transform = "translateY(0)"; openFullScr("storyViewer"); playStoryAt(0);
+}
+
+async function playStoryAt(idx) {
+  clearInterval(svTimer);
+  const vid = document.getElementById("svVid"), img = document.getElementById("svImg");
+  vid.pause(); vid.style.display = "none"; img.style.display = "none";
+  document.getElementById("svHeartBtn").innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+  if (idx >= activeStories.length) { closeStoryViewer(); return; }
+  if (idx < 0) idx = 0;
+  svIdx = idx; svProg = 0; svPaused = false;
+  const st = activeStories[idx], isMe = svOwner === prof.user;
+  document.getElementById("svFriendFooter").style.display = isMe ? "none" : "flex";
+  document.getElementById("svOwnerFooter").style.display = isMe ? "flex" : "none";
+  const views = st.views || [];
+  if (isMe) document.getElementById("svViewCount").innerText = views.length + " مشاهدة";
+    else if (!views.includes(prof.user)) {
+    try { const od = await getUserData(svOwner); if (od && od.stories) { const t = od.stories.find(s => s.ts === st.ts); if (t) { t.views = t.views || []; if (!t.views.includes(prof.user)) { t.views.push(prof.user); await setUserData(svOwner, od); } } } } catch(e) {}
+  }
+  const hrs = Math.max(1, Math.floor((Date.now() - st.ts) / 3600000));
+  document.getElementById("svTime").innerText = hrs + " س";
+  document.getElementById("svBars").innerHTML = activeStories.map((_, i) => '<div style="flex:1;height:2.5px;background:rgba(255,255,255,.3);border-radius:2px;overflow:hidden"><div id="svFill' + i + '" style="width:' + (i < idx ? '100%' : '0%') + ';height:100%;background:#fff"></div></div>').join("");
+  const capEl = document.getElementById("svCapOverlay");
+  if (st.cap) { capEl.innerText = st.cap; capEl.style.display = "block"; } else capEl.style.display = "none";
+  if (st.type === "video") { vid.src = st.src; vid.style.display = "block"; vid.onloadedmetadata = () => { const dur = (vid.duration && vid.duration < 30 ? vid.duration : 10) * 1000; vid.play().catch(()=>{}); runStoryBar(dur); }; }
+  else { img.src = st.src; img.style.display = "block"; runStoryBar(5000); }
+}
+
+function runStoryBar(durationMs) { const step = 50; svTimer = setInterval(() => { if (svPaused) return; svProg += (step / durationMs) * 100; const fill = document.getElementById("svFill" + svIdx); if (fill) fill.style.width = Math.min(100, svProg) + "%"; if (svProg >= 100) playStoryAt(svIdx + 1); }, step); }
+function pauseStory(state) { svPaused = state; const vid = document.getElementById("svVid"); if (vid.style.display === "block") { if (state) vid.pause(); else vid.play().catch(()=>{}); } }
+function storyDown(e) { svStartY = e.clientY; svStartX = e.clientX; svMoved = false; pauseStory(true); }
+function storyMove(e) { const dy = e.clientY - svStartY; if (dy > 15) { svMoved = true; document.getElementById("storyViewer").style.transform = "translateY(" + dy + "px)"; } }
+function storyUp(e) { const dy = e.clientY - svStartY, svEl = document.getElementById("storyViewer"); if (dy > 110) { svEl.style.transform = "translateY(0)"; closeStoryViewer(); return; } svEl.style.transform = "translateY(0)"; pauseStory(false); if (!svMoved && Math.abs(e.clientX - svStartX) < 15) { const x = e.clientX / window.innerWidth; if (x < 0.35) playStoryAt(svIdx + 1); else playStoryAt(svIdx - 1); } }
+function showStoryEmojis(show) { pauseStory(show); document.getElementById("svQuickEmojis").style.display = show ? "flex" : "none"; }
+async function sendStoryEmoji(em) { showStoryEmojis(false); document.getElementById("svReplyInp").blur(); if (!svOwner || svOwner === prof.user) return pop("تفاعلت بـ " + em); const rid = [prof.user, svOwner].sort().join("_"); try { await fastFetch(RTDB + "/chats/" + rid + ".json", { method: "POST", body: JSON.stringify({ s: prof.user, enc: false, c: "تفاعل مع قصتك: " + em }) }); } catch(e) {} pop("تم إرسال التفاعل " + em); }
+async function likeCurrentStory() { document.getElementById("svHeartBtn").innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="#ed4956" stroke="#ed4956" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'; if (svOwner && svOwner !== prof.user) { const rid = [prof.user, svOwner].sort().join("_"); try { await fastFetch(RTDB + "/chats/" + rid + ".json", { method: "POST", body: JSON.stringify({ s: prof.user, enc: false, c: "أُعجب بقصتك" }) }); } catch(e) {} } pop("تم الإعجاب بالقصة"); }
+function closeStoryViewer() { clearInterval(svTimer); const vid = document.getElementById("svVid"); vid.pause(); vid.src = ""; closeFullScr("storyViewer"); }
+async function replyToStory() { const inp = document.getElementById("svReplyInp"), txt = inp.value.trim(); if (!txt) return; inp.value = ""; inp.blur(); showStoryEmojis(false); if (svOwner && svOwner !== prof.user) { const rid = [prof.user, svOwner].sort().join("_"); try { await fastFetch(RTDB + "/chats/" + rid + ".json", { method: "POST", body: JSON.stringify({ s: prof.user, enc: false, c: "رد على قصتك: " + txt }) }); } catch(e) {} } pop("تم إرسال رسالتك"); }
+function shareCurrentStory() { navigator.clipboard.writeText("https://github.io"); pop("تم نسخ رابط القصة"); }
+function openStoryViewersList() { pauseStory(true); const st = activeStories[svIdx], views = (st && st.views) ? st.views : [], box = document.getElementById("followList"); document.getElementById("followTitle").innerText = "المشاهدون (" + views.length + ")"; box.innerHTML = views.length ? views.map(u => '<div class="f-row" onclick="document.getElementById(\'followModal\').style.display=\'none\';closeStoryViewer();viewProfile(\'' + u + '\')"><b dir="ltr">' + u + '</b><span style="color:#0095f6;font-size:12px">عرض الحساب</span></div>').join("") : "<div style='text-align:center;color:#8e8e8e;padding:24px;font-size:13px'>لم يشاهد أحد قصتك بعد</div>"; document.getElementById("followModal").style.display = "flex"; }
+async function deleteCurrentStory() { const st = activeStories[svIdx]; if (!st) return; const me = await getUserData(prof.user); me.stories = (me.stories || []).filter(s => s.ts !== st.ts); await setUserData(prof.user, me); prof = { ...me, user: prof.user }; localStorage.setItem("cx_prof", JSON.stringify(prof)); closeStoryViewer(); loadFeed(); pop("تم حذف القصة"); }
+async function toggleSavePost(owner, idx) { const me = await getUserData(prof.user); me.saved = me.saved || []; const key = owner + ":" + idx, pos = me.saved.indexOf(key); if (pos > -1) { me.saved.splice(pos, 1); pop("تمت الإزالة من المحفوظات"); } else { me.saved.push(key); pop("تم حفظ المنشور"); } await setUserData(prof.user, me); prof = { ...me, user: prof.user }; localStorage.setItem("cx_prof", JSON.stringify(prof)); loadFeed(); }
+/* === ترقية الدردشة الفورية + مؤشرات التواجد + إدارة المنشورات المتقدمة === */
+let activeReplyTxt = "", typingToUser = "", onlineUsersMap = {};
+
+(function upgradeChatAndProfileUI() {
+  const msgMenu = document.createElement("div");
+  msgMenu.id = "msgActionSheet";
+  msgMenu.className = "modal";
+  msgMenu.style.alignItems = "flex-end";
+  msgMenu.style.padding = "0";
+  msgMenu.onclick = e => { if (e.target === msgMenu) msgMenu.style.display = "none"; };
+  msgMenu.innerHTML = '<div style="width:100%;max-width:480px;background:#161616;border-top-left-radius:20px;border-top-right-radius:20px;padding:14px 16px 26px;border-top:1px solid #262626"><div style="width:38px;height:4px;background:#444;border-radius:4px;margin:0 auto 14px"></div><div id="msgReactBar" style="display:flex;justify-content:space-around;font-size:28px;padding:8px 0 14px;border-bottom:1px solid #262626;margin-bottom:8px"></div><div id="msgSheetActions"></div></div>';
+  document.body.appendChild(msgMenu);
+
+  const roomBox = document.getElementById("roomBox");
+  const msgBar = roomBox ? roomBox.querySelector(".msg-bar") : null;
+  if (roomBox && msgBar) {
+    const repBar = document.createElement("div");
+    repBar.id = "replyBar";
+    repBar.style.cssText = "display:none;padding:8px 14px;background:#141414;border-top:1px solid #262626;justify-content:space-between;align-items:center;font-size:12px";
+    repBar.innerHTML = '<div><span style="color:#0095f6;font-weight:700">الرد على: </span><span id="replyBarTxt" style="color:#ccc"></span></div><button type="button" class="icon-btn" onclick="clearChatReply()" style="font-size:18px;color:#8e8e8e">×</button>';
+    roomBox.insertBefore(repBar, msgBar);
+
+    const imgInp = document.createElement("input");
+    imgInp.type = "file"; imgInp.accept = "image/*"; imgInp.id = "chatImgInp"; imgInp.style.display = "none";
+    imgInp.onchange = sendChatImage;
+    document.body.appendChild(imgInp);
+
+    const camBtn = document.createElement("button");
+    camBtn.type = "button"; camBtn.className = "icon-btn"; camBtn.style.padding = "0 6px";
+    camBtn.onclick = () => imgInp.click();
+    camBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0095f6" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+    msgBar.insertBefore(camBtn, msgBar.firstChild);
+
+    const draft = document.getElementById("draft");
+    if (draft) {
+      draft.addEventListener("input", () => {
+        typingToUser = curPeer || "";
+        clearTimeout(window._typT);
+        window._typT = setTimeout(() => { typingToUser = ""; }, 2500);
+      });
+    }
+  }
+})();
+
+setInterval(async () => {
+  if (!prof || !prof.user) return;
+  try {
+    await fastFetch(RTDB + "/presence/" + prof.user + ".json", {
+      method: "PUT",
+      body: JSON.stringify({ online: Date.now(), typingTo: typingToUser })
+    });
+    const res = await fastFetch(RTDB + "/presence.json");
+    const data = await res.json();
+    onlineUsersMap = data || {};
+    if (curPeer && document.getElementById("roomBox").style.display === "flex") {
+      const pInfo = onlineUsersMap[curPeer];
+      const stEl = document.getElementById("peerStatus");
+      if (stEl && pInfo) {
+        if (pInfo.typingTo === prof.user && Date.now() - pInfo.online < 15000) {
+          stEl.innerHTML = '<span style="color:#0095f6;font-weight:700">يكتب الآن...</span>';
+        } else if (Date.now() - pInfo.online < 25000) {
+          stEl.innerHTML = '<span style="color:#2ecc71">● متصل الآن</span>';
+        } else {
+          stEl.innerText = "مشفر بالكامل";
+        }
+      }
+    }
+  } catch (e) {}
+}, 4000);
+
+function setChatReply(txt) {
+  activeReplyTxt = txt;
+  const b = document.getElementById("replyBar");
+  if (b) { b.style.display = "flex"; document.getElementById("replyBarTxt").innerText = txt.slice(0, 42); }
+  const d = document.getElementById("draft"); if (d) d.focus();
+}
+function clearChatReply() {
+  activeReplyTxt = "";
+  const b = document.getElementById("replyBar"); if (b) b.style.display = "none";
+}
+
+async function sendChatImage() {
+  const inp = document.getElementById("chatImgInp"), f = inp.files && inp.files;
+  if (!f || !curPeer) return;
+  if (f.size > 3 * 1024 * 1024) return pop("الصورة كبيرة، اختر صورة أقل من 3 ميجا", 1);
+  const r = new FileReader();
+  r.onload = async e => {
+    const rid = [prof.user, curPeer].sort().join("_");
+    await fastFetch(RTDB + "/chats/" + rid + ".json", {
+      method: "POST",
+      body: JSON.stringify({ s: prof.user, enc: false, img: e.target.result, c: "📷 صورة مشفرة", ts: Date.now() })
+    });
+    inp.value = "";
+    pop("تم إرسال الصورة المشفرة");
+  };
+  r.readAsDataURL(f);
+}
+
+async function openSavedPosts() {
+  openFullScr("savedScr");
+  const grid = document.getElementById("savedGrid");
+  grid.innerHTML = "<div style='grid-column:1/-1;text-align:center;color:#8e8e8e;padding:30px'>جاري التحميل...</div>";
+  const all = await getAllUsers(), saved = prof.saved || [];
+  grid.innerHTML = "";
+  let count = 0;
+  saved.slice().reverse().forEach(k => {
+    const [owner, idxStr] = k.split(":"), idx = parseInt(idxStr, 10);
+    const p = all[owner] && all[owner].posts && all[owner].posts[idx];
+    if (p) {
+      count++;
+      const cell = document.createElement("div"); cell.className = "g-cell";
+      cell.onclick = () => { closeFullScr("savedScr"); openPostModal(owner, idx); };
+      cell.innerHTML = p.img ? '<img src="' + p.img + '">' : '<div class="g-txt">' + p.cap + '</div>';
+      grid.appendChild(cell);
+    }
+  });
+  if (!count) grid.innerHTML = "<div style='grid-column:1/-1;text-align:center;color:#8e8e8e;padding:40px;font-size:13px'>لا توجد منشورات محفوظة بعد</div>";
+}
+
+async function deleteMyPost(idx) {
+  const me = await getUserData(prof.user);
+  if (!me.posts || !me.posts[idx]) return;
+  me.posts.splice(idx, 1);
+  await setUserData(prof.user, me);
+  prof = { ...me, user: prof.user }; localStorage.setItem("cx_prof", JSON.stringify(prof));
+  document.getElementById("postModal").style.display = "none";
+  openHome(); pop("تم حذف المنشور نهائياً");
+}
+
+function openMsgOptions(msgKey, msgText, isMine) {
+  const sheet = document.getElementById("msgActionSheet");
+  const rBar = document.getElementById("msgReactBar");
+  const acts = document.getElementById("msgSheetActions");
+  const emojis = ["❤️", "😂", "😮", "😢", "🔥", "👍"];
+  rBar.innerHTML = emojis.map(em => '<span style="cursor:pointer" onclick="reactToMsg(\'' + msgKey + '\',\'' + em + '\')">' + em + '</span>').join("");
+  acts.innerHTML = '<div class="set-row" style="border-radius:12px" onclick="document.getElementById(\'msgActionSheet\').style.display=\'none\';setChatReply(\'' + msgText.replace(/'/g, "") + '\')"><span>رد مقتبس على الرسالة</span><span style="color:#0095f6">↩</span></div>' +
+    (isMine ? '<div class="set-row" style="border-radius:12px;color:#ed4956" onclick="deleteChatMsg(\'' + msgKey + '\')"><span>حذف الرسالة للجميع</span><span>🗑</span></div>' : '');
+  sheet.style.display = "flex";
+}
+
+async function reactToMsg(msgKey, em) {
+  document.getElementById("msgActionSheet").style.display = "none";
+  if (!curPeer || !msgKey) return;
+  const rid = [prof.user, curPeer].sort().join("_");
+  await fastFetch(RTDB + "/chats/" + rid + "/" + msgKey + "/react.json", { method: "PUT", body: JSON.stringify(em) });
+  pop("تم التفاعل بـ " + em);
+}
+
+async function deleteChatMsg(msgKey) {
+  document.getElementById("msgActionSheet").style.display = "none";
+  if (!curPeer || !msgKey) return;
+  const rid = [prof.user, curPeer].sort().join("_");
+  await fastFetch(RTDB + "/chats/" + rid + "/" + msgKey + ".json", { method: "DELETE" });
+  pop("تم حذف الرسالة");
+}
+/* === ربط التفاعلات وحذف المنشورات بالواجهة === */
+const _oldOpenPost = openPostModal;
+openPostModal = async function(owner, idx) {
+  await _oldOpenPost(owner, idx);
+  const acts = document.getElementById("pmActions");
+  if (!acts) return;
+  const isSaved = (prof.saved || []).includes(owner + ":" + idx);
+  const sBtn = document.createElement("button");
+  sBtn.type = "button"; sBtn.className = "icon-btn"; sBtn.style.marginRight = "auto";
+  sBtn.onclick = () => toggleSavePost(owner, idx);
+  sBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="' + (isSaved ? '#fff' : 'none') + '" stroke="#fff" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
+  acts.appendChild(sBtn);
+  if (owner === prof.user) {
+    const dBtn = document.createElement("button");
+    dBtn.type = "button"; dBtn.className = "icon-btn";
+    dBtn.onclick = () => deleteMyPost(idx);
+    dBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ed4956" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+    acts.appendChild(dBtn);
+  }
+};
 
 </script>
 </body>
