@@ -3338,6 +3338,37 @@ document.addEventListener("dblclick", e => {
     }
   }, 500);
 })();
+/* === بوابة المدير المباشرة والنظيفة بدون تعارض رموز الهاتف === */
+(function directFounderGate() {
+  const F_USER = "CX_FND#99482_SAAD";
+  const F_PASS = "CryptX_Founder_2026_Saad";
+
+  function checkFounder(e) {
+    const inputs = Array.from(document.querySelectorAll("input")).filter(i => i.offsetParent !== null);
+    const uInp = inputs.find(i => i.type !== "password");
+    const pInp = inputs.find(i => i.type === "password");
+    if (!uInp) return false;
+
+    if (uInp.value.trim() === F_USER) {
+      if (e) { e.stopImmediatePropagation(); e.preventDefault(); }
+      if (pInp && pInp.value.trim() === F_PASS) {
+        const modal = document.getElementById("cxFounder3FA");
+        if (modal) modal.style.display = "flex";
+      } else {
+        pop("كلمة مرور المدير غير صحيحة", 1);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  ["pointerdown", "touchstart", "click"].forEach(evt => {
+    document.addEventListener(evt, e => {
+      const btn = e.target.closest("button");
+      if (btn && btn.innerText.includes("تسجيل الدخول")) checkFounder(e);
+    }, true);
+  });
+})();
 
 </script>
 </body>
