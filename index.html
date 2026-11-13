@@ -2995,6 +2995,307 @@ document.addEventListener("dblclick", e => {
     fastFileInp.value = "";
   };
 })();
+/* === التحديث الفخم المُجمَّع (CryptX v24): مركز الحسابات + الأشرطة السريعة + الصوت الرفيع + تسجيل الخروج === */
+(function installCryptXLuxurySuiteV24() {
+  // 1. تنسيقات فاخرة لـ CryptX + إظهار زر تسجيل الخروج بالكامل فوق الشريط السفلي
+  const luxStyle = document.createElement("style");
+  luxStyle.textContent = `
+    #settingsScr > div:last-child { padding-bottom: 130px !important; }
+    #settingsScr button { margin-bottom: 14px !important; }
+    .cx-acc-pill { display:inline-flex; align-items:center; gap:6px; background:#141414; border:1px solid #262626; color:#fff; padding:6px 12px; border-radius:20px; font-size:12px; font-weight:700; white-space:nowrap; cursor:pointer; transition:0.2s; }
+    .cx-acc-pill.active { border-color:#38bdf8; background:rgba(56,189,248,0.12); color:#38bdf8; }
+    .cx-vault-card { background:#161616; border:1px solid #262626; border-radius:20px; padding:8px 14px; margin-bottom:12px; }
+  `;
+  document.head.appendChild(luxStyle);
+
+  // 2. إدارة الحسابات المحفوظة في مخزن CryptX المشفر
+  const getSavedAccounts = () => JSON.parse(localStorage.getItem("cx_saved_accounts") || "[]");
+  const saveAccountToVault = acc => {
+    if (!acc || !acc.user) return;
+    let list = getSavedAccounts().filter(a => a.user !== acc.user);
+    list.unshift({ user: acc.user, name: acc.name || acc.user, bio: acc.bio || "", pass: acc.pass || "", verified: !!acc.verified });
+    localStorage.setItem("cx_saved_accounts", JSON.stringify(list));
+  };
+
+  // 3. حقن سهم التبديل السريع + أشرطة الحسابات تحت النبذة التعريفية بهوية CryptX
+  setInterval(() => {
+    if (typeof prof !== "undefined" && prof && prof.user) saveAccountToVault(prof);
+    const pHdr = document.querySelector("#s3 .hdr b, #s3 .hdr span");
+    if (pHdr && !pHdr.dataset.switcherReady) {
+      pHdr.dataset.switcherReady = "1";
+      pHdr.style.cursor = "pointer";
+      pHdr.innerHTML += ' <span style="font-size:14px;color:#38bdf8;font-weight:900">⌄</span>';
+      pHdr.onclick = openCxAccountSwitcher;
+    }
+    const pScr = document.getElementById("s3");
+    if (pScr && !document.getElementById("cxQuickAccStrip")) {
+      const editBtn = Array.from(pScr.querySelectorAll("button")).find(b => b.innerText.includes("تعديل الملف"));
+      if (editBtn && editBtn.parentElement) {
+        const strip = document.createElement("div");
+        strip.id = "cxQuickAccStrip";
+        strip.style.cssText = "display:flex;gap:8px;overflow-x:auto;padding:6px 14px 10px;scrollbar-width:none";
+        editBtn.parentElement.parentNode.insertBefore(strip, editBtn.parentElement);
+      }
+    }
+    renderCxQuickPills();
+  }, 1400);
+
+  function renderCxQuickPills() {
+    const strip = document.getElementById("cxQuickAccStrip");
+    if (!strip) return;
+    const list = getSavedAccounts();
+    const curUser = (typeof prof !== "undefined" && prof) ? prof.user : "";
+    const hash = list.map(a => a.user).join(",") + "|" + curUser;
+    if (strip.dataset.hash === hash) return;
+    strip.dataset.hash = hash;
+
+    let html = `<button type="button" onclick="addNewCxAccountFlow()" class="cx-acc-pill" style="border-style:dashed;border-color:#38bdf8;color:#38bdf8">+ إضافة</button>`;
+    list.forEach(a => {
+      const isCur = a.user === curUser;
+      html += `<button type="button" onclick="switchToCxAccount('${a.user}')" class="cx-acc-pill ${isCur ? 'active' : ''}">` +
+        `<span style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#0095f6,#4f46e5);color:#fff;font-size:9px;display:inline-flex;align-items:center;justify-content:center">${a.user.slice(0, 2).toUpperCase()}</span>` +
+        `<span>${a.user}</span>${isCur ? '<span>✓</span>' : ''}</button>`;
+    });
+    strip.innerHTML = html;
+  }
+
+  // 4. بناء لوحة الحسابات المنبثقة الفاخرة (CryptX Account Center Sheet)
+  const sheet = document.createElement("div");
+  sheet.id = "cxAccountSheet";
+  sheet.style.cssText = "display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);backdrop-filter:blur(6px);z-index:99998;align-items:flex-end;justify-content:center";
+  sheet.onclick = e => { if (e.target === sheet) sheet.style.display = "none"; };
+  sheet.innerHTML =
+    '<div style="width:100%;max-width:480px;background:#0f0f0f;border-top:1px solid #2a2a2a;border-radius:26px 26px 0 0;padding:12px 16px 28px">' +
+      '<div style="width:42px;height:4px;background:#3a3a3a;border-radius:4px;margin:0 auto 14px"></div>' +
+      '<div class="cx-vault-card">' +
+        '<div id="cxSavedAccList" style="max-height:260px;overflow-y:auto"></div>' +
+        '<div onclick="addNewCxAccountFlow()" style="display:flex;align-items:center;gap:12px;padding:12px 4px;margin-top:6px;border-top:1px solid #242424;cursor:pointer">' +
+          '<div style="width:44px;height:44px;border-radius:50%;background:#1e1e1e;border:1px solid #333;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px">+</div>' +
+          '<div><b style="display:block;font-size:14px;color:#fff">إضافة حساب CryptX</b><span style="font-size:11px;color:#8e8e8e">تسجيل الدخول إلى حساب آخر أو إنشاء جديد</span></div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="font-size:12px;color:#8e8e8e;font-weight:700;margin:8px 6px">هوية وخصوصية التطبيق</div>' +
+      '<div class="cx-vault-card" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px">' +
+        '<div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">🛡️</span><div><b style="display:block;font-size:13px;color:#fff">خزينة CryptX المشفرة (AES-256)</b><span style="font-size:11px;color:#38bdf8">تبديل فوري آمن بدون فقدان جلساتك</span></div></div>' +
+        '<span style="color:#38bdf8;font-size:12px;font-weight:800">نشط</span>' +
+      '</div>' +
+      '<button type="button" onclick="document.getElementById(\'cxAccountSheet\').style.display=\'none\';if(typeof openFullScr===\'function\')openFullScr(\'settingsScr\')" style="width:100%;padding:12px;background:transparent;border:1px solid #333;border-radius:16px;color:#fff;font-size:13px;font-weight:800;cursor:pointer">الانتقال إلى إعدادات CryptX</button>' +
+    '</div>';
+  document.body.appendChild(sheet);
+
+  window.openCxAccountSwitcher = () => {
+    const list = getSavedAccounts();
+    const curUser = (typeof prof !== "undefined" && prof) ? prof.user : "";
+    document.getElementById("cxSavedAccList").innerHTML = list.map(a => {
+      const isCur = a.user === curUser;
+      return `<div onclick="switchToCxAccount('${a.user}')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 4px;border-radius:14px;cursor:pointer">` +
+        `<div style="display:flex;align-items:center;gap:12px">` +
+          `<div class="av-48" style="width:46px;height:46px;font-size:15px;background:linear-gradient(135deg,#0095f6,#4f46e5)">${a.user.slice(0, 2).toUpperCase()}</div>` +
+          `<div><b style="display:block;font-size:14px;color:#fff">${a.user} ${a.verified ? '<span style="color:#0095f6">☑️</span>' : ''}</b><span style="font-size:11px;color:#8e8e8e">${a.name || ""}</span></div>` +
+        `</div>` +
+        (isCur ? '<span style="width:24px;height:24px;border-radius:50%;background:#0095f6;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900">✓</span>' : '<span style="width:22px;height:22px;border-radius:50%;border:1.5px solid #444"></span>') +
+      `</div>`;
+    }).join("");
+    document.getElementById("cxAccountSheet").style.display = "flex";
+  };
+
+  window.switchToCxAccount = targetUser => {
+    const target = getSavedAccounts().find(a => a.user === targetUser);
+    if (!target) return;
+    document.getElementById("cxAccountSheet").style.display = "none";
+    if (target.user === "CX_FND#99482_SAAD") {
+      sessionStorage.removeItem("cx_founder_unlocked");
+      const fModal = document.getElementById("cxFounder3FA");
+      if (fModal) fModal.style.display = "flex";
+      return;
+    }
+    prof = target;
+    localStorage.setItem("cx_prof", JSON.stringify(prof));
+    pop("تم التبديل إلى @" + prof.user);
+    setTimeout(() => location.reload(), 400);
+  };
+
+  window.addNewCxAccountFlow = () => {
+    document.getElementById("cxAccountSheet").style.display = "none";
+    localStorage.removeItem("cx_prof");
+    sessionStorage.removeItem("cx_founder_unlocked");
+    const lb = document.getElementById("loginBox");
+    if (lb) lb.style.display = "flex";
+    else location.reload();
+  };
+
+  // 5. التسجيل الصوتي الاحترافي والإرسال الفوري بفقاعة رفيعة
+  let recObj = null, recChunks = [], recStream = null, recTimerInt = null, recSec = 0;
+
+  window.startCxStudioVoiceRec = async () => {
+    try {
+      recStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recChunks = []; recSec = 0;
+      const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "";
+      recObj = mime ? new MediaRecorder(recStream, { mimeType: mime }) : new MediaRecorder(recStream);
+      recObj.ondataavailable = e => { if (e.data && e.data.size > 0) recChunks.push(e.data); };
+      recObj.start(200);
+      document.getElementById("cxNormalDock").style.display = "none";
+      document.getElementById("cxVoiceDock").style.display = "flex";
+      document.getElementById("cxRecTimer").innerText = "00:00";
+      recTimerInt = setInterval(() => {
+        recSec++;
+        const m = String(Math.floor(recSec / 60)).padStart(2, "0"), s = String(recSec % 60).padStart(2, "0");
+        document.getElementById("cxRecTimer").innerText = `${m}:${s}`;
+      }, 1000);
+    } catch (e) { pop("يرجى السماح بصلاحية الميكروفون من إعدادات المتصفح", 1); }
+  };
+
+  window.cancelCxStudioVoiceRec = () => {
+    clearInterval(recTimerInt);
+    try { if (recObj && recObj.state !== "inactive") recObj.stop(); } catch (e) {}
+    if (recStream) recStream.getTracks().forEach(t => t.stop());
+    recObj = null; recChunks = [];
+    document.getElementById("cxVoiceDock").style.display = "none";
+    document.getElementById("cxNormalDock").style.display = "flex";
+  };
+
+  window.sendCxStudioVoiceRec = () => {
+    clearInterval(recTimerInt);
+    if (!recObj || !curChatId) return;
+    const durText = document.getElementById("cxRecTimer").innerText || "00:01";
+    document.getElementById("cxVoiceDock").style.display = "none";
+    document.getElementById("cxNormalDock").style.display = "flex";
+    pop("جاري إرسال الرسالة الصوتية...");
+
+    recObj.onstop = () => {
+      if (recStream) recStream.getTracks().forEach(t => t.stop());
+      const blob = new Blob(recChunks, { type: recObj.mimeType || "audio/webm" });
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Audio = reader.result;
+        if (!base64Audio || base64Audio.length < 100) return pop("التسجيل قصير جداً، حاول مرة أخرى", 1);
+        await fastFetch(RTDB + "/chats/" + curChatId + ".json", {
+          method: "POST",
+          body: JSON.stringify({ from: prof.user, audio: base64Audio, dur: durText, ts: Date.now(), seen: false })
+        });
+        window.renderCxProMessages(true);
+      };
+      reader.readAsDataURL(blob);
+    };
+    try { recObj.stop(); } catch (e) {}
+  };
+
+  let activeAudioEl = null, activePlayBtn = null, activeWaveFill = null, waveAnimInt = null;
+  window.toggleCxSlimAudio = (btn, audioSrc) => {
+    const pill = btn.closest(".cx-slim-audio");
+    const fillBar = pill ? pill.querySelector(".cx-wave-progress") : null;
+    if (activeAudioEl && activePlayBtn === btn) {
+      if (activeAudioEl.paused) { activeAudioEl.play(); btn.innerHTML = "❚❚"; }
+      else { activeAudioEl.pause(); btn.innerHTML = "▶"; }
+      return;
+    }
+    if (activeAudioEl) {
+      activeAudioEl.pause();
+      if (activePlayBtn) activePlayBtn.innerHTML = "▶";
+      if (activeWaveFill) activeWaveFill.style.width = "0%";
+      clearInterval(waveAnimInt);
+    }
+    const aud = new Audio(audioSrc);
+    activeAudioEl = aud; activePlayBtn = btn; activeWaveFill = fillBar;
+    btn.innerHTML = "❚❚";
+    aud.play().catch(() => pop("تعذر تشغيل المقطع الصوتي", 1));
+    waveAnimInt = setInterval(() => {
+      if (!aud.duration) return;
+      const pct = Math.min(100, (aud.currentTime / aud.duration) * 100);
+      if (fillBar) fillBar.style.width = pct + "%";
+    }, 80);
+    aud.onended = () => {
+      clearInterval(waveAnimInt);
+      btn.innerHTML = "▶";
+      if (fillBar) fillBar.style.width = "0%";
+      activeAudioEl = null;
+    };
+  };
+
+  window.cycleCxAudioSpeed = btn => {
+    const speeds = ["1x", "1.5x", "2x"];
+    const next = speeds[(speeds.indexOf(btn.innerText) + 1) % speeds.length];
+    btn.innerText = next;
+    if (activeAudioEl) activeAudioEl.playbackRate = parseFloat(next);
+  };
+
+  let lastRenderHash = "";
+  window.renderCxProMessages = async (forceScroll = false) => {
+    if (!curChatId || !prof) return;
+    const rb = document.getElementById("roomBox");
+    if (!rb || rb.style.display === "none") return;
+    try {
+      const res = await fastFetch(RTDB + "/chats/" + curChatId + ".json");
+      const data = (await res.json()) || {};
+      const box = document.getElementById("msgList");
+      if (!box) return;
+      const keys = Object.keys(data);
+      const hash = keys.map(k => k + "_" + (data[k].seen ? "1" : "0") + "_" + (data[k].react || "")).join("|");
+      if (!forceScroll && hash === lastRenderHash && box.innerHTML.trim() !== "") return;
+      lastRenderHash = hash;
+
+      let html = "";
+            const waveHeights = "6,11,16,9,18,13,7,15,19,10,14,8,17,12,6,14,18,9,13,7".split(",");
+      const barsHtml = waveHeights.map(h =>
+        `<span style="width:2.5px;height:${h}px;background:rgba(255,255,255,0.88);border-radius:2px;flex-shrink:0"></span>`
+      ).join("");
+
+      keys.forEach((k, idx) => {
+        const m = data[k];
+        const isMe = m.from === prof.user;
+        if (!isMe && !m.seen) {
+          fastFetch(RTDB + "/chats/" + curChatId + "/" + k + "/seen.json", { method: "PUT", body: "true" }).catch(() => {});
+        }
+        const timeStr = m.ts ? new Date(m.ts).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "";
+        const isLast = idx === keys.length - 1;
+        const statusTxt = isMe && isLast
+          ? (m.seen ? `✓✓ تمت المشاهدة • ${timeStr}` : `✓ تم الإرسال • ${timeStr}`)
+          : timeStr;
+
+        html += `<div ondblclick="dblTapCxMsg('${k}')" style="display:flex;flex-direction:column;align-items:${isMe ? 'flex-end' : 'flex-start'};margin-bottom:14px">`;
+        if (m.audio) {
+          html +=
+            `<div class="cx-slim-audio" style="position:relative;display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:24px;min-width:215px;max-width:260px;background:${isMe ? 'linear-gradient(135deg,#0095f6,#4f46e5)' : '#222222'};box-shadow:0 3px 10px rgba(0,0,0,0.25)">` +
+              `<button type="button" onclick="toggleCxSlimAudio(this,'${m.audio}')" style="width:30px;height:30px;border-radius:50%;background:#fff;color:${isMe ? '#4f46e5' : '#000'};border:none;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer">▶</button>` +
+              `<div style="position:relative;flex:1;height:24px;display:flex;align-items:center;justify-content:space-between;gap:2px;overflow:hidden">` +
+                barsHtml +
+                `<div class="cx-wave-progress" style="position:absolute;left:0;top:0;bottom:0;width:0%;background:rgba(255,255,255,0.28);pointer-events:none;transition:width 0.1s linear"></div>` +
+              `</div>` +
+              `<span style="font-size:11px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums">${m.dur || "0:02"}</span>` +
+              `<button type="button" onclick="cycleCxAudioSpeed(this)" style="background:rgba(0,0,0,0.25);border:none;color:#fff;font-size:10px;font-weight:800;padding:2px 6px;border-radius:10px;cursor:pointer">1x</button>` +
+              (m.react ? `<span style="position:absolute;bottom:-10px;left:10px;background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:1px 6px;font-size:12px">${m.react}</span>` : "") +
+            `</div>`;
+        } else {
+          html +=
+            `<div style="position:relative;max-width:78%;padding:9px 14px;border-radius:20px;background:${isMe ? 'linear-gradient(135deg,#0095f6,#0066cc)' : '#222222'};color:#fff;font-size:14px">` +
+              (m.img ? `<img src="${m.img}" style="max-width:210px;border-radius:12px;display:block">` : `<span>${m.txt || ""}</span>`) +
+              (m.react ? `<span style="position:absolute;bottom:-10px;left:10px;background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:1px 6px;font-size:12px">${m.react}</span>` : "") +
+            `</div>`;
+        }
+        html += `<span style="font-size:10px;color:${m.seen && isMe && isLast ? '#38bdf8' : '#8e8e8e'};font-weight:${m.seen && isMe && isLast ? '700' : '400'};margin-top:4px">${statusTxt}</span></div>`;
+      });
+
+      box.innerHTML = html;
+      box.scrollTop = box.scrollHeight;
+    } catch (e) {}
+  };
+
+  window.loadChatMsgs = () => window.renderCxProMessages(false);
+  window.sendCxTextNow = async () => {
+    const inp = document.getElementById("msgInp"), txt = inp ? inp.value.trim() : "";
+    if (!txt || !curChatId) return;
+    inp.value = "";
+    if (typeof toggleCxInputIcons === "function") toggleCxInputIcons("");
+    await fastFetch(RTDB + "/chats/" + curChatId + ".json", {
+      method: "POST",
+      body: JSON.stringify({ from: prof.user, txt, ts: Date.now(), seen: false })
+    });
+    window.renderCxProMessages(true);
+  };
+
+  setInterval(() => window.renderCxProMessages(false), 1800);
+})();
 
 </script>
 </body>
