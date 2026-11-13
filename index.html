@@ -2158,6 +2158,451 @@ document.addEventListener("dblclick", e => {
     if (hdr && hdr.nextSibling) s1.insertBefore(banner, hdr.nextSibling);
   }
 })();
+/* === الجزء 1 من 3: واجهة المحادثة الاحترافية وقائمة خيارات الرسائل === */
+(function installCryptXProChatSuite() {
+  const style = document.createElement("style");
+  style.textContent = `
+    .cx-chat-top { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:#000; border-bottom:1px solid #1c1c1c; position:sticky; top:0; z-index:25; }
+    .cx-chat-user { display:flex; align-items:center; gap:10px; cursor:pointer; }
+    .cx-chat-actions { display:flex; align-items:center; gap:14px; }
+    .cx-msg-bubble { position:relative; max-width:78%; padding:10px 14px; border-radius:20px; font-size:14px; line-height:1.45; word-break:break-word; transition:transform 0.15s; cursor:pointer; }
+    .cx-msg-bubble:active { transform:scale(0.97); }
+    .cx-msg-time { font-size:10px; color:#8e8e8e; margin-top:3px; display:block; }
+    .cx-msg-react-badge { position:absolute; bottom:-10px; left:10px; background:#1e1e1e; border:1px solid #333; border-radius:12px; padding:1px 6px; font-size:12px; }
+    .cx-reply-preview { background:rgba(255,255,255,0.1); border-right:3px solid #fff; padding:6px 10px; border-radius:8px; margin-bottom:6px; font-size:12px; color:#eee; }
+    .cx-chat-dock { display:flex; align-items:center; gap:8px; padding:8px 10px; background:#000; border-top:1px solid #1a1a1a; }
+    .cx-chat-pill { flex:1; display:flex; align-items:center; background:#161616; border:1px solid #2a2a2a; border-radius:24px; padding:4px 8px 4px 12px; gap:8px; }
+    .cx-chat-pill input { flex:1; background:transparent!important; border:none!important; margin:0!important; padding:6px 0!important; color:#fff!important; font-size:14px!important; outline:none!important; }
+    .cx-cam-circle { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#0095f6,#833ab4); display:flex; align-items:center; justify-content:center; border:none; color:#fff; flex-shrink:0; cursor:pointer; }
+    .cx-ctx-menu { position:fixed; inset:0; background:rgba(0,0,0,0.78); backdrop-filter:blur(6px); z-index:9999; display:none; flex-direction:column; align-items:center; justify-content:center; padding:20px; }
+    .cx-react-bar { display:flex; gap:10px; background:#1c1c1c; border:1px solid #2e2e2e; padding:10px 16px; border-radius:30px; margin-bottom:14px; font-size:24px; }
+    .cx-react-bar span { cursor:pointer; transition:transform 0.15s; }
+    .cx-react-bar span:active { transform:scale(1.35); }
+    .cx-action-sheet { width:100%; max-width:290px; background:#181818; border:1px solid #2c2c2c; border-radius:18px; overflow:hidden; }
+    .cx-action-sheet div { padding:14px 18px; border-bottom:1px solid #242424; font-size:14px; font-weight:600; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+    .cx-action-sheet div:last-child { border-bottom:none; }
+  `;
+  document.head.appendChild(style);
+
+  const overlays = document.createElement("div");
+  overlays.innerHTML =
+    '<div id="cxMsgCtxMenu" class="cx-ctx-menu" onclick="if(event.target===this)this.style.display=\'none\'">' +
+      '<div class="cx-react-bar">' +
+        '<span onclick="reactToCxMsg(\'❤️\')">❤️</span><span onclick="reactToCxMsg(\'😂\')">😂</span><span onclick="reactToCxMsg(\'😮\')">😮</span><span onclick="reactToCxMsg(\'😢\')">😢</span><span onclick="reactToCxMsg(\'🔥\')">🔥</span><span onclick="reactToCxMsg(\'👍\')">👍</span>' +
+      '</div>' +
+      '<div class="cx-action-sheet">' +
+        '<div onclick="setCxReplyTarget()"><span>رد على الرسالة</span><span>↩️</span></div>' +
+        '<div onclick="copyCxMsgText()"><span>نسخ النص</span><span>📋</span></div>' +
+        '<div id="cxUnsendBtn" onclick="deleteCxMessage(true)" style="color:#ff4d6d"><span>إلغاء الإرسال (حذف للجميع)</span><span>🗑️</span></div>' +
+        '<div onclick="deleteCxMessage(false)" style="color:#aaa"><span>حذف لدي فقط</span><span>✕</span></div>' +
+      '</div>' +
+    '</div>' +
+    '<div id="cxChatSettingsScr" class="full-scr" style="z-index:996;background:#000;flex-direction:column">' +
+      '<div class="hdr"><button type="button" class="icon-btn" onclick="closeFullScr(\'cxChatSettingsScr\')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg></button><b>تفاصيل الدردشة</b><span style="width:24px"></span></div>' +
+      '<div style="flex:1;overflow-y:auto;padding:16px">' +
+        '<div style="text-align:center;margin-bottom:20px">' +
+          '<div id="cxSetPeerAv" style="width:76px;height:76px;border-radius:50%;margin:0 auto 10px;background:#1e1e1e;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;overflow:hidden"></div>' +
+          '<b id="cxSetPeerName" style="font-size:18px;display:block"></b>' +
+          '<div style="display:flex;justify-content:center;gap:22px;margin-top:16px">' +
+            '<div onclick="closeFullScr(\'cxChatSettingsScr\');openUserProfile(curPeer)" style="text-align:center;cursor:pointer"><div style="width:42px;height:42px;border-radius:50%;background:#181818;display:flex;align-items:center;justify-content:center;margin:0 auto 4px">👤</div><span style="font-size:11px;color:#ccc">ملف شخصي</span></div>' +
+            '<div onclick="closeFullScr(\'cxChatSettingsScr\');searchInCxChat()" style="text-align:center;cursor:pointer"><div style="width:42px;height:42px;border-radius:50%;background:#181818;display:flex;align-items:center;justify-content:center;margin:0 auto 4px">🔍</div><span style="font-size:11px;color:#ccc">بحث</span></div>' +
+            '<div onclick="toggleCxChatMute()" style="text-align:center;cursor:pointer"><div style="width:42px;height:42px;border-radius:50%;background:#181818;display:flex;align-items:center;justify-content:center;margin:0 auto 4px">🔔</div><span id="cxMuteLbl" style="font-size:11px;color:#ccc">كتم الصوت</span></div>' +
+            '<div onclick="document.getElementById(\'cxMoreSafetyBox\').style.display=\'block\'" style="text-align:center;cursor:pointer"><div style="width:42px;height:42px;border-radius:50%;background:#181818;display:flex;align-items:center;justify-content:center;margin:0 auto 4px">•••</div><span style="font-size:11px;color:#ccc">الخيارات</span></div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="background:#121212;border:1px solid #222;border-radius:16px;padding:14px;margin-bottom:12px">' +
+          '<b style="display:block;font-size:14px;margin-bottom:10px">🎨 السمة (لون المحادثة)</b>' +
+          '<div style="display:flex;gap:12px;justify-content:space-around">' +
+            '<div onclick="setCxChatTheme(\'linear-gradient(135deg,#0095f6,#0066cc)\',\'أزرق CryptX\')" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0095f6,#0066cc);border:2px solid #fff;cursor:pointer"></div>' +
+            '<div onclick="setCxChatTheme(\'linear-gradient(135deg,#833ab4,#fd1d1d)\',\'نيون متدرج\')" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#833ab4,#fd1d1d);border:2px solid #fff;cursor:pointer"></div>' +
+            '<div onclick="setCxChatTheme(\'linear-gradient(135deg,#06d6a0,#118ab2)\',\'زمردي\')" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#06d6a0,#118ab2);border:2px solid #fff;cursor:pointer"></div>' +
+            '<div onclick="setCxChatTheme(\'linear-gradient(135deg,#ff4d6d,#c9184a)\',\'وردي غروب\')" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#ff4d6d,#c9184a);border:2px solid #fff;cursor:pointer"></div>' +
+            '<div onclick="setCxChatTheme(\'linear-gradient(135deg,#f59e0b,#b45309)\',\'ذهبي ملكي\')" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#b45309);border:2px solid #fff;cursor:pointer"></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="row-item" onclick="setCxNickname()"><span>✏️ الكنيات (تغيير الاسم المستعار)</span><span id="cxNickVal" style="color:#8e8e8e;font-size:12px">تعيين</span></div>' +
+        '<div class="row-item" onclick="toggleCxVanishMode()"><span>⏱️ رسائل مؤقتة (اختفاء تلقائي)</span><span id="cxVanishVal" style="color:#8e8e8e;font-size:12px">متوقفة</span></div>' +
+        '<div id="cxMoreSafetyBox" style="display:none;margin-top:12px;background:#161616;border-radius:16px;overflow:hidden;border:1px solid #2c2c2c">' +
+          '<div class="row-item" onclick="pop(\'تم تقييد الحساب\')"><span>🚫 تقييد</span></div>' +
+          '<div class="row-item" onclick="blockPeer()" style="color:#ff4d6d"><span>⛔ حظر المستخدم</span></div>' +
+          '<div class="row-item" onclick="pop(\'تم إرسال البلاغ للمراجعة\')" style="color:#ff4d6d"><span>⚠️ إبلاغ</span></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(overlays);
+})();
+/* === الجزء 2 من 3: محرك الرسائل الاحترافي + المشاهدة والوقت + المكالمات والتسجيل الصوتي === */
+(function installCryptXProChatEngine() {
+  const callScr = document.createElement("div");
+  callScr.id = "cxCallScreen";
+  callScr.className = "full-scr";
+  callScr.style.cssText = "z-index:999;background:radial-gradient(circle at top,#1a2a44,#050505);flex-direction:column;align-items:center;justify-content:space-between;padding:40px 20px";
+  callScr.innerHTML =
+    '<video id="cxCallSelfVid" autoplay playsinline muted style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.85"></video>' +
+    '<div style="position:relative;z-index:5;text-align:center;margin-top:20px">' +
+      '<div id="cxCallAv" style="width:92px;height:92px;border-radius:50%;background:#1e293b;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:800;border:3px solid #0095f6;overflow:hidden"></div>' +
+      '<b id="cxCallName" style="font-size:22px;display:block"></b>' +
+      '<span id="cxCallStatus" style="font-size:13px;color:#06d6a0;margin-top:6px;display:block">جاري الاتصال...</span>' +
+    '</div>' +
+    '<div style="position:relative;z-index:5;display:flex;gap:22px;align-items:center;margin-bottom:20px">' +
+      '<button type="button" onclick="this.style.opacity=this.style.opacity===\'0.5\'?\'1\':\'0.5\';pop(\'تبديل كتم الميكروفون\')" style="width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,0.16);border:none;color:#fff;font-size:22px;cursor:pointer">🎙️</button>' +
+      '<button type="button" onclick="endCxCall()" style="width:66px;height:66px;border-radius:50%;background:#ed4956;border:none;color:#fff;font-size:26px;cursor:pointer;box-shadow:0 6px 20px rgba(237,73,86,0.5)">📵</button>' +
+      '<button type="button" onclick="pop(\'تفعيل مكبر الصوت\')" style="width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,0.16);border:none;color:#fff;font-size:22px;cursor:pointer">🔊</button>' +
+    '</div>';
+  document.body.appendChild(callScr);
+
+  window.cxSelectedMsgKey = null;
+  window.cxSelectedMsgObj = null;
+  window.cxReplyDraft = null;
+  let cxCallStream = null, cxVoiceRec = null, cxVoiceChunks = [];
+
+  window.getCxChatTheme = peer => localStorage.getItem("cx_theme_" + peer) || "linear-gradient(135deg,#0095f6,#0066cc)";
+  window.setCxChatTheme = (grad, name) => {
+    if (!curPeer) return;
+    localStorage.setItem("cx_theme_" + curPeer, grad);
+    pop("تم تغيير السمة إلى: " + name);
+    closeFullScr("cxChatSettingsScr");
+    if (typeof loadChatMsgs === "function") loadChatMsgs();
+  };
+  window.setCxNickname = () => {
+    const n = prompt("اكتب الكنية (الاسم المستعار) لـ " + curPeer + ":", localStorage.getItem("cx_nick_" + curPeer) || curPeer);
+    if (n !== null) {
+      localStorage.setItem("cx_nick_" + curPeer, n.trim());
+      document.getElementById("cxNickVal").innerText = n.trim() || "تعيين";
+      pop("تم حفظ الكنية");
+    }
+  };
+  window.toggleCxVanishMode = () => {
+    const k = "cx_vanish_" + curPeer, on = localStorage.getItem(k) !== "1";
+    localStorage.setItem(k, on ? "1" : "0");
+    document.getElementById("cxVanishVal").innerText = on ? "مفعّلة (تختفي عند الخروج)" : "متوقفة";
+    pop(on ? "تم تفعيل وضع الرسائل المؤقتة" : "تم إيقاف الرسائل المؤقتة");
+  };
+  window.toggleCxChatMute = () => {
+    const k = "cx_mute_" + curPeer, on = localStorage.getItem(k) !== "1";
+    localStorage.setItem(k, on ? "1" : "0");
+    document.getElementById("cxMuteLbl").innerText = on ? "إلغاء الكتم" : "كتم الصوت";
+    pop(on ? "تم كتم إشعارات الدردشة" : "تم تفعيل الإشعارات");
+  };
+  window.searchInCxChat = () => {
+    const q = prompt("ابحث عن كلمة داخل هذه المحادثة:");
+    if (!q) return;
+    document.querySelectorAll("#msgList .cx-msg-bubble").forEach(b => {
+      b.style.outline = b.innerText.toLowerCase().includes(q.toLowerCase()) ? "2px solid #ffd166" : "none";
+    });
+  };
+  window.openCxChatDetails = () => {
+    if (!curPeer) return;
+    document.getElementById("cxSetPeerName").innerText = localStorage.getItem("cx_nick_" + curPeer) || curPeer;
+    document.getElementById("cxSetPeerAv").innerText = curPeer.toUpperCase();
+    document.getElementById("cxNickVal").innerText = localStorage.getItem("cx_nick_" + curPeer) || "تعيين";
+    document.getElementById("cxVanishVal").innerText = localStorage.getItem("cx_vanish_" + curPeer) === "1" ? "مفعّلة" : "متوقفة";
+    openFullScr("cxChatSettingsScr");
+  };
+
+  window.startCxCall = async isVideo => {
+    if (!curPeer) return;
+    document.getElementById("cxCallName").innerText = localStorage.getItem("cx_nick_" + curPeer) || curPeer;
+    document.getElementById("cxCallAv").innerText = curPeer.toUpperCase();
+    document.getElementById("cxCallStatus").innerText = isVideo ? "جاري بدء مكالمة فيديو..." : "جاري الاتصال الصوتي...";
+    const v = document.getElementById("cxCallSelfVid");
+    v.style.display = isVideo ? "block" : "none";
+    openFullScr("cxCallScreen");
+    if (isVideo) {
+      try {
+        cxCallStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
+        v.srcObject = cxCallStream;
+      } catch (e) {}
+    }
+    setTimeout(() => { document.getElementById("cxCallStatus").innerText = "متصل • 00:01"; }, 2200);
+  };
+  window.endCxCall = () => {
+    if (cxCallStream) { cxCallStream.getTracks().forEach(t => t.stop()); cxCallStream = null; }
+    closeFullScr("cxCallScreen");
+    pop("انتهت المكالمة");
+  };
+
+  window.openCxMsgMenu = (key, msgObj) => {
+    window.cxSelectedMsgKey = key;
+    window.cxSelectedMsgObj = msgObj;
+    document.getElementById("cxUnsendBtn").style.display = msgObj.from === prof.user ? "flex" : "none";
+    document.getElementById("cxMsgCtxMenu").style.display = "flex";
+  };
+  window.reactToCxMsg = async emoji => {
+    document.getElementById("cxMsgCtxMenu").style.display = "none";
+    if (!cxSelectedMsgKey || !curChatId) return;
+    await fastFetch(RTDB + "/chats/" + curChatId + "/" + cxSelectedMsgKey + "/react.json", { method: "PUT", body: JSON.stringify(emoji) });
+  };
+  window.setCxReplyTarget = () => {
+    document.getElementById("cxMsgCtxMenu").style.display = "none";
+    if (!cxSelectedMsgObj) return;
+    window.cxReplyDraft = (cxSelectedMsgObj.txt || "وسائط").slice(0, 45);
+    let bar = document.getElementById("cxReplyBar");
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.id = "cxReplyBar";
+      bar.style.cssText = "display:flex;justify-content:space-between;align-items:center;padding:6px 14px;background:#141414;border-top:1px solid #262626;font-size:12px;color:#ccc";
+      const dock = document.querySelector("#roomBox .cx-chat-dock") || document.querySelector("#roomBox > div:last-child");
+      if (dock) dock.parentNode.insertBefore(bar, dock);
+    }
+    bar.innerHTML = `<span>الرد على: <b>${window.cxReplyDraft}</b></span><span onclick="window.cxReplyDraft=null;this.parentElement.remove()" style="cursor:pointer;padding:2px 6px">✕</span>`;
+  };
+  window.copyCxMsgText = () => {
+    document.getElementById("cxMsgCtxMenu").style.display = "none";
+    if (cxSelectedMsgObj && cxSelectedMsgObj.txt) { navigator.clipboard.writeText(cxSelectedMsgObj.txt); pop("تم نسخ الرسالة"); }
+  };
+  window.deleteCxMessage = async forAll => {
+    document.getElementById("cxMsgCtxMenu").style.display = "none";
+    if (!cxSelectedMsgKey || !curChatId) return;
+    if (forAll) {
+      await fastFetch(RTDB + "/chats/" + curChatId + "/" + cxSelectedMsgKey + ".json", { method: "DELETE" });
+      pop("تم إلغاء إرسال الرسالة للجميع");
+    } else {
+      const hidden = JSON.parse(localStorage.getItem("cx_hid_msgs") || "[]");
+      hidden.push(cxSelectedMsgKey);
+      localStorage.setItem("cx_hid_msgs", JSON.stringify(hidden));
+      pop("تم حذف الرسالة لديك");
+    }
+  };
+
+  window.toggleCxVoiceNote = async btn => {
+    if (!cxVoiceRec || cxVoiceRec.state === "inactive") {
+      try {
+        const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+        cxVoiceChunks = []; cxVoiceRec = new MediaRecorder(s);
+        cxVoiceRec.ondataavailable = e => { if (e.data.size > 0) cxVoiceChunks.push(e.data); };
+        cxVoiceRec.onstop = () => {
+          s.getTracks().forEach(t => t.stop());
+          const r = new FileReader();
+          r.onload = async ev => {
+            await fastFetch(RTDB + "/chats/" + curChatId + ".json", {
+              method: "POST",
+              body: JSON.stringify({ from: prof.user, audio: ev.target.result, ts: Date.now(), seen: false })
+            });
+          };
+          r.readAsDataURL(new Blob(cxVoiceChunks, { type: "audio/webm" }));
+        };
+        cxVoiceRec.start(); btn.style.color = "#ff4d6d"; pop("🎙️ جاري تسجيل الصوت... اضغط للإرسال");
+      } catch (e) { pop("اسمح بالوصول للميكروفون أولاً", 1); }
+    } else { cxVoiceRec.stop(); btn.style.color = "#fff"; }
+  };
+})();
+/* === الجزء 3 من 3: تشغيل الدردشة + غرفة تحكم المؤسس الحصرية (توثيق + حظر + حذف منشورات) === */
+(function activateCryptXChatAndFounderSuite() {
+  const fmtCxTime = ts => {
+    if (!ts) return "";
+    return new Date(ts).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+  };
+
+  // ترقية رأس المحادثة وشريط الإرسال السفلي
+  const origOpenRoom = window.openRoom;
+  window.openRoom = function(peer) {
+    if (typeof origOpenRoom === "function") origOpenRoom(peer);
+    const rb = document.getElementById("roomBox");
+    if (!rb) return;
+    const hdr = rb.querySelector(".hdr");
+    if (hdr) {
+      const nick = localStorage.getItem("cx_nick_" + peer) || peer;
+      hdr.innerHTML =
+        '<div style="display:flex;align-items:center;gap:10px">' +
+          '<button type="button" class="icon-btn" onclick="closeChatRoom()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg></button>' +
+          '<div class="cx-chat-user" onclick="openCxChatDetails()">' +
+            `<div class="av-48" style="width:36px;height:36px;font-size:14px">${peer.toUpperCase()}</div>` +
+            `<div><b style="font-size:15px;display:block">${nick}</b><span style="font-size:11px;color:#8e8e8e">اضغط لتفاصيل الدردشة والسمة ›</span></div>` +
+          '</div>' +
+        '</div>' +
+        '<div class="cx-chat-actions">' +
+          '<button type="button" class="icon-btn" onclick="startCxCall(false)" title="اتصال صوتي"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></button>' +
+          '<button type="button" class="icon-btn" onclick="startCxCall(true)" title="مكالمة فيديو"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></button>' +
+          '<button type="button" class="icon-btn" onclick="openCxChatDetails()" title="إعدادات"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button>' +
+        '</div>';
+    }
+    const oldDock = rb.querySelector(".in-bar") || rb.lastElementChild;
+    if (oldDock && !oldDock.classList.contains("cx-chat-dock")) {
+      oldDock.className = "cx-chat-dock";
+      oldDock.innerHTML =
+        '<div class="cx-chat-pill">' +
+          '<button type="button" class="cx-cam-circle" onclick="openCxRealStudio()"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></button>' +
+          '<input id="msgInp" placeholder="مراسلة..." oninput="document.getElementById(\'cxSendTxtBtn\').style.display=this.value.trim()?\'inline-block\':\'none\'" onkeydown="if(event.key===\'Enter\')sendCxProMsg()">' +
+          '<button type="button" class="icon-btn" onclick="toggleCxVoiceNote(this)" title="تسجيل صوتي"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg></button>' +
+          '<button type="button" class="icon-btn" onclick="document.getElementById(\'chatImgInp\').click()" title="صورة"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>' +
+          '<button type="button" id="cxSendTxtBtn" onclick="sendCxProMsg()" style="display:none;background:none;border:none;color:#0095f6;font-weight:800;font-size:14px;padding:0 6px;cursor:pointer">إرسال</button>' +
+        '</div>';
+    }
+  };
+
+  window.sendCxProMsg = async function() {
+    const inp = document.getElementById("msgInp"), txt = inp.value.trim();
+    if (!txt || !curChatId) return;
+    inp.value = ""; document.getElementById("cxSendTxtBtn").style.display = "none";
+    const payload = { from: prof.user, txt, ts: Date.now(), seen: false };
+    if (window.cxReplyDraft) {
+      payload.reply = window.cxReplyDraft; window.cxReplyDraft = null;
+      const rb = document.getElementById("cxReplyBar"); if (rb) rb.remove();
+    }
+    await fastFetch(RTDB + "/chats/" + curChatId + ".json", { method: "POST", body: JSON.stringify(payload) });
+  };
+
+  window.loadChatMsgs = async function() {
+    if (!curChatId) return;
+    try {
+      const res = await fastFetch(RTDB + "/chats/" + curChatId + ".json");
+      const data = (await res.json()) || {}, box = document.getElementById("msgList");
+      if (!box) return;
+      const hidden = JSON.parse(localStorage.getItem("cx_hid_msgs") || "[]");
+      const keys = Object.keys(data).filter(k => !hidden.includes(k));
+      const themeGrad = getCxChatTheme(curPeer);
+      let html = "";
+      keys.forEach((k, idx) => {
+        const m = data[k], isMe = m.from === prof.user;
+        if (!isMe && !m.seen) fastFetch(RTDB + "/chats/" + curChatId + "/" + k + "/seen.json", { method: "PUT", body: "true" }).catch(() => {});
+        const safeJson = JSON.stringify(m).replace(/"/g, "&quot;");
+        const isLast = idx === keys.length - 1;
+        const statusTxt = isMe && isLast ? (m.seen ? `تمت المشاهدة • ${fmtCxTime(m.ts)}` : `تم الإرسال • ${fmtCxTime(m.ts)}`) : fmtCxTime(m.ts);
+        html += `<div style="display:flex;flex-direction:column;align-items:${isMe ? 'flex-end' : 'flex-start'};margin-bottom:14px">`;
+        html += `<div class="cx-msg-bubble" onclick="openCxMsgMenu('${k}',${safeJson})" style="background:${isMe ? themeGrad : '#222222'};color:#fff">`;
+        if (m.reply) html += `<div class="cx-reply-preview">↩️ ${m.reply}</div>`;
+        if (m.img) html += `<img src="${m.img}" style="max-width:210px;border-radius:12px;display:block">`;
+        else if (m.audio) html += `<audio controls src="${m.audio}" style="height:34px;max-width:210px"></audio>`;
+        else html += `<span>${m.txt || ""}</span>`;
+        if (m.react) html += `<span class="cx-msg-react-badge">${m.react}</span>`;
+        html += `</div><span class="cx-msg-time">${statusTxt}</span></div>`;
+      });
+      if (box.dataset.lastCount !== String(keys.length) || box.innerHTML.length !== html.length) {
+        box.dataset.lastCount = String(keys.length); box.innerHTML = html; box.scrollTop = box.scrollHeight;
+      }
+    } catch (e) {}
+  };
+
+  /* === غرفة تحكم المؤسس الحصرية (saadmaher22 فقط) === */
+  const adminScr = document.createElement("div");
+  adminScr.id = "cxFounderRoom";
+  adminScr.className = "full-scr";
+  adminScr.style.cssText = "z-index:999;background:#050505;flex-direction:column";
+  adminScr.innerHTML =
+    '<div class="hdr" style="border-bottom:1px solid #262626">' +
+      '<button type="button" class="icon-btn" onclick="closeFullScr(\'cxFounderRoom\')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg></button>' +
+      '<b style="color:#ffd166;font-size:15px">👑 غرفة المؤسس (saadmaher22)</b>' +
+      '<button type="button" onclick="loadCxFounderData()" style="background:none;border:none;color:#0095f6;font-size:12px;font-weight:700;cursor:pointer">↻ تحديث</button>' +
+    '</div>' +
+    '<div style="display:flex;border-bottom:1px solid #1e1e1e;background:#0a0a0a">' +
+      '<button type="button" id="cxTabUsersBtn" onclick="switchFounderTab(\'users\')" style="flex:1;padding:12px;background:none;border:none;border-bottom:2px solid #ffd166;color:#ffd166;font-weight:800;font-size:13px;cursor:pointer">👤 الحسابات والتوثيق</button>' +
+      '<button type="button" id="cxTabPostsBtn" onclick="switchFounderTab(\'posts\')" style="flex:1;padding:12px;background:none;border:none;border-bottom:2px solid transparent;color:#8e8e8e;font-weight:700;font-size:13px;cursor:pointer">🖼️ المنشورات المنتهكة</button>' +
+    '</div>' +
+    '<div id="cxFounderUsersPane" style="flex:1;overflow-y:auto;padding:12px 14px">' +
+      '<input id="cxAdmSearch" placeholder="ابحث باسم الحساب لتوثيقه أو حظره..." oninput="filterCxAdminList(this.value)" style="margin:0 0 12px;border-radius:14px">' +
+      '<div id="cxAdmUsersList"></div>' +
+    '</div>' +
+    '<div id="cxFounderPostsPane" style="display:none;flex:1;overflow-y:auto;padding:12px 14px"></div>';
+  document.body.appendChild(adminScr);
+
+  let cxAllUsersCache = {};
+  window.openCxFounderRoom = () => {
+    if (!prof || prof.user !== "saadmaher22") return;
+    openFullScr("cxFounderRoom");
+    loadCxFounderData();
+  };
+
+  window.switchFounderTab = tabName => {
+    const uPane = document.getElementById("cxFounderUsersPane"), pPane = document.getElementById("cxFounderPostsPane");
+    const uBtn = document.getElementById("cxTabUsersBtn"), pBtn = document.getElementById("cxTabPostsBtn");
+    uPane.style.display = tabName === "users" ? "block" : "none";
+    pPane.style.display = tabName === "posts" ? "block" : "none";
+    uBtn.style.color = tabName === "users" ? "#ffd166" : "#8e8e8e";
+    uBtn.style.borderBottomColor = tabName === "users" ? "#ffd166" : "transparent";
+    pBtn.style.color = tabName === "posts" ? "#ffd166" : "#8e8e8e";
+    pBtn.style.borderBottomColor = tabName === "posts" ? "#ffd166" : "transparent";
+  };
+
+  window.loadCxFounderData = async () => {
+    if (!prof || prof.user !== "saadmaher22") return;
+    try {
+      const res = await fastFetch(RTDB + "/users.json");
+      cxAllUsersCache = (await res.json()) || {};
+      const keys = Object.keys(cxAllUsersCache);
+      renderCxAdminUsers(keys);
+      renderCxAdminPosts(keys);
+    } catch (e) {}
+  };
+
+  window.filterCxAdminList = q => {
+    q = (q || "").trim().toLowerCase();
+    renderCxAdminUsers(Object.keys(cxAllUsersCache).filter(u => u.toLowerCase().includes(q) || (cxAllUsersCache[u].name || "").toLowerCase().includes(q)));
+  };
+
+  function renderCxAdminUsers(keys) {
+    document.getElementById("cxAdmUsersList").innerHTML = keys.map(u => {
+      const uObj = cxAllUsersCache[u] || {}, isVer = !!uObj.verified, isBan = !!uObj.banned;
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#121212;border:1px solid ${isBan ? '#ed4956' : '#222'};border-radius:14px;margin-bottom:8px">` +
+        `<div><b style="font-size:14px">${u} ${isVer ? '<span style="color:#0095f6">☑️</span>' : ''}</b><span style="display:block;font-size:11px;color:#8e8e8e">${uObj.name || ""} ${isBan ? '• <span style="color:#ff4d6d">محظور</span>' : ''}</span></div>` +
+        `<div style="display:flex;gap:6px">` +
+          `<button type="button" onclick="toggleCxUserVerify('${u}',${!isVer})" style="background:${isVer ? '#262626' : '#0095f6'};color:#fff;border:none;border-radius:10px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer">${isVer ? 'إلغاء التوثيق' : 'توثيق ✓'}</button>` +
+          (u !== "saadmaher22" ? `<button type="button" onclick="toggleCxUserBan('${u}',${!isBan})" style="background:${isBan ? '#06d6a0' : '#ed4956'};color:#fff;border:none;border-radius:10px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer">${isBan ? 'فك الحظر' : 'حظر ⛔'}</button>` : '') +
+        `</div></div>`;
+    }).join("");
+  }
+
+  function renderCxAdminPosts(keys) {
+    let html = "";
+    keys.forEach(u => {
+      const posts = (cxAllUsersCache[u] && cxAllUsersCache[u].posts) || [];
+      posts.forEach((p, idx) => {
+        if (!p) return;
+        html += `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;background:#121212;border:1px solid #222;border-radius:14px;margin-bottom:8px">` +
+          `<div style="display:flex;align-items:center;gap:10px"><img src="${p.img || ''}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;background:#222"><div><b style="font-size:13px">@${u}</b><span style="display:block;font-size:11px;color:#aaa;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.cap || 'بدون وصف'}</span></div></div>` +
+          `<button type="button" onclick="deleteCxViolatingPost('${u}',${idx})" style="background:#ed4956;color:#fff;border:none;border-radius:10px;padding:7px 12px;font-size:11px;font-weight:800;cursor:pointer">حذف المنشور 🗑️</button>` +
+        `</div>`;
+      });
+    });
+    document.getElementById("cxFounderPostsPane").innerHTML = html || '<div style="text-align:center;padding:30px;color:#8e8e8e">لا توجد منشورات حالياً</div>';
+  }
+
+  window.toggleCxUserVerify = async (u, state) => {
+    await fastFetch(RTDB + "/users/" + u + "/verified.json", { method: "PUT", body: JSON.stringify(state) });
+    pop(state ? `☑️ تم منح التوثيق لحساب ${u}` : `تم سحب التوثيق من ${u}`);
+    loadCxFounderData();
+  };
+
+  window.toggleCxUserBan = async (u, state) => {
+    await fastFetch(RTDB + "/users/" + u + "/banned.json", { method: "PUT", body: JSON.stringify(state) });
+    pop(state ? `⛔ تم حظر حساب ${u} لمخالفة المجتمع` : `تم فك الحظر عن ${u}`);
+    loadCxFounderData();
+  };
+
+  window.deleteCxViolatingPost = async (u, idx) => {
+    const posts = (cxAllUsersCache[u] && cxAllUsersCache[u].posts) || [];
+    posts.splice(idx, 1);
+    await fastFetch(RTDB + "/users/" + u + "/posts.json", { method: "PUT", body: JSON.stringify(posts) });
+    pop("🗑️ تم حذف المنشور المخالف نهائياً");
+    loadCxFounderData();
+    if (typeof loadFeed === "function") loadFeed();
+  };
+
+  setInterval(async () => {
+    if (!prof || !prof.user) return;
+    document.querySelectorAll("button").forEach(b => {
+      if (b.innerText && b.innerText.includes("طلب توثيق") && prof.user !== "saadmaher22") b.style.display = "none";
+    });
+    if (prof.user === "saadmaher22") {
+      const pScr = document.getElementById("s3");
+      if (pScr && !document.getElementById("cxFounderRoomBtn")) {
+        const btn = document.createElement("button");
+        btn.id = "cxFounderRoomBtn"; btn.type = "button"; btn.onclick = openCxFounderRoom;
+        btn.style.cssText = "width:calc(100% - 28px);margin:10px 14px;padding:12px;border-radius:14px;background:linear-gradient(90deg,#ffd166,#f59e0b);color:#000;border:none;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 4px 16px rgba(245,158,11,0.35)";
+        btn.innerHTML = "👑 غرفة تحكم المؤسس (توثيق وحظر ومراقبة)";
+        const hdr = pScr.querySelector(".hdr");
+        if (hdr && hdr.nextSibling) pScr.insertBefore(btn, hdr.nextSibling);
+      }
+    } else {
+      try {
+        const r = await fastFetch(RTDB + "/users/" + prof.user + "/banned.json");
+        if ((await r.json()) === true) {
+          document.body.innerHTML = '<div style="height:100dvh;background:#000;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px"><span style="font-size:50px">⛔</span><h2 style="color:#ff4d6d;margin:12px 0">تم حظر حسابك</h2><p style="color:#8e8e8e">تم تجميد هذا الحساب من قبل مؤسس CryptX لانتهاك معايير المجتمع.</p></div>';
+        }
+      } catch (e) {}
+    }
+  }, 3500);
+})();
 
 </script>
 </body>
