@@ -1135,6 +1135,141 @@ openPostModal = async function(owner, idx) {
     acts.appendChild(dBtn);
   }
 };
+/* === ترقية شاشة المتابعين المطابقة لإنستغرام + إصلاح المستخدم غير موجود + حالة الرسائل وعرض الصور === */
+(function installFullFollowScreen() {
+  const scr = document.createElement("div");
+  scr.id = "igFollowScr";
+  scr.className = "full-scr";
+  scr.style.zIndex = "950";
+  scr.innerHTML = '<div class="hdr"><button type="button" class="icon-btn" onclick="closeFullScr(\'igFollowScr\')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button><b id="igfUserTitle" dir="ltr" style="font-size:16px"></b><span style="width:24px"></span></div>' +
+    '<div style="display:flex;border-bottom:1px solid #262626"><div id="igfTabFollowers" onclick="switchIgFollowTab(\'followers\')" style="flex:1;text-align:center;padding:12px 0;font-size:14px;font-weight:700;cursor:pointer;border-bottom:2px solid #fff;color:#fff"></div><div id="igfTabFollowing" onclick="switchIgFollowTab(\'following\')" style="flex:1;text-align:center;padding:12px 0;font-size:14px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;color:#8e8e8e"></div></div>' +
+    '<div style="padding:10px 14px"><input id="igfSearchInp" placeholder="بحث" oninput="filterIgFollowList()" style="margin:0;border-radius:10px;background:#1a1a1a;border:none;padding:9px 14px;font-size:13px"></div>' +
+    '<div id="igfListBox" style="flex:1;overflow-y:auto;padding:0 14px 20px"></div>';
+  document.body.appendChild(scr);
+})();
+
+let igfTargetUser = "", igfMode = "followers", igfAllCache = {};
+
+async function openFollowList(type, targetU) {
+  igfTargetUser = targetU || prof.user;
+  igfMode = type === "following" ? "following" : "followers";
+  document.getElementById("igfUserTitle").innerText = igfTargetUser;
+  document.getElementById("igfSearchInp").value = "";
+  openFullScr("igFollowScr");
+  document.getElementById("igfListBox").innerHTML = "<div style='text-align:center;color:#8e8e8e;padding:30px;font-size:13px'>جاري التحميل...</div>";
+  igfAllCache = await getAllUsers();
+  const uObj = igfAllCache[igfTargetUser] || prof;
+  const fCount = (uObj.followers || []).filter(u => igfAllCache[u]).length;
+  const gCount = (uObj.following || []).filter(u => igfAllCache[u]).length;
+  document.getElementById("igfTabFollowers").innerText = fCount + " متابِعاً";
+  document.getElementById("igfTabFollowing").innerText = "تتابع " + gCount;
+  renderIgFollowRows();
+}
+
+function switchIgFollowTab(mode) {
+  igfMode = mode;
+  renderIgFollowRows();
+}
+
+function filterIgFollowList() {
+  renderIgFollowRows();
+}
+
+function renderIgFollowRows() {
+  const isF = igfMode === "followers";
+  document.getElementById("igfTabFollowers").style.borderBottomColor = isF ? "#fff" : "transparent";
+  document.getElementById("igfTabFollowers").style.color = isF ? "#fff" : "#8e8e8e";
+  document.getElementById("igfTabFollowing").style.borderBottomColor = !isF ? "#fff" : "transparent";
+  document.getElementById("igfTabFollowing").style.color = !isF ? "#fff" : "#8e8e8e";
+
+  const uObj = igfAllCache[igfTargetUser] || prof;
+  const q = (document.getElementById("igfSearchInp").value || "").trim().toLowerCase();
+  const rawList = (isF ? (uObj.followers || []) : (uObj.following || [])).filter(u => igfAllCache[u]);
+  const list = q ? rawList.filter(u => u.toLowerCase().includes(q) || ((igfAllCache[u].name || "").toLowerCase().includes(q))) : rawList;
+
+  const box = document.getElementById("igfListBox");
+  if (!list.length) {
+    box.innerHTML = "<div style='text-align:center;color:#8e8e8e;padding:40px 16px;font-size:13px'>لا يوجد مستخدمون في هذه القائمة</div>";
+    return;
+  }
+  const now = Date.now();
+  box.innerHTML = list.map(u => {
+    const item = igfAllCache[u];
+    const hasStory = (item.stories || []).some(s => now - s.ts < 86400000);
+    const iFollowHim = (prof.following || []).includes(u);
+    const ringStyle = hasStory ? "padding:2px;background:linear-gradient(45deg,#f09433,#dc2743,#bc1888);border-radius:50%" : "padding:2px;border:1px solid #262626;border-radius:50%";
+    const avHtml = item.av ? '<img src="' + item.av + '" style="width:46px;height:46px;border-radius:50%;object-fit:cover;display:block;border:2px solid #000">' : '<div style="width:46px;height:46px;border-radius:50%;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;border:2px solid #000">' + u.toUpperCase() + '</div>';
+    let btnHtml = "";
+    if (u !== prof.user) {
+      btnHtml = iFollowHim
+        ? '<button type="button" onclick="event.stopPropagation();closeFullScr(\'igFollowScr\');startChatWith(\'' + u + '\')" style="background:#262626;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">مراسلة</button>'
+        : '<button type="button" onclick="event.stopPropagation();quickFollowBack(\'' + u + '\')" style="background:#0095f6;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">رد المتابعة</button>';
+    }
+    return '<div onclick="closeFullScr(\'igFollowScr\');viewProfile(\'' + u + '\')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;cursor:pointer">' +
+      '<div style="display:flex;align-items:center;gap:12px"><div style="' + ringStyle + '">' + avHtml + '</div><div><b dir="ltr" style="font-size:14px;display:block">' + u + '</b><span style="font-size:12px;color:#8e8e8e">' + (item.name || u) + '</span></div></div>' +
+      '<div>' + btnHtml + '</div></div>';
+  }).join("");
+}
+
+async function quickFollowBack(targetU) {
+  const me = await getUserData(prof.user), them = await getUserData(targetU);
+  if (!me || !them) return pop("تعذر العثور على الحساب", 1);
+  me.following = me.following || []; them.followers = them.followers || [];
+  if (!me.following.includes(targetU)) me.following.push(targetU);
+  if (!them.followers.includes(prof.user)) them.followers.push(prof.user);
+  await setUserData(prof.user, me); await setUserData(targetU, them);
+  prof = { ...me, user: prof.user }; localStorage.setItem("cx_prof", JSON.stringify(prof));
+  igfAllCache[prof.user] = me; igfAllCache[targetU] = them;
+  renderIgFollowRows(); pop("تمت المتابعة");
+}
+
+/* === تحسين عرض الصور وحالة (تم الإرسال / تمت المشاهدة) داخل الدردشة === */
+setInterval(async () => {
+  const box = document.getElementById("chatBox");
+  if (!box || !curPeer || document.getElementById("roomBox").style.display !== "flex") return;
+  try {
+    const rid = [prof.user, curPeer].sort().join("_");
+    const res = await fastFetch(RTDB + "/chats/" + rid + ".json");
+    const msgs = await res.json();
+    if (!msgs) return;
+    const keys = Object.keys(msgs);
+    let lastMyKey = "";
+    keys.forEach(k => {
+      const m = msgs[k];
+      if (m.s === prof.user) lastMyKey = k;
+      else if (!m.seen) {
+        fastFetch(RTDB + "/chats/" + rid + "/" + k + "/seen.json", { method: "PUT", body: JSON.stringify(true) });
+      }
+    });
+    // تحديث عرض الصور وحالة آخر رسالة مرسلة
+    const bubbles = box.querySelectorAll(".msg");
+    keys.forEach((k, idx) => {
+      const m = msgs[k], b = bubbles[idx];
+      if (!b) return;
+      if (m.img && !b.querySelector("img.chat-pic")) {
+        b.innerHTML = '<img class="chat-pic" src="' + m.img + '" style="max-width:210px;border-radius:12px;display:block">';
+        b.style.padding = "4px";
+      }
+      if (m.react && !b.querySelector(".msg-react")) {
+        const sp = document.createElement("span");
+        sp.className = "msg-react";
+        sp.style.cssText = "display:inline-block;background:#1e1e1e;border:1px solid #333;border-radius:12px;padding:1px 6px;font-size:12px;margin-top:4px";
+        sp.innerText = m.react;
+        b.appendChild(sp);
+      }
+    });
+    let stTag = document.getElementById("lastMsgSeenTag");
+    if (!stTag) {
+      stTag = document.createElement("div");
+      stTag.id = "lastMsgSeenTag";
+      stTag.style.cssText = "font-size:11px;color:#8e8e8e;text-align:left;padding:2px 6px 8px;align-self:flex-start";
+    }
+    if (lastMyKey && msgs[lastMyKey]) {
+      stTag.innerText = msgs[lastMyKey].seen ? "تمت المشاهدة" : "تم الإرسال";
+      if (box.lastElementChild !== stTag) box.appendChild(stTag);
+    }
+  } catch (e) {}
+}, 2000);
 
 </script>
 </body>
