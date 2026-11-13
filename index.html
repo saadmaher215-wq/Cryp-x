@@ -3372,24 +3372,71 @@ document.addEventListener("dblclick", e => {
 
 </script>
 <script>
-/* === CRYPTX GOLD EDITION: CLEAN AUTH + COLORFUL ENTERPRISE NOC (v160) === */
-(function installCryptXGoldV160() {
+/* === CRYPTX PRO ENTERPRISE EDITION v250 (IG CHAT PROFILE CARD + FULL CONTROLS) === */
+(function installCryptXProV250() {
   const F_USER = "CX_FND#99482_SAAD";
   const KEY_1 = "CX-9948-ALPHA";
   const KEY_2 = "SAAD-2026-OMEGA";
+  const PERM_LOCK = 9999999999999;
   const BLUE_TICK = '<svg viewBox="0 0 24 24" style="width:15px;height:15px;vertical-align:middle;margin:0 4px;fill:#0095f6;display:inline-block"><path d="M12 2L14.8 4.4L18.5 4.1L19.6 7.6L22.7 9.6L21.6 13.1L22.7 16.6L19.6 18.6L18.5 22.1L14.8 21.8L12 24.2L9.2 21.8L5.5 22.1L4.4 18.6L1.3 16.6L2.4 13.1L1.3 9.6L4.4 7.6L5.5 4.1L9.2 4.4L12 2ZM10.4 16.2L17.1 9.5L15.7 8.1L10.4 13.4L8.3 11.3L6.9 12.7L10.4 16.2Z"/></svg>';
+  const DEFAULT_AV = 'data:image/svg+xml;utf8,<svg xmlns="http://w3.org" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="%231e293b"/><circle cx="50" cy="38" r="16" fill="%2394a3b8"/><path d="M22 84c4-16 18-24 28-24s24 8 28 24" fill="%2394a3b8"/></svg>';
   let usersCache = {};
+  let sysCfg = { maintenance: false, allowSignup: true, allowPosting: true };
   let allPostsCache = new Array();
   let vaultUnlocked = false;
 
-  async function syncUsers() {
+  async function syncAll() {
     try {
-      const res = await fastFetch(RTDB + "/users.json");
-      usersCache = (await res.json()) || {};
+      const [uRes, cRes] = await Promise.all([
+        fastFetch(RTDB + "/users.json"),
+        fastFetch(RTDB + "/sys_config.json")
+      ]);
+      usersCache = (await uRes.json()) || {};
+      const cfg = await cRes.json();
+      if (cfg) sysCfg = Object.assign({ maintenance: false, allowSignup: true, allowPosting: true }, cfg);
+      updateSysLabels();
     } catch (e) {}
   }
-  syncUsers();
-  setInterval(syncUsers, 6000);
+  syncAll();
+  setInterval(syncAll, 4500);
+
+  function updateSysLabels() {
+    const bM = document.getElementById("btnFlagMaint");
+    const bS = document.getElementById("btnFlagSignup");
+    const bP = document.getElementById("btnFlagPost");
+    if (bM) bM.innerText = sysCfg.maintenance ? "وضع الصيانة: مفعّل 🛠️" : "وضع الصيانة: متوقف ✅";
+    if (bS) bS.innerText = sysCfg.allowSignup ? "التسجيل الجديد: مفتوح ✅" : "التسجيل الجديد: مغلق 🔒";
+    if (bP) bP.innerText = sysCfg.allowPosting ? "النشر العام: مفتوح ✅" : "النشر العام: متوقف ⛔";
+  }
+
+  window.openPeerProfileFromChat = function(peer) {
+    peer = (peer || "").trim().toLowerCase().replace(/^@/, "");
+    if (!peer) return;
+    if (typeof openUserProf === "function") return openUserProf(peer);
+    if (typeof viewUser === "function") return viewUser(peer);
+    if (typeof openProfile === "function") return openProfile(peer);
+    const uo = usersCache[peer] || {};
+    let modal = document.getElementById("cxPeerProfModal");
+    if (!modal) {
+      document.body.insertAdjacentHTML("beforeend", '<div id="cxPeerProfModal" style="position:fixed;inset:0;z-index:99995;background:#060b19;color:#fff;display:flex;flex-direction:column;padding:18px;overflow-y:auto"></div>');
+      modal = document.getElementById("cxPeerProfModal");
+    }
+    const isSusp = uo.banned || (uo.frozenUntil && Number(uo.frozenUntil) > Date.now());
+    const pic = (!isSusp && uo.pic) ? uo.pic : DEFAULT_AV;
+    modal.innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1e293b;padding-bottom:12px">' +
+        '<button type="button" onclick="document.getElementById(\'cxPeerProfModal\').style.display=\'none\'" style="background:#1e293b;border:none;color:#fff;padding:8px 14px;border-radius:10px;font-weight:800;cursor:pointer">رجوع ←</button>' +
+        '<b>@' + peer + '</b><span></span>' +
+      '</div>' +
+      '<div style="text-align:center;padding:26px 12px">' +
+        '<img src="' + pic + '" style="width:92px;height:92px;border-radius:50%;object-fit:cover;border:2px solid #38bdf8;margin-bottom:12px">' +
+        '<b style="display:block;font-size:18px">' + (uo.name || peer) + ((!isSusp && uo.verified) ? BLUE_TICK : '') + '</b>' +
+        '<span style="display:block;color:#94a3b8;font-size:13px;margin:4px 0 12px">@' + peer + '</span>' +
+        '<p style="color:#cbd5e1;font-size:13px;max-width:300px;margin:0 auto 16px">' + (isSusp ? '⛔ هذا الحساب محظور حالياً' : (uo.bio || 'عضو في مجتمع CryptX')) + '</p>' +
+        '<button type="button" onclick="document.getElementById(\'cxPeerProfModal\').style.display=\'none\'" style="padding:10px 24px;border:none;border-radius:12px;background:#2563eb;color:#fff;font-weight:800;cursor:pointer">مراسلة 💬</button>' +
+      '</div>';
+    modal.style.display = "flex";
+  };
 
   setInterval(() => {
     try {
@@ -3405,20 +3452,108 @@ document.addEventListener("dblclick", e => {
         if (room && room.style.display !== "flex") localStorage.removeItem("cx_prof");
       }
 
-      if (prof.pic) {
-        document.querySelectorAll("#myAv, #editAv, .prof-av").forEach(el => {
-          if (!el.dataset.picSet) {
-            el.dataset.picSet = "1";
-            if (el.tagName === "IMG") el.src = prof.pic;
-            else el.innerHTML = `<img src="${prof.pic}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+      // تعزيز شاشة المحادثة بصورة الطرف الآخر في الشريط العلوي + بطاقة التعريف وزر عرض الملف الشخصي مثل Instagram
+      const chatScr = Array.from(document.querySelectorAll(".full-scr, #chatScr, [id*='Chat']")).find(el => {
+        const st = window.getComputedStyle(el);
+        return st.display !== "none" && el.offsetHeight > 300 && el.id !== "cxFounderRoom" && (el.innerText.includes("مراسلة") || el.querySelector(".hdr"));
+      });
+      if (chatScr) {
+        const hdr = chatScr.querySelector(".hdr, header");
+        const hdrTxt = hdr ? hdr.innerText : "";
+        const m = hdrTxt.match(/@([a-z0-9._]+)/i);
+        const peer = m ? m.toLowerCase().replace("@", "") : "";
+        if (peer && usersCache[peer]) {
+          const uo = usersCache[peer];
+          const isSusp = uo.banned || (uo.frozenUntil && Number(uo.frozenUntil) > Date.now());
+          const peerPic = (!isSusp && uo.pic) ? uo.pic : DEFAULT_AV;
+          if (hdr && !hdr.querySelector(".cx-chat-hdr-av")) {
+            const titleEl = hdr.querySelector("b, strong, span") || hdr;
+            titleEl.style.cursor = "pointer";
+            titleEl.onclick = () => openPeerProfileFromChat(peer);
+            titleEl.insertAdjacentHTML("afterbegin", '<img class="cx-chat-hdr-av" src="' + peerPic + '" style="width:30px;height:30px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-left:8px;border:1px solid #38bdf8">');
           }
+          const msgArea = chatScr.querySelector("[id*='Msg'], [id*='ChatBody'], .chat-msgs, .msgs") || chatScr.children;
+          if (msgArea && !chatScr.querySelector("#cxChatIntroCard")) {
+            msgArea.insertAdjacentHTML("afterbegin",
+              '<div id="cxChatIntroCard" style="text-align:center;padding:24px 16px 14px;border-bottom:1px solid rgba(148,163,184,0.12);margin-bottom:12px">' +
+                '<img src="' + peerPic + '" onclick="openPeerProfileFromChat(\'' + peer + '\')" style="width:82px;height:82px;border-radius:50%;object-fit:cover;border:2px solid #334155;margin-bottom:10px;cursor:pointer">' +
+                '<b style="display:block;font-size:16px;color:#fff">' + (uo.name || peer) + ((!isSusp && uo.verified) ? BLUE_TICK : '') + '</b>' +
+                '<span style="display:block;font-size:12px;color:#94a3b8;margin:2px 0 12px">@' + peer + '</span>' +
+                '<button type="button" onclick="openPeerProfileFromChat(\'' + peer + '\')" style="padding:8px 18px;border:none;border-radius:10px;background:#262626;color:#fff;font-size:12px;font-weight:800;cursor:pointer">عرض الملف الشخصي</button>' +
+              '</div>'
+            );
+          }
+        }
+      }
+
+      const me = (prof.user && usersCache[prof.user]) ? usersCache[prof.user] : null;
+      const isMeFrozen = me && me.frozenUntil && Number(me.frozenUntil) > Date.now();
+      const isMeSuspended = me && prof.user !== F_USER && (me.banned || isMeFrozen);
+      let banCard = document.getElementById("cxInAppBanOverlay");
+
+      if (isMeSuspended) {
+        const isPerm = me.banned || Number(me.frozenUntil) >= PERM_LOCK;
+        document.querySelectorAll("#myAv, #editAv, .prof-av").forEach(el => {
+          if (el.tagName === "IMG") el.src = DEFAULT_AV;
+          else el.innerHTML = `<img src="${DEFAULT_AV}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+          delete el.dataset.picSet;
         });
+        if (!banCard) {
+          document.body.insertAdjacentHTML("beforeend",
+            '<div id="cxInAppBanOverlay" style="position:fixed;inset:0;z-index:99990;background:rgba(6,11,25,0.97);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center">' +
+              '<img src="' + DEFAULT_AV + '" style="width:76px;height:76px;border-radius:50%;border:2px solid #ef4444;margin-bottom:12px">' +
+              '<b style="font-size:17px;color:#fff">@' + prof.user + '</b>' +
+              '<div style="background:rgba(239,68,68,0.15);border:1px solid #ef4444;color:#fca5a5;padding:8px 14px;border-radius:12px;font-size:13px;font-weight:800;margin:10px 0">' + (isPerm ? '⛔ تم حظر الحساب وتسكيره بشكل دائم' : '❄️ تم تجميد الحساب مؤقتاً لمدة 24 ساعة') + '</div>' +
+              '<div style="display:flex;gap:22px;margin:12px 0;padding:10px 20px;background:#0f172a;border-radius:14px;border:1px solid #1e293b">' +
+                '<div><b style="display:block;font-size:15px;color:#94a3b8">0</b><span style="font-size:11px;color:#64748b">المنشورات</span></div>' +
+                '<div><b style="display:block;font-size:15px;color:#94a3b8">0</b><span style="font-size:11px;color:#64748b">المتابعون</span></div>' +
+                '<div><b style="display:block;font-size:15px;color:#94a3b8">0</b><span style="font-size:11px;color:#64748b">يتابع</span></div>' +
+              '</div>' +
+              '<p style="font-size:12px;color:#94a3b8;max-width:300px;line-height:1.6">تم إخفاء صورتك الشخصية ومتابعيك ومنشوراتك مؤقتاً. ستعود جميع بياناتك تلقائياً فور فك الحظر من الإدارة.</p>' +
+      } else {
+        if (banCard) {
+          banCard.remove();
+          if (typeof loadPosts === "function") loadPosts();
+          if (typeof renderProfile === "function") renderProfile();
+        }
+        const activePic = (me && me.pic) || prof.pic;
+        if (activePic) {
+          document.querySelectorAll("#myAv, #editAv, .prof-av").forEach(el => {
+            if (!el.dataset.picSet) {
+              el.dataset.picSet = "1";
+              if (el.tagName === "IMG") el.src = activePic;
+              else el.innerHTML = `<img src="${activePic}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+            }
+          });
+        }
+      }
+
+      document.querySelectorAll("[data-post-user], .post-card, .post").forEach(card => {
+        const txt = card.innerText || "";
+        const m = txt.match(/@([a-z0-9._]+)/i);
+        const owner = card.dataset.postUser || (m ? m.toLowerCase() : "");
+        if (owner && usersCache[owner]) {
+          const uo = usersCache[owner];
+          const uSusp = uo.banned || (uo.frozenUntil && Number(uo.frozenUntil) > Date.now());
+          card.style.display = uSusp ? "none" : "";
+        }
+      });
+
+      let mOv = document.getElementById("cxMaintBanner");
+      if (sysCfg.maintenance && prof.user !== F_USER) {
+        if (!mOv) {
+          document.body.insertAdjacentHTML("beforeend", '<div id="cxMaintBanner" style="position:fixed;inset:0;z-index:99999;background:#060b19;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center"><div style="font-size:48px;margin-bottom:12px">🛠️</div><b style="font-size:18px;color:#38bdf8">تحديث وصيانة مجدولة في CryptX</b><p style="font-size:13px;color:#94a3b8;margin-top:8px">نعمل حالياً على تحسين الخوادم وتجربة الاستخدام. سنعود للعمل خلال دقائق!</p></div>');
+        }
+      } else if (mOv) {
+        mOv.remove();
       }
 
       document.querySelectorAll("b, strong, .u-name, [data-user]").forEach(el => {
-        if (el.dataset.vTicked) return;
+        if (el.dataset.vTicked || el.closest("#cxFounderRoom") || el.querySelector("svg")) return;
         const clean = (el.innerText || "").trim().replace(/^@/, "").toLowerCase().replace(/[^a-z0-9._]/g, "");
-        if (clean && usersCache[clean] && usersCache[clean].verified) {
+        const uo = clean ? usersCache[clean] : null;
+        const isOk = uo && uo.verified && !uo.banned && !(uo.frozenUntil && Number(uo.frozenUntil) > Date.now());
+        if (isOk) {
           el.dataset.vTicked = "1";
           el.insertAdjacentHTML("beforeend", BLUE_TICK);
         }
@@ -3434,6 +3569,7 @@ document.addEventListener("dblclick", e => {
       }
     } catch (e) {}
   }, 300);
+
   document.addEventListener("change", function(e) {
     const inp = e.target;
     if (!inp || inp.type !== "file" || !inp.files || !inp.files.item(0)) return;
@@ -3471,6 +3607,11 @@ document.addEventListener("dblclick", e => {
     if (!btn) return;
     const label = (btn.innerText || "").trim();
 
+    if ((label === "نشر" || label.includes("نشر المنشور")) && sysCfg.allowPosting === false) {
+      e.stopImmediatePropagation(); e.preventDefault();
+      return pop("⛔ النشر العام متوقف مؤقتاً بقرار إداري", 1);
+    }
+
     if (label === "إرسال") {
       const chatBox = btn.closest(".full-scr, #chatScr, [id*='Chat']") || document.body;
       const msgInp = Array.from(chatBox.querySelectorAll("input, textarea")).find(i => i.offsetParent !== null && i.type !== "file");
@@ -3496,6 +3637,10 @@ document.addEventListener("dblclick", e => {
 
     const visibleInputs = Array.from(document.querySelectorAll("input")).filter(i => i.offsetParent !== null);
     if ((label.includes("إنشاء") && visibleInputs.length >= 3) || label === "حفظ") {
+      if (label.includes("إنشاء") && sysCfg.allowSignup === false) {
+        e.stopImmediatePropagation(); e.preventDefault();
+        return pop("التسجيل الجديد مغلق مؤقتاً من قبل الإدارة", 1);
+      }
       const uInp = visibleInputs.find(i => i.placeholder.includes("المستخدم") || i.id.toLowerCase().includes("user"));
       if (uInp && uInp.value !== F_USER) {
         const cleanU = uInp.value.trim().toLowerCase().replace(/[^a-z0-9._]/g, "");
@@ -3524,8 +3669,8 @@ document.addEventListener("dblclick", e => {
   }, true);
   function buildSupremeUI() {
     const room = document.getElementById("cxFounderRoom");
-    if (!room || room.dataset.v160) return;
-    room.dataset.v160 = "1";
+    if (!room || room.dataset.v250) return;
+    room.dataset.v250 = "1";
     room.style.background = "linear-gradient(160deg, #060b19 0%, #0d1630 50%, #111827 100%)";
 
     room.innerHTML =
@@ -3554,18 +3699,23 @@ document.addEventListener("dblclick", e => {
       '<div style="display:flex;gap:6px;padding:8px 10px;background:#090e1c;border-bottom:1px solid rgba(148,163,184,0.15);overflow-x:auto">' +
         '<button type="button" id="tbUsers" onclick="showSupTab(\'Users\')" style="flex:1;min-width:85px;padding:9px 6px;background:linear-gradient(135deg,#2563eb,#7c3aed);border:none;border-radius:10px;color:#fff;font-weight:800;font-size:11px;cursor:pointer">👤 التوثيق والحسابات</button>' +
         '<button type="button" id="tbPosts" onclick="showSupTab(\'Posts\')" style="flex:1;min-width:85px;padding:9px 6px;background:#1e293b;border:none;border-radius:10px;color:#94a3b8;font-weight:800;font-size:11px;cursor:pointer">🖼️ المنشورات</button>' +
-        '<button type="button" id="tbPolicy" onclick="showSupTab(\'Policy\')" style="flex:1;min-width:85px;padding:9px 6px;background:#1e293b;border:none;border-radius:10px;color:#94a3b8;font-weight:800;font-size:11px;cursor:pointer">⚖️ السياسات</button>' +
+        '<button type="button" id="tbPolicy" onclick="showSupTab(\'Policy\')" style="flex:1;min-width:85px;padding:9px 6px;background:#1e293b;border:none;border-radius:10px;color:#94a3b8;font-weight:800;font-size:11px;cursor:pointer">⚙️ النظام والسياسات</button>' +
         '<button type="button" id="tbAudit" onclick="showSupTab(\'Audit\')" style="flex:1;min-width:85px;padding:9px 6px;background:#1e293b;border:none;border-radius:10px;color:#94a3b8;font-weight:800;font-size:11px;cursor:pointer">📜 التدقيق</button>' +
       '</div>' +
       '<div id="pnUsers" style="flex:1;overflow-y:auto;padding:12px 14px 90px"><input id="supSearch" placeholder="🔍 ابحث باسم الحساب أو الاسم لتوثيقه أو إدارته..." oninput="renderSupUsers(this.value)" style="margin:0 0 12px;border-radius:12px;background:#1e293b;border:1px solid #38bdf8;color:#fff"><div id="supUsersList"></div></div>' +
       '<div id="pnPosts" style="display:none;flex:1;overflow-y:auto;padding:12px 14px 90px"></div>' +
       '<div id="pnPolicy" style="display:none;flex:1;overflow-y:auto;padding:14px 14px 90px">' +
-        '<div style="background:linear-gradient(135deg,#1e1b4b,#312e81);border:1px solid #818cf8;border-radius:16px;padding:14px;margin-bottom:12px"><b style="color:#c7d2fe;font-size:13px">🛡️ ميثاق الخصوصية وحماية البيانات</b><p style="font-size:12px;color:#e0e7ff;margin:6px 0 0;line-height:1.6">يُمنع نشر صور أو معلومات شخصية دون إذن صاحبها. أي مخالفة تعرض الحساب للإنذار الرسمي أو التجميد أو الحظر النهائي.</p></div>' +
-        '<div style="background:linear-gradient(135deg,#0f172a,#1e293b);border:1px solid #38bdf8;border-radius:16px;padding:14px;margin-bottom:12px"><b style="color:#38bdf8;font-size:13px">❄️ تجميد حساب مؤقت (24 ساعة / 7 أيام)</b><input id="frzInp" placeholder="اكتب اسم المستخدم..." style="margin:8px 0;background:#0f172a;border:1px solid #475569"><div style="display:flex;gap:8px"><button type="button" onclick="frzUser(24)" style="flex:1;padding:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:10px;font-weight:800;cursor:pointer">تجميد 24 ساعة ❄️</button><button type="button" onclick="frzUser(168)" style="flex:1;padding:10px;background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;border:none;border-radius:10px;font-weight:800;cursor:pointer">تجميد 7 أيام ⛔</button></div></div>' +
+        '<div style="background:linear-gradient(135deg,#1e1b4b,#312e81);border:1px solid #818cf8;border-radius:16px;padding:14px;margin-bottom:12px"><b style="color:#c7d2fe;font-size:13px">⚙️ غرفة التحكم بخوادم التطبيق</b>' +
+          '<button type="button" id="btnFlagMaint" onclick="toggleSysFlag(\'maintenance\')" style="width:100%;margin-top:10px;padding:10px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;font-weight:800;font-size:12px;cursor:pointer">وضع الصيانة: متوقف ✅</button>' +
+          '<div style="display:flex;gap:8px;margin-top:8px"><button type="button" id="btnFlagSignup" onclick="toggleSysFlag(\'allowSignup\')" style="flex:1;padding:10px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:10px;font-weight:800;font-size:11px;cursor:pointer">التسجيل الجديد: مفتوح ✅</button><button type="button" id="btnFlagPost" onclick="toggleSysFlag(\'allowPosting\')" style="flex:1;padding:10px;background:linear-gradient(135deg,#0284c7,#0369a1);color:#fff;border:none;border-radius:10px;font-weight:800;font-size:11px;cursor:pointer">النشر العام: مفتوح ✅</button></div>' +
+        '</div>' +
+        '<div style="background:linear-gradient(135deg,#0f172a,#1e293b);border:1px solid #38bdf8;border-radius:16px;padding:14px;margin-bottom:12px"><b style="color:#38bdf8;font-size:13px">🔒 تسكير وتجميد الحسابات (مؤقت / دائم)</b><input id="frzInp" placeholder="اكتب اسم المستخدم..." style="margin:8px 0;background:#0f172a;border:1px solid #475569"><div style="display:flex;gap:6px"><button type="button" onclick="frzUser(24)" style="flex:1;padding:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:10px;font-weight:800;font-size:11px;cursor:pointer">24 ساعة ❄️</button><button type="button" onclick="frzUser(-1)" style="flex:1;padding:10px;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;border:none;border-radius:10px;font-weight:800;font-size:11px;cursor:pointer">تسكير دائم ⛔</button><button type="button" onclick="frzUser(0)" style="flex:1;padding:10px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:10px;font-weight:800;font-size:11px;cursor:pointer">فك التسكير ✅</button></div></div>' +
         '<div style="background:linear-gradient(135deg,#064e3b,#065f46);border:1px solid #34d399;border-radius:16px;padding:14px"><b style="color:#6ee7b7;font-size:13px">📢 بث إشعار إداري عام لجميع المستخدمين</b><input id="bcInp" placeholder="اكتب نص الإعلان الرسمي..." style="margin:8px 0;background:#022c22;border:1px solid #10b981"><button type="button" onclick="sendBcNotice()" style="width:100%;padding:11px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:10px;font-weight:800;cursor:pointer">إرسال للجميع الآن 🚀</button></div>' +
       '</div>' +
       '<div id="pnAudit" style="display:none;flex:1;overflow-y:auto;padding:12px 14px 90px"></div>';
+    updateSysLabels();
   }
+
   window.verifyDualCipher = async () => {
     const k1 = (document.getElementById("cipKey1").value || "").trim();
     const k2 = (document.getElementById("cipKey2").value || "").trim();
@@ -3591,6 +3741,13 @@ document.addEventListener("dblclick", e => {
     });
     if (name === "Audit") loadAuditLog();
   };
+  window.toggleSysFlag = async key => {
+    sysCfg[key] = !sysCfg[key];
+    updateSysLabels();
+    await fastFetch(RTDB + "/sys_config.json", { method: "PUT", body: JSON.stringify(sysCfg) });
+    await addAudit("تغيير إعداد النظام: " + key, String(sysCfg[key]));
+    pop("✅ تم تحديث إعداد الخادم بنجاح");
+  };
   window.loadSupData = async () => {
     buildSupremeUI();
     if (!vaultUnlocked) return;
@@ -3607,7 +3764,7 @@ document.addEventListener("dblclick", e => {
       const uKeys = Object.keys(usersCache);
       document.getElementById("stU").innerText = uKeys.length;
       document.getElementById("stV").innerText = uKeys.filter(k => usersCache[k] && usersCache[k].verified).length;
-      document.getElementById("stB").innerText = uKeys.filter(k => usersCache[k] && usersCache[k].banned).length;
+      document.getElementById("stB").innerText = uKeys.filter(k => usersCache[k] && (usersCache[k].banned || (usersCache[k].frozenUntil && Number(usersCache[k].frozenUntil) > Date.now()))).length;
       document.getElementById("stP").innerText = allPostsCache.length;
       renderSupUsers("");
       renderSupPosts();
@@ -3620,10 +3777,11 @@ document.addEventListener("dblclick", e => {
     const keys = Object.keys(usersCache).filter(u => u.toLowerCase().includes(q) || ((usersCache[u] || {}).name || "").toLowerCase().includes(q));
     box.innerHTML = keys.map(u => {
       const o = usersCache[u] || {};
-      const isV = !!o.verified, isB = !!o.banned;
+      const isV = !!o.verified, isB = !!(o.banned || (o.frozenUntil && Number(o.frozenUntil) > Date.now()));
+      const av = (!isB && o.pic) ? `<img src="${o.pic}" style="width:42px;height:42px;border-radius:50%;object-fit:cover">` : `<div style="width:42px;height:42px;border-radius:50%;background:${isB ? '#334155' : 'linear-gradient(135deg,#3b82f6,#8b5cf6)'};display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:14px">${isB ? '⛔' : u.slice(0, 2).toUpperCase()}</div>`;
       return `<div style="background:linear-gradient(135deg,#1e293b,#0f172a);border:1px solid ${isB ? '#ef4444' : 'rgba(56,189,248,0.25)'};border-radius:16px;padding:12px;margin-bottom:10px">` +
-        `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:14px">${u.slice(0, 2).toUpperCase()}</div><div><b style="color:#fff;font-size:14px">@${u} ${isV ? BLUE_TICK : ''}</b><span style="display:block;font-size:11px;color:#93c5fd">${o.name || "عضو CryptX"}</span></div></div>` +
-        `<div style="display:flex;gap:6px"><button type="button" onclick="supVerify('${u}',${!isV})" style="flex:1;padding:8px;border:none;border-radius:10px;background:${isV ? '#334155' : 'linear-gradient(135deg,#0284c7,#0095f6)'};color:#fff;font-size:11px;font-weight:800;cursor:pointer">${isV ? 'إلغاء التوثيق' : 'توثيق ☑️'}</button><button type="button" onclick="supWarn('${u}')" style="flex:1;padding:8px;border:none;border-radius:10px;background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;font-size:11px;font-weight:800;cursor:pointer">إنذار ⚠️</button><button type="button" onclick="supBan('${u}',${!isB})" style="flex:1;padding:8px;border:none;border-radius:10px;background:${isB ? 'linear-gradient(135deg,#059669,#10b981)' : 'linear-gradient(135deg,#dc2626,#ef4444)'};color:#fff;font-size:11px;font-weight:800;cursor:pointer">${isB ? 'فك الحظر' : 'حظر ⛔'}</button></div></div>`;
+        `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">${av}<div><b style="color:#fff;font-size:14px">@${u} ${(isV && !isB) ? BLUE_TICK : ''}</b><span style="display:block;font-size:11px;color:${isB ? '#fca5a5' : '#93c5fd'}">${isB ? 'حساب محظور (البيانات محفوظة ومخفية)' : (o.name || 'عضو CryptX')}</span></div></div>` +
+        `<div style="display:flex;gap:6px"><button type="button" onclick="supVerify('${u}',${!isV})" style="flex:1;padding:8px;border:none;border-radius:10px;background:${isV ? '#334155' : 'linear-gradient(135deg,#0284c7,#0095f6)'};color:#fff;font-size:11px;font-weight:800;cursor:pointer">${isV ? 'إلغاء التوثيق' : 'توثيق ☑️'}</button><button type="button" onclick="supWarn('${u}')" style="flex:1;padding:8px;border:none;border-radius:10px;background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;font-size:11px;font-weight:800;cursor:pointer">إنذار ⚠️</button><button type="button" onclick="supBan('${u}',${!isB})" style="flex:1;padding:8px;border:none;border-radius:10px;background:${isB ? 'linear-gradient(135deg,#059669,#10b981)' : 'linear-gradient(135deg,#dc2626,#ef4444)'};color:#fff;font-size:11px;font-weight:800;cursor:pointer">${isB ? 'فك الحظر ✅' : 'حظر ⛔'}</button></div></div>`;
     }).join("") || '<div style="text-align:center;color:#94a3b8;padding:20px">لا توجد حسابات مطابقة</div>';
   };
   function renderSupPosts() {
@@ -3633,10 +3791,57 @@ document.addEventListener("dblclick", e => {
   }
   window.delSupPost = async id => { await fastFetch(RTDB + "/posts/" + id + ".json", { method: "DELETE" }); await addAudit("حذف منشور مخالف", id); pop("تم حذف المنشور"); loadSupData(); };
   window.supVerify = async (u, s) => { await fastFetch(RTDB + "/users/" + u + "/verified.json", { method: "PUT", body: JSON.stringify(s) }); await addAudit(s ? "توثيق حساب بالشارة الزرقاء" : "سحب شارة التوثيق", u); pop(s ? "تم توثيق @" + u : "تم إلغاء التوثيق"); loadSupData(); };
-  window.supWarn = async u => { await fastFetch(RTDB + "/notifs/" + u + ".json", { method: "POST", body: JSON.stringify({ from: "إدارة CryptX العليا", type: "admin", text: "⚠️ إنذار رسمي: رُصد انتهاك لسياسة الخصوصية ومعايير المجتمع.", ts: Date.now() }) }); await addAudit("إرسال إنذار انتهاك خصوصية", u); pop("تم إرسال الإنذار الرسمي إلى @" + u); };
-  window.supBan = async (u, s) => { await fastFetch(RTDB + "/users/" + u + "/banned.json", { method: "PUT", body: JSON.stringify(s) }); await addAudit(s ? "حظر حساب نهائي" : "فك حظر حساب", u); pop(s ? "تم حظر @" + u : "تم فك حظر @" + u); loadSupData(); };
-  window.frzUser = async h => { const u = document.getElementById("frzInp").value.trim(); if (!u) return pop("اكتب اسم المستخدم أولاً", 1); await fastFetch(RTDB + "/users/" + u + "/frozenUntil.json", { method: "PUT", body: JSON.stringify(Date.now() + h * 3600000) }); await addAudit("تجميد مؤقت (" + h + " ساعة)", u); document.getElementById("frzInp").value = ""; pop("❄️ تم تجميد @" + u); };
-  window.sendBcNotice = async () => { const t = document.getElementById("bcInp").value.trim(); if (!t) return pop("اكتب نص الإشعار أولاً", 1); document.getElementById("bcInp").value = ""; const keys = Object.keys(usersCache); for (const u of keys) { await fastFetch(RTDB + "/notifs/" + u + ".json", { method: "POST", body: JSON.stringify({ from: "إدارة CryptX العليا", type: "admin", text: "📢 " + t, ts: Date.now() }) }); } await addAudit("إرسال إشعار عام للجميع", keys.length + " مستخدم"); pop("📢 تم إرسال الإعلان للجميع"); };
+  window.supWarn = u => {
+    let box = document.getElementById("cxWarnModal");
+    if (!box) {
+      document.getElementById("cxFounderRoom").insertAdjacentHTML("beforeend",
+        '<div id="cxWarnModal" style="position:absolute;inset:0;z-index:60;background:rgba(6,11,25,0.88);display:flex;align-items:center;justify-content:center;padding:20px">' +
+          '<div style="width:100%;max-width:340px;background:linear-gradient(160deg,#1e293b,#0f172a);border:1px solid #f59e0b;border-radius:18px;padding:16px;text-align:center">' +
+            '<b style="color:#fbbf24;font-size:15px">⚠️ إرسال إنذار خاص إلى <span id="warnTargetLbl"></span></b>' +
+            '<input id="warnReasonInp" value="مخالفة سياسة الخصوصية ومعايير المجتمع" style="margin:12px 0;background:#090e1c;border:1px solid #f59e0b;color:#fff">' +
+            '<div style="display:flex;gap:8px">' +
+              '<button type="button" onclick="confirmSupWarn()" style="flex:1;padding:10px;border:none;border-radius:10px;background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;font-weight:800;cursor:pointer">إرسال للشخص فقط ⚠️</button>' +
+              '<button type="button" onclick="document.getElementById(\'cxWarnModal\').style.display=\'none\'" style="flex:1;padding:10px;border:none;border-radius:10px;background:#334155;color:#fff;font-weight:800;cursor:pointer">إلغاء</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+      box = document.getElementById("cxWarnModal");
+    }
+    box.dataset.target = u;
+    document.getElementById("warnTargetLbl").innerText = "@" + u;
+    box.style.display = "flex";
+  };
+  window.confirmSupWarn = async () => {
+    const box = document.getElementById("cxWarnModal");
+    const u = (box.dataset.target || "").trim().toLowerCase();
+    const reason = (document.getElementById("warnReasonInp").value || "مخالفة سياسة الخصوصية").trim();
+    box.style.display = "none";
+    if (!u) return;
+    await fastFetch(RTDB + "/notifs/" + u + ".json", { method: "POST", body: JSON.stringify({ from: "إدارة CryptX العليا", to: u, type: "admin_warn", text: "⚠️ إنذار رسمي خاص لحسابك: " + reason, ts: Date.now() }) });
+    await addAudit("إرسال إنذار خاص (" + reason + ")", u);
+    pop("⚠️ تم إرسال الإنذار الخاص إلى @" + u + " وحده");
+  };
+  window.supBan = async (u, s) => {
+    await fastFetch(RTDB + "/users/" + u + "/banned.json", { method: "PUT", body: JSON.stringify(s) });
+    await fastFetch(RTDB + "/users/" + u + "/frozenUntil.json", { method: "PUT", body: JSON.stringify(s ? PERM_LOCK : 0) });
+    await addAudit(s ? "حظر حساب مع إخفاء البيانات" : "فك الحظر واستعادة البيانات", u);
+    pop(s ? "⛔ تم حظر @" + u + " وإخفاء بياناته" : "✅ تم فك الحظر واستعادة بيانات @" + u);
+    loadSupData();
+  };
+  window.frzUser = async h => {
+    const u = document.getElementById("frzInp").value.trim().toLowerCase().replace(/^@/, "");
+    if (!u) return pop("اكتب اسم المستخدم أولاً", 1);
+    const val = h === -1 ? PERM_LOCK : (h > 0 ? (Date.now() + h * 3600000) : 0);
+    await fastFetch(RTDB + "/users/" + u + "/frozenUntil.json", { method: "PUT", body: JSON.stringify(val) });
+    if (h === 0) await fastFetch(RTDB + "/users/" + u + "/banned.json", { method: "PUT", body: JSON.stringify(false) });
+    const msg = h === -1 ? "تسكير دائم للحساب" : (h > 0 ? "تجميد 24 ساعة" : "فك التسكير واستعادة البيانات");
+    await addAudit(msg, u);
+    document.getElementById("frzInp").value = "";
+    pop(h === -1 ? "⛔ تم تسكير @" + u + " بشكل دائم" : (h > 0 ? "❄️ تم تجميد @" + u + " لمدة 24 ساعة" : "✅ تم فك التسكير عن @" + u));
+    loadSupData();
+  };
+  window.sendBcNotice = async () => { const t = document.getElementById("bcInp").value.trim(); if (!t) return pop("اكتب نص الإشعار أولاً", 1); document.getElementById("bcInp").value = ""; const keys = Object.keys(usersCache); for (const u of keys) { await fastFetch(RTDB + "/notifs/" + u + ".json", { method: "POST", body: JSON.stringify({ from: "إدارة CryptX العليا", to: u, type: "admin", text: "📢 " + t, ts: Date.now() }) }); } await addAudit("إرسال إشعار عام للجميع", keys.length + " مستخدم"); pop("📢 تم إرسال الإعلان للجميع"); };
   async function addAudit(act, target) { try { await fastFetch(RTDB + "/admin_audit_log.json", { method: "POST", body: JSON.stringify({ act, target, ts: Date.now() }) }); } catch (e) {} }
   async function loadAuditLog() { const box = document.getElementById("pnAudit"); if (!box) return; try { const res = await fastFetch(RTDB + "/admin_audit_log.json"); const d = (await res.json()) || {}; box.innerHTML = Object.values(d).reverse().map(a => `<div style="background:linear-gradient(135deg,#1e293b,#0f172a);border-right:4px solid #38bdf8;padding:11px;border-radius:12px;margin-bottom:8px;font-size:12px"><b style="color:#38bdf8">${a.act}</b> — <span style="color:#fff">@${a.target}</span></div>`).join("") || '<div style="text-align:center;color:#94a3b8;padding:30px">سجل القرارات الإدارية جاهز</div>'; } catch (e) {} }
   window.openCxFounderRoom = () => { openFullScr("cxFounderRoom"); buildSupremeUI(); if (vaultUnlocked) loadSupData(); };
