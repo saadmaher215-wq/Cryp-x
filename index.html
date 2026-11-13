@@ -3846,6 +3846,162 @@ document.addEventListener("dblclick", e => {
   async function loadAuditLog() { const box = document.getElementById("pnAudit"); if (!box) return; try { const res = await fastFetch(RTDB + "/admin_audit_log.json"); const d = (await res.json()) || {}; box.innerHTML = Object.values(d).reverse().map(a => `<div style="background:linear-gradient(135deg,#1e293b,#0f172a);border-right:4px solid #38bdf8;padding:11px;border-radius:12px;margin-bottom:8px;font-size:12px"><b style="color:#38bdf8">${a.act}</b> — <span style="color:#fff">@${a.target}</span></div>`).join("") || '<div style="text-align:center;color:#94a3b8;padding:30px">سجل القرارات الإدارية جاهز</div>'; } catch (e) {} }
   window.openCxFounderRoom = () => { openFullScr("cxFounderRoom"); buildSupremeUI(); if (vaultUnlocked) loadSupData(); };
   window.loadCxFounderData = () => loadSupData();
+  /* === DM PRIVACY FILTER + CAMERA GALLERY PICKER v260 === */
+  function isActiveChatPeer(u, myUser) {
+    if (!u || u === F_USER || u === myUser) return false;
+    try {
+      const localList = JSON.parse(localStorage.getItem("cx_dm_peers_" + myUser) || "[]");
+      if (localList.includes(u)) return true;
+    } catch (e) {}
+    return false;
+  }
+
+  function rememberChatPeer(peer) {
+    const prof = JSON.parse(localStorage.getItem("cx_prof") || "{}");
+    const me = (prof.user || "").toLowerCase();
+    peer = (peer || "").toLowerCase().replace(/^@/, "");
+    if (!me || !peer || peer === F_USER || peer === me) return;
+    try {
+      const key = "cx_dm_peers_" + me;
+      const list = JSON.parse(localStorage.getItem(key) || "[]");
+      if (!list.includes(peer)) {
+        list.unshift(peer);
+        localStorage.setItem(key, JSON.stringify(list));
+      }
+    } catch (e) {}
+  }
+
+  let dmSyncDoneFor = "";
+  async function syncMyRealChats(myUser) {
+    if (!myUser || dmSyncDoneFor === myUser) return;
+    dmSyncDoneFor = myUser;
+    try {
+      const res = await fastFetch(RTDB + "/chats.json?shallow=true");
+      const pairs = Object.keys((await res.json()) || {});
+      pairs.forEach(pair => {
+        const parts = pair.split("_");
+        if (parts.includes(myUser)) {
+          const other = parts.find(p => p !== myUser);
+          if (other && other !== F_USER) rememberChatPeer(other);
+        }
+      });
+    } catch (e) {}
+  }
+
+  setInterval(() => {
+    try {
+      const prof = JSON.parse(localStorage.getItem("cx_prof") || "{}");
+      const myUser = (prof.user || "").toLowerCase();
+      if (myUser) syncMyRealChats(myUser);
+
+      // 1. تصفية قائمة الرسائل المباشرة: إخفاء الكل وإظهار المحادثات الفعلية أو نتائج البحث فقط
+      const dmScr = Array.from(document.querySelectorAll(".full-scr, [id*='Dm'], [id*='Msg'], [id*='Chat'], div")).find(el =>
+        el.offsetHeight > 300 && (el.innerText || "").includes("الرسائل المباشرة")
+      );
+      if (dmScr) {
+        const searchInp = dmScr.querySelector("input");
+        const query = searchInp ? searchInp.value.trim().toLowerCase().replace(/^@/, "") : "";
+        const rows = Array.from(dmScr.querySelectorAll("div")).filter(d =>
+          (d.innerText || "").includes("مراسلة") && (d.innerText || "").includes("@") && d.querySelectorAll("div").length <= 5
+        );
+        let visibleCount = 0;
+        rows.forEach(row => {
+          const m = (row.innerText || "").match(/@([a-z0-9._#]+)/i);
+          const u = m ? m[1].toLowerCase() : "";
+          if (u === F_USER.toLowerCase() || u === myUser) {
+            row.style.display = "none";
+            return;
+          }
+          const show = query ? u.includes(query) : isActiveChatPeer(u, myUser);
+          row.style.display = show ? "" : "none";
+          if (show) visibleCount++;
+        });
+        let emptyHint = dmScr.querySelector("#cxDmEmptyHint");
+        if (!emptyHint && rows.length > 0) {
+          rows[0].parentElement.insertAdjacentHTML("beforeend",
+            '<div id="cxDmEmptyHint" style="text-align:center;padding:40px 20px;color:#94a3b8;font-size:13px">💬 لا توجد محادثات بعد.<br><span style="font-size:11px;color:#64748b">ابحث عن اسم المستخدم في الأعلى لبدء مراسلته وسيظهر هنا تلقائياً.</span></div>'
+          );
+          emptyHint = dmScr.querySelector("#cxDmEmptyHint");
+        }
+        if (emptyHint) emptyHint.style.display = visibleCount === 0 ? "block" : "none";
+      }
+
+      // 2. ربط أيقونة الاستوديو في أسفل يمين الكاميرا لرفع الصور والفيديوهات
+      const camScr = Array.from(document.querySelectorAll(".full-scr, [id*='Cam'], [id*='Post'], div")).find(el =>
+        el.offsetHeight > 400 && (el.innerText || "").includes("إضافة صوت") && (el.innerText || "").includes("فلاتر")
+      );
+      if (camScr && !camScr.dataset.galWired) {
+        camScr.dataset.galWired = "1";
+        let galInp = document.getElementById("cxCamGalleryInput");
+        if (!galInp) {
+          galInp = document.createElement("input");
+          galInp.id = "cxCamGalleryInput";
+          galInp.type = "file";
+          galInp.accept = "image/*,video/*";
+          galInp.style.display = "none";
+          document.body.appendChild(galInp);
+
+          galInp.addEventListener("change", function() {
+            const file = this.files && this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async ev => {
+              const dataUrl = ev.target.result;
+              const isVid = file.type.startsWith("video/");
+              if (file.size > 6 * 1024 * 1024) {
+                return pop("حجم الملف كبير جداً، اختر صورة أو فيديو أقل من 6 ميجا", 1);
+              }
+              const cap = prompt("اكتب وصفاً للمنشور (اختياري):") || "";
+              const p = JSON.parse(localStorage.getItem("cx_prof") || "{}");
+              if (!p.user) return pop("سجل الدخول أولاً", 1);
+              pop("جاري رفع ونشر الملف... ⏳");
+              await fastFetch(RTDB + "/posts.json", {
+                method: "POST",
+                body: JSON.stringify({
+                  user: p.user,
+                  from: p.user,
+                  name: p.name || p.user,
+                  img: isVid ? "" : dataUrl,
+                  video: isVid ? dataUrl : "",
+                  cap: cap,
+                  txt: cap,
+                  ts: Date.now()
+                })
+              });
+              galInp.value = "";
+              pop("تم النشر بنجاح ✓");
+              document.querySelectorAll(".full-scr, [id*='Cam']").forEach(s => {
+                if ((s.innerText || "").includes("إضافة صوت")) s.style.display = "none";
+              });
+              if (typeof loadPosts === "function") loadPosts();
+            };
+            reader.readAsDataURL(file);
+          });
+        }
+
+        const bottomBtns = Array.from(camScr.querySelectorAll("button, div, span")).filter(el => {
+          const r = el.getBoundingClientRect();
+          return r.width >= 34 && r.width <= 75 && r.height >= 34 && r.height <= 75 && r.bottom > window.innerHeight - 130 && r.right > window.innerWidth - 110;
+        });
+        bottomBtns.forEach(b => {
+          b.style.cursor = "pointer";
+          b.onclick = e => {
+            e.stopImmediatePropagation();
+            e.preventDefault();
+            galInp.click();
+          };
+        });
+      }
+    } catch (e) {}
+  }, 350);
+
+  document.addEventListener("click", function(e) {
+    const row = e.target.closest("div, button");
+    if (row && (row.innerText || "").includes("مراسلة")) {
+      const m = (row.innerText || "").match(/@([a-z0-9._]+)/i);
+      if (m && m[1]) rememberChatPeer(m[1]);
+    }
+  }, true);
 })();
 </script>
 
