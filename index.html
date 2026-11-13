@@ -3883,5 +3883,40 @@ document.addEventListener("dblclick", e => {
 })();
 
 </script>
+<script>
+(function emergencyBootCryptX() {
+  const F_USER = "CX_FND#99482_SAAD";
+  const F_PASS = "CryptX_Founder_2026_Saad";
+
+  document.addEventListener("click", function(e) {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    const txt = btn.innerText || "";
+
+    if (txt.indexOf("تسجيل الدخول") !== -1) {
+      const inputs = document.querySelectorAll("input");
+      let uVal = "", pVal = "";
+      inputs.forEach(inp => {
+        if (inp.offsetParent !== null) {
+          if (inp.type === "password") pVal = inp.value.trim();
+          else uVal = inp.value.trim();
+        }
+      });
+
+      if (uVal === F_USER) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        if (pVal === F_PASS) {
+          const m = document.getElementById("cxFounder3FA");
+          if (m) m.style.display = "flex";
+          else if (typeof openCxFounderRoom === "function") openCxFounderRoom();
+        } else {
+          alert("كلمة مرور المدير غير صحيحة");
+        }
+      }
+    }
+  }, true);
+})();
+</script>
 </body>
 </html>
