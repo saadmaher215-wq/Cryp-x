@@ -3372,8 +3372,8 @@ document.addEventListener("dblclick", e => {
 
 </script>
 <script>
-/* === CRYPTX ENTERPRISE NOC + DUAL-KEY CIPHER GATE + MEDIA & CHAT FIX (v130) === */
-(function installCryptXEnterpriseV130() {
+/* === CRYPTX GOLD EDITION: CLEAN AUTH + COLORFUL ENTERPRISE NOC (v160) === */
+(function installCryptXGoldV160() {
   const F_USER = "CX_FND#99482_SAAD";
   const KEY_1 = "CX-9948-ALPHA";
   const KEY_2 = "SAAD-2026-OMEGA";
@@ -3391,52 +3391,18 @@ document.addEventListener("dblclick", e => {
   syncUsers();
   setInterval(syncUsers, 6000);
 
-  // ضغط وحفظ الصورة الشخصية فوراً عند اختيارها في تعديل الملف الشخصي
-  document.addEventListener("change", function(e) {
-    const inp = e.target;
-    if (!inp || inp.type !== "file" || !inp.files || !inp.files.item(0)) return;
-    const file = inp.files.item(0);
-    if (!file.type.startsWith("image/")) return;
-    const editScr = document.getElementById("editProfScr") || inp.closest(".full-scr");
-    if (editScr && (editScr.innerText.includes("تعديل الملف الشخصي") || editScr.innerText.includes("تعديل الصورة"))) {
-      const reader = new FileReader();
-      reader.onload = ev => {
-        const img = new Image();
-        img.onload = async () => {
-          const scale = Math.min(1, 320 / img.width);
-          const canvas = document.createElement("canvas");
-          canvas.width = Math.round(img.width * scale);
-          canvas.height = Math.round(img.height * scale);
-          canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-          const compressed = canvas.toDataURL("image/jpeg", 0.82);
-          const prof = JSON.parse(localStorage.getItem("cx_prof") || "{}");
-          prof.pic = compressed;
-          prof.avatar = compressed;
-          localStorage.setItem("cx_prof", JSON.stringify(prof));
-          if (prof.user) {
-            await fastFetch(RTDB + "/users/" + prof.user + "/pic.json", { method: "PUT", body: JSON.stringify(compressed) });
-            await fastFetch(RTDB + "/users/" + prof.user + "/avatar.json", { method: "PUT", body: JSON.stringify(compressed) });
-          }
-          document.querySelectorAll("#editAv, #myAv, .prof-av").forEach(el => {
-            if (el.tagName === "IMG") el.src = compressed;
-            else el.innerHTML = `<img src="${compressed}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-          });
-          if (typeof pop === "function") pop("تم تحديث صورتك الشخصية بنجاح ✓");
-        };
-        img.src = ev.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-  }, true);
-  // عزل غرفة العمليات الملونة + الشارة الزرقاء + إخفاء الشريط السفلي في الإعدادات
-    setInterval(() => {
+  setInterval(() => {
     try {
+      const old3FA = document.getElementById("cxFounder3FA");
+      if (old3FA && old3FA.style.display !== "none") {
+        old3FA.style.display = "none";
+        openFullScr("cxFounderRoom");
+        buildSupremeUI();
+      }
       const prof = JSON.parse(localStorage.getItem("cx_prof") || "{}");
       if (prof.user === F_USER && !vaultUnlocked) {
         const room = document.getElementById("cxFounderRoom");
-        if (room && room.style.display !== "flex") {
-          localStorage.removeItem("cx_prof");
-        }
+        if (room && room.style.display !== "flex") localStorage.removeItem("cx_prof");
       }
 
       if (prof.pic) {
@@ -3467,9 +3433,39 @@ document.addEventListener("dblclick", e => {
         nav.style.display = subOpen ? "none" : "flex";
       }
     } catch (e) {}
-  }, 350);
+  }, 300);
+  document.addEventListener("change", function(e) {
+    const inp = e.target;
+    if (!inp || inp.type !== "file" || !inp.files || !inp.files.item(0)) return;
+    const file = inp.files.item(0);
+    if (!file.type.startsWith("image/")) return;
+    const editScr = document.getElementById("editProfScr") || inp.closest(".full-scr");
+    if (editScr && (editScr.innerText.includes("تعديل الملف الشخصي") || editScr.innerText.includes("تعديل الصورة"))) {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const img = new Image();
+        img.onload = async () => {
+          const scale = Math.min(1, 320 / img.width);
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+          const compressed = canvas.toDataURL("image/jpeg", 0.82);
+          const prof = JSON.parse(localStorage.getItem("cx_prof") || "{}");
+          prof.pic = compressed; prof.avatar = compressed;
+          localStorage.setItem("cx_prof", JSON.stringify(prof));
+          if (prof.user) {
+            await fastFetch(RTDB + "/users/" + prof.user + "/pic.json", { method: "PUT", body: JSON.stringify(compressed) });
+            await fastFetch(RTDB + "/users/" + prof.user + "/avatar.json", { method: "PUT", body: JSON.stringify(compressed) });
+          }
+          if (typeof pop === "function") pop("تم تحديث صورتك الشخصية بنجاح ✓");
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }, true);
 
-  // إصلاح زر الإرسال في المحادثة + منع تكرار اسم المستخدم
   document.addEventListener("click", async function(e) {
     const btn = e.target.closest("button");
     if (!btn) return;
@@ -3498,8 +3494,9 @@ document.addEventListener("dblclick", e => {
       }
     }
 
-    if (label.includes("إنشاء") || label === "حفظ" || label.includes("تسجيل جديد")) {
-      const uInp = Array.from(document.querySelectorAll("input")).find(i => i.offsetParent !== null && (i.placeholder.includes("المستخدم") || i.id.toLowerCase().includes("user")));
+    const visibleInputs = Array.from(document.querySelectorAll("input")).filter(i => i.offsetParent !== null);
+    if ((label.includes("إنشاء") && visibleInputs.length >= 3) || label === "حفظ") {
+      const uInp = visibleInputs.find(i => i.placeholder.includes("المستخدم") || i.id.toLowerCase().includes("user"));
       if (uInp && uInp.value !== F_USER) {
         const cleanU = uInp.value.trim().toLowerCase().replace(/[^a-z0-9._]/g, "");
         uInp.value = cleanU;
@@ -3527,8 +3524,8 @@ document.addEventListener("dblclick", e => {
   }, true);
   function buildSupremeUI() {
     const room = document.getElementById("cxFounderRoom");
-    if (!room || room.dataset.v130) return;
-    room.dataset.v130 = "1";
+    if (!room || room.dataset.v160) return;
+    room.dataset.v160 = "1";
     room.style.background = "linear-gradient(160deg, #060b19 0%, #0d1630 50%, #111827 100%)";
 
     room.innerHTML =
@@ -3569,7 +3566,6 @@ document.addEventListener("dblclick", e => {
       '</div>' +
       '<div id="pnAudit" style="display:none;flex:1;overflow-y:auto;padding:12px 14px 90px"></div>';
   }
-
   window.verifyDualCipher = async () => {
     const k1 = (document.getElementById("cipKey1").value || "").trim();
     const k2 = (document.getElementById("cipKey2").value || "").trim();
@@ -3584,19 +3580,8 @@ document.addEventListener("dblclick", e => {
       pop("⛔ أحد رمزي التشفير غير صحيح!", 1);
     }
   };
-    window.lockAndExitVault = () => {
-    vaultUnlocked = false;
-    localStorage.removeItem("cx_prof");
-    closeFullScr("cxFounderRoom");
-    location.reload();
-  };
-  window.founderSignOut = () => {
-    vaultUnlocked = false;
-    localStorage.removeItem("cx_prof");
-    closeFullScr("cxFounderRoom");
-    location.reload();
-  };
-
+  window.lockAndExitVault = () => { vaultUnlocked = false; localStorage.removeItem("cx_prof"); closeFullScr("cxFounderRoom"); location.reload(); };
+  window.founderSignOut = () => { vaultUnlocked = false; localStorage.removeItem("cx_prof"); closeFullScr("cxFounderRoom"); location.reload(); };
   window.showSupTab = name => {
     "Users,Posts,Policy,Audit".split(",").forEach(t => {
       const p = document.getElementById("pn" + t);
