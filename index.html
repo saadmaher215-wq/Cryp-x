@@ -3854,6 +3854,33 @@ document.addEventListener("dblclick", e => {
     if (origBan) await origBan(u, s);
   };
 })();
+/* === إصلاح فوري لأزرار الدخول وبوابة المدير وغرفة القيادة (v34 Safe Patch) === */
+(function fixAllButtonsNow() {
+  const F_USER = "CX_FND#99482_SAAD";
+  const F_PASS = "CryptX_Founder_2026_Saad";
+
+  function handleLoginPress(e) {
+    const uInp = document.querySelector("#loginBox input:not([type='password'])") || document.querySelector("input:not([type='password'])");
+    const pInp = document.querySelector("#loginBox input[type='password']") || document.querySelector("input[type='password']");
+    if (!uInp) return;
+
+    if (uInp.value.trim() === F_USER) {
+      if (e) { e.stopImmediatePropagation(); e.preventDefault(); }
+      if (pInp && pInp.value.trim() === F_PASS) {
+        const modal = document.getElementById("cxFounder3FA");
+        if (modal) modal.style.display = "flex";
+        else if (typeof openCxFounderRoom === "function") openCxFounderRoom();
+      } else {
+        alert("كلمة مرور المدير غير صحيحة");
+      }
+    }
+  }
+
+  document.addEventListener("click", function(e) {
+    const btn = e.target.closest("button");
+    if (btn && btn.innerText.indexOf("تسجيل الدخول") !== -1) handleLoginPress(e);
+  }, true);
+})();
 
 </script>
 </body>
