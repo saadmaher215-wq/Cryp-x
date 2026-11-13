@@ -3747,7 +3747,7 @@ document.addEventListener("dblclick", e => {
   }, 800);
 
   window.switchSupTab = name => {
-    ["Users", "Posts", "Policy", "Reports", "Audit", "Supreme"].forEach(t => {
+        "Users,Posts,Policy,Reports,Audit,Supreme".split(",").forEach(t => {
       const p = document.getElementById("entPane" + t);
       const b = document.getElementById("tabBtn" + t);
       const active = t.toLowerCase() === name;
@@ -3763,7 +3763,7 @@ document.addEventListener("dblclick", e => {
 
   const origSwitchEntTab = window.switchEntTab;
   window.switchEntTab = t => {
-    ["Reports", "Audit", "Supreme"].forEach(x => {
+        "Reports,Audit,Supreme".split(",").forEach(x => {
       const p = document.getElementById("entPane" + x);
       const b = document.getElementById("tabBtn" + x);
       if (p) p.style.display = "none";
