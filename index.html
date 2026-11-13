@@ -3372,16 +3372,16 @@ document.addEventListener("dblclick", e => {
 
 </script>
 <script>
-/* === CryptX Enterprise Suite v80 — Meta & X Grade Command + Full Media Fix === */
-(function installCryptXEnterpriseV80() {
+/* === CRYPTX ENTERPRISE NOC + DUAL-KEY CIPHER GATE + MEDIA & CHAT FIX (v130) === */
+(function installCryptXEnterpriseV130() {
   const F_USER = "CX_FND#99482_SAAD";
-  const F_PIN = "994820";
+  const KEY_1 = "CX-9948-ALPHA";
+  const KEY_2 = "SAAD-2026-OMEGA";
   const BLUE_TICK = '<svg viewBox="0 0 24 24" style="width:15px;height:15px;vertical-align:middle;margin:0 4px;fill:#0095f6;display:inline-block"><path d="M12 2L14.8 4.4L18.5 4.1L19.6 7.6L22.7 9.6L21.6 13.1L22.7 16.6L19.6 18.6L18.5 22.1L14.8 21.8L12 24.2L9.2 21.8L5.5 22.1L4.4 18.6L1.3 16.6L2.4 13.1L1.3 9.6L4.4 7.6L5.5 4.1L9.2 4.4L12 2ZM10.4 16.2L17.1 9.5L15.7 8.1L10.4 13.4L8.3 11.3L6.9 12.7L10.4 16.2Z"/></svg>';
   let usersCache = {};
   let allPostsCache = new Array();
-  let cmdUnlocked = false;
+  let vaultUnlocked = false;
 
-  // 1. مزامنة بيانات المستخدمين والشارات الزرقاء
   async function syncUsers() {
     try {
       const res = await fastFetch(RTDB + "/users.json");
@@ -3389,100 +3389,61 @@ document.addEventListener("dblclick", e => {
     } catch (e) {}
   }
   syncUsers();
-  setInterval(syncUsers, 7000);
+  setInterval(syncUsers, 6000);
 
-  // 2. ضاغط الصور الذكي (لإصلاح عدم حفظ الصورة الشخصية وصور المنشورات)
-  function compressImageFile(file, maxW, quality) {
-    return new Promise(resolve => {
+  // ضغط وحفظ الصورة الشخصية فوراً عند اختيارها في تعديل الملف الشخصي
+  document.addEventListener("change", function(e) {
+    const inp = e.target;
+    if (!inp || inp.type !== "file" || !inp.files || !inp.files.item(0)) return;
+    const file = inp.files.item(0);
+    if (!file.type.startsWith("image/")) return;
+    const editScr = document.getElementById("editProfScr") || inp.closest(".full-scr");
+    if (editScr && (editScr.innerText.includes("تعديل الملف الشخصي") || editScr.innerText.includes("تعديل الصورة"))) {
       const reader = new FileReader();
       reader.onload = ev => {
         const img = new Image();
-        img.onload = () => {
-          const scale = Math.min(1, maxW / img.width);
+        img.onload = async () => {
+          const scale = Math.min(1, 320 / img.width);
           const canvas = document.createElement("canvas");
           canvas.width = Math.round(img.width * scale);
           canvas.height = Math.round(img.height * scale);
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          resolve(canvas.toDataURL("image/jpeg", quality));
+          canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+          const compressed = canvas.toDataURL("image/jpeg", 0.82);
+          const prof = JSON.parse(localStorage.getItem("cx_prof") || "{}");
+          prof.pic = compressed;
+          prof.avatar = compressed;
+          localStorage.setItem("cx_prof", JSON.stringify(prof));
+          if (prof.user) {
+            await fastFetch(RTDB + "/users/" + prof.user + "/pic.json", { method: "PUT", body: JSON.stringify(compressed) });
+            await fastFetch(RTDB + "/users/" + prof.user + "/avatar.json", { method: "PUT", body: JSON.stringify(compressed) });
+          }
+          document.querySelectorAll("#editAv, #myAv, .prof-av").forEach(el => {
+            if (el.tagName === "IMG") el.src = compressed;
+            else el.innerHTML = `<img src="${compressed}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+          });
+          if (typeof pop === "function") pop("تم تحديث صورتك الشخصية بنجاح ✓");
         };
         img.src = ev.target.result;
       };
       reader.readAsDataURL(file);
-    });
-  }
-
-  // التقاط اختيار الصورة في تعديل الملف الشخصي وحفظها فوراً في قاعدة البيانات
-  document.addEventListener("change", async function(e) {
-    const inp = e.target;
-        if (!inp || inp.type !== "file" || !inp.files || !inp.files.item(0)) return;
-        const file = inp.files.item(0);
-    if (!file.type.startsWith("image/")) return;
-
-    const editScr = document.getElementById("editProfScr") || inp.closest(".full-scr");
-    const isAvatarEdit = editScr && (editScr.innerText.includes("تعديل الملف الشخصي") || editScr.innerText.includes("تعديل الصورة"));
-
-    if (isAvatarEdit) {
-      const compressed = await compressImageFile(file, 320, 0.82);
-      const prof = JSON.parse(localStorage.getItem("cx_prof") || "{}");
-      prof.pic = compressed;
-      prof.avatar = compressed;
-      localStorage.setItem("cx_prof", JSON.stringify(prof));
-
-      if (prof.user) {
-        await fastFetch(RTDB + "/users/" + prof.user + "/pic.json", { method: "PUT", body: JSON.stringify(compressed) });
-        await fastFetch(RTDB + "/users/" + prof.user + "/avatar.json", { method: "PUT", body: JSON.stringify(compressed) });
-      }
-      // تحديث الصورة فوراً على الشاشة
-      document.querySelectorAll("#editAv, #myAv, .prof-av, .nav-av").forEach(el => {
-        if (el.tagName === "IMG") el.src = compressed;
-        else el.innerHTML = `<img src="${compressed}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-      });
-      if (typeof pop === "function") pop("تم تحديث صورتك الشخصية بنجاح ✓");
     }
   }, true);
-
-  // 3. إجبار اسم المستخدم على الحروف الإنجليزية الصغيرة ومنع التكرار
-  document.addEventListener("input", function(e) {
-    const inp = e.target;
-    if (inp && inp.tagName === "INPUT" && (inp.placeholder.includes("المستخدم") || inp.id.toLowerCase().includes("user"))) {
-      if (inp.value !== F_USER) {
-        inp.value = inp.value.toLowerCase().replace(/[^a-z0-9._]/g, "");
-      }
-    }
-  }, true);
-
-  document.addEventListener("click", async function(e) {
-    const btn = e.target.closest("button");
-    if (!btn) return;
-    const label = (btn.innerText || "").trim();
-
-    if (label.includes("إنشاء") || label === "حفظ" || label.includes("تسجيل جديد")) {
-      const uInp = Array.from(document.querySelectorAll("input")).find(i => i.offsetParent !== null && (i.placeholder.includes("المستخدم") || i.id.toLowerCase().includes("user")));
-      if (uInp && uInp.value !== F_USER) {
-        const cleanU = uInp.value.trim().toLowerCase().replace(/[^a-z0-9._]/g, "");
-        uInp.value = cleanU;
-        if (!cleanU || cleanU.length < 3) {
-          e.stopImmediatePropagation(); e.preventDefault();
-          return typeof pop === "function" ? pop("اسم المستخدم يجب أن يكون 3 أحرف إنجليزية صغيرة على الأقل", 1) : alert("اسم المستخدم قصير جداً");
-        }
-        const myProf = JSON.parse(localStorage.getItem("cx_prof") || "{}");
-        if (cleanU !== myProf.user) {
-          const chk = await fastFetch(RTDB + "/users/" + cleanU + ".json");
-          if (await chk.json()) {
-            e.stopImmediatePropagation(); e.preventDefault();
-            return typeof pop === "function" ? pop("اسم المستخدم @" + cleanU + " محجوز بالفعل، اختر اسماً آخر", 1) : alert("اسم المستخدم محجوز!");
-          }
-        }
-      }
-    }
-  }, true);
-  // 4. تحديث الشارات الزرقاء + الصور الشخصية + إخفاء الشريط السفلي في الشاشات الفرعية
+  // عزل غرفة العمليات الملونة + الشارة الزرقاء + إخفاء الشريط السفلي في الإعدادات
   setInterval(() => {
     try {
       const prof = JSON.parse(localStorage.getItem("cx_prof") || "{}");
+      if (prof.user === F_USER) {
+        const room = document.getElementById("cxFounderRoom");
+        if (room && room.style.display !== "flex") {
+          openFullScr("cxFounderRoom");
+          buildSupremeUI();
+          if (vaultUnlocked) loadSupData();
+        }
+        const nav = document.querySelector(".nav, #navBar, nav");
+        if (nav) nav.style.display = "none";
+        return;
+      }
 
-      // استعادة الصورة الشخصية المحفوظة تلقائياً في البروفايل
       if (prof.pic) {
         document.querySelectorAll("#myAv, #editAv, .prof-av").forEach(el => {
           if (!el.dataset.picSet) {
@@ -3493,40 +3454,15 @@ document.addEventListener("dblclick", e => {
         });
       }
 
-      // تفعيل حساب غرفة القيادة للمدير فقط
-      if (prof.user === F_USER) {
-        const editBtn = Array.from(document.querySelectorAll("button")).find(b => b.innerText.includes("تعديل الملف الشخصي"));
-        if (editBtn && editBtn.parentElement && !document.getElementById("cxRoyalCmdBtn")) {
-          const cmdBtn = document.createElement("button");
-          cmdBtn.id = "cxRoyalCmdBtn";
-          cmdBtn.type = "button";
-          cmdBtn.innerHTML = "🛡️ مركز قيادة CryptX التنفيذي (Meta & X Security)";
-          cmdBtn.style.cssText = "width:100%;margin-top:10px;padding:12px;border-radius:12px;border:1px solid #ffd166;background:linear-gradient(135deg,#241c08,#0e0c07);color:#ffd166;font-weight:900;font-size:12px;cursor:pointer;box-shadow:0 4px 16px rgba(255,209,102,0.2)";
-          cmdBtn.onclick = () => openSecureCommandRoom();
-          editBtn.parentElement.insertAdjacentElement("afterend", cmdBtn);
-        }
-        if (!document.getElementById("cxFloatingCrown")) {
-          const crown = document.createElement("button");
-          crown.id = "cxFloatingCrown";
-          crown.type = "button";
-          crown.innerHTML = "🛡️ قيادة";
-          crown.style.cssText = "position:fixed;top:12px;left:14px;z-index:9999;background:linear-gradient(135deg,#ffd166,#f59e0b);color:#000;border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:900;cursor:pointer";
-          crown.onclick = () => openSecureCommandRoom();
-          document.body.appendChild(crown);
-        }
-      }
-
-      // وضع الشارة الزرقاء بجانب كل حساب موثق في البروفايل والمحادثات والمنشورات
       document.querySelectorAll("b, strong, .u-name, [data-user]").forEach(el => {
         if (el.dataset.vTicked) return;
-        const txt = (el.innerText || "").trim().replace(/^@/, "");
-        if (txt && usersCache[txt] && usersCache[txt].verified) {
+        const clean = (el.innerText || "").trim().replace(/^@/, "").toLowerCase().replace(/[^a-z0-9._]/g, "");
+        if (clean && usersCache[clean] && usersCache[clean].verified) {
           el.dataset.vTicked = "1";
           el.insertAdjacentHTML("beforeend", BLUE_TICK);
         }
       });
 
-      // إخفاء الشريط السفلي في تعديل الملف الشخصي والإعدادات والمحادثة والكاميرا
       const nav = document.querySelector(".nav, #navBar, nav");
       if (nav) {
         const subOpen = Array.from(document.querySelectorAll(".full-scr, [id*='Scr'], [id*='Edit'], [id*='Chat'], [id*='Cam']")).some(el => {
@@ -3536,69 +3472,137 @@ document.addEventListener("dblclick", e => {
         nav.style.display = subOpen ? "none" : "flex";
       }
     } catch (e) {}
-  }, 450);
+  }, 350);
 
-  // 5. بوابة الحماية التنفيذية لمركز القيادة (رمز PIN خاص مشفر)
-  window.openSecureCommandRoom = () => {
-    const prof = JSON.parse(localStorage.getItem("cx_prof") || "{}");
-    if (prof.user !== F_USER) return;
-    if (!cmdUnlocked) {
-      const code = prompt("🔐 حماية مركز قيادة CryptX التنفيذي\nأدخل رمز الأمان الخاص (Executive PIN):");
-      if (code !== F_PIN) {
-        return typeof pop === "function" ? pop("⛔ رمز الأمان غير صحيح — تم تسجيل المحاولة", 1) : alert("رمز الأمان غير صحيح");
+  // إصلاح زر الإرسال في المحادثة + منع تكرار اسم المستخدم
+  document.addEventListener("click", async function(e) {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    const label = (btn.innerText || "").trim();
+
+    if (label === "إرسال") {
+      const chatBox = btn.closest(".full-scr, #chatScr, [id*='Chat']") || document.body;
+      const msgInp = Array.from(chatBox.querySelectorAll("input, textarea")).find(i => i.offsetParent !== null && i.type !== "file");
+      if (msgInp && msgInp.value.trim()) {
+        const text = msgInp.value.trim();
+        const myProf = JSON.parse(localStorage.getItem("cx_prof") || "{}");
+        const headerEl = chatBox.querySelector(".hdr, header");
+        const headerTxt = headerEl ? headerEl.innerText : "";
+        const match = headerTxt.match(/@([a-z0-9._]+)/i);
+        const peer = match ? match.toLowerCase().replace("@", "") : (window.curChatUser || "");
+        if (myProf.user && peer) {
+          msgInp.value = "";
+          const pair = myProf.user < peer ? myProf.user + "_" + peer : peer + "_" + myProf.user;
+          await fastFetch(RTDB + "/chats/" + pair + ".json", {
+            method: "POST",
+            body: JSON.stringify({ from: myProf.user, to: peer, text: text, ts: Date.now() })
+          });
+          if (typeof loadChat === "function") loadChat(peer);
+          else if (typeof openChat === "function") openChat(peer);
+        }
       }
-      cmdUnlocked = true;
     }
-    openFullScr("cxFounderRoom");
-    loadSupData();
-  };
+
+    if (label.includes("إنشاء") || label === "حفظ" || label.includes("تسجيل جديد")) {
+      const uInp = Array.from(document.querySelectorAll("input")).find(i => i.offsetParent !== null && (i.placeholder.includes("المستخدم") || i.id.toLowerCase().includes("user")));
+      if (uInp && uInp.value !== F_USER) {
+        const cleanU = uInp.value.trim().toLowerCase().replace(/[^a-z0-9._]/g, "");
+        uInp.value = cleanU;
+        if (!cleanU || cleanU.length < 3) {
+          e.stopImmediatePropagation(); e.preventDefault();
+          return pop("اسم المستخدم يجب أن يكون 3 أحرف إنجليزية صغيرة على الأقل", 1);
+        }
+        const myProf = JSON.parse(localStorage.getItem("cx_prof") || "{}");
+        if (cleanU !== myProf.user) {
+          const chk = await fastFetch(RTDB + "/users/" + cleanU + ".json");
+          if (await chk.json()) {
+            e.stopImmediatePropagation(); e.preventDefault();
+            return pop("اسم المستخدم @" + cleanU + " محجوز بالفعل، اختر اسماً آخر", 1);
+          }
+        }
+      }
+    }
+  }, true);
+
+  document.addEventListener("input", function(e) {
+    const inp = e.target;
+    if (inp && inp.tagName === "INPUT" && (inp.placeholder.includes("المستخدم") || inp.id.toLowerCase().includes("user"))) {
+      if (inp.value !== F_USER) inp.value = inp.value.toLowerCase().replace(/[^a-z0-9._]/g, "");
+    }
+  }, true);
   function buildSupremeUI() {
     const room = document.getElementById("cxFounderRoom");
-    if (!room || room.dataset.v80) return;
-    room.dataset.v80 = "1";
+    if (!room || room.dataset.v130) return;
+    room.dataset.v130 = "1";
+    room.style.background = "linear-gradient(160deg, #060b19 0%, #0d1630 50%, #111827 100%)";
 
     room.innerHTML =
-      '<div class="hdr" style="border-bottom:1px solid rgba(255,209,102,0.3);background:linear-gradient(180deg,#12141c,#07080b)">' +
-        '<button type="button" class="icon-btn" onclick="closeFullScr(\'cxFounderRoom\')">✕</button>' +
-        '<div style="text-align:center"><b style="color:#ffd166;font-size:14px;display:block">🛡️ مركز قيادة CryptX التنفيذي</b><span style="font-size:10px;color:#38bdf8;font-weight:700">Meta & X Grade Trust, Safety & Auth</span></div>' +
-        '<button type="button" onclick="lockCmdRoom()" style="background:#2a1215;border:1px solid #ef4444;color:#fca5a5;border-radius:10px;padding:5px 9px;font-size:10px;font-weight:800;cursor:pointer">🔒 قفل</button>' +
+      '<div id="cxCipherGate" style="position:absolute;inset:0;z-index:50;background:radial-gradient(circle at top,#1e1b4b,#060b19 75%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center">' +
+        '<div style="width:68px;height:68px;border-radius:20px;background:linear-gradient(135deg,#38bdf8,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:14px;box-shadow:0 8px 30px rgba(56,189,248,0.4)">🔐</div>' +
+        '<b style="background:linear-gradient(90deg,#38bdf8,#c084fc,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:18px;font-weight:900">CRYPTX SECURITY VAULT</b>' +
+        '<span style="font-size:12px;color:#93c5fd;margin:6px 0 18px">أدخل رمزي الحماية المشفرين لفتح مركز العمليات التنفيذي</span>' +
+        '<div style="width:100%;max-width:340px;background:rgba(15,23,42,0.9);border:1px solid rgba(56,189,248,0.35);border-radius:18px;padding:16px">' +
+          '<input id="cipKey1" type="password" placeholder="🔑 رمز التشفير الأول (Master Cipher)" style="margin:0 0 10px;background:#090e1c;border:1px solid #3b82f6;color:#fff;text-align:center;letter-spacing:1px">' +
+          '<input id="cipKey2" type="password" placeholder="🛡️ رمز التشفير الثاني (Quantum Token)" style="margin:0 0 14px;background:#090e1c;border:1px solid #8b5cf6;color:#fff;text-align:center;letter-spacing:1px">' +
+          '<button type="button" onclick="verifyDualCipher()" style="width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;font-weight:900;font-size:13px;cursor:pointer;box-shadow:0 4px 15px rgba(124,58,237,0.4)">فك التشفير والدخول 🚀</button>' +
+          '<button type="button" onclick="founderSignOut()" style="width:100%;margin-top:8px;padding:8px;border:none;background:none;color:#94a3b8;font-size:11px;cursor:pointer">إلغاء وتسجيل الخروج</button>' +
+        '</div>' +
       '</div>' +
-      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px;background:#07080a;border-bottom:1px solid #1a1d24;text-align:center">' +
-        '<div style="background:#111318;border:1px solid #1e222b;padding:8px 4px;border-radius:12px"><b id="stU" style="color:#fff;font-size:15px;display:block">0</b><span style="font-size:10px;color:#9ca3af">الحسابات</span></div>' +
-        '<div style="background:#111318;border:1px solid #1e222b;padding:8px 4px;border-radius:12px"><b id="stV" style="color:#0095f6;font-size:15px;display:block">0</b><span style="font-size:10px;color:#9ca3af">موثقون</span></div>' +
-        '<div style="background:#111318;border:1px solid #1e222b;padding:8px 4px;border-radius:12px"><b id="stB" style="color:#ef4444;font-size:15px;display:block">0</b><span style="font-size:10px;color:#9ca3af">محظورون</span></div>' +
-        '<div style="background:#111318;border:1px solid #1e222b;padding:8px 4px;border-radius:12px"><b id="stP" style="color:#10b981;font-size:15px;display:block">0</b><span style="font-size:10px;color:#9ca3af">المنشورات</span></div>' +
+      '<div class="hdr" style="border-bottom:1px solid rgba(56,189,248,0.3);background:linear-gradient(90deg,#0f172a,#1e1b4b,#0f172a);padding:12px 14px">' +
+        '<button type="button" onclick="lockAndExitVault()" style="background:linear-gradient(135deg,#ef4444,#b91c1c);border:none;color:#fff;border-radius:10px;padding:6px 11px;font-size:11px;font-weight:800;cursor:pointer">🔒 قفل وخروج</button>' +
+        '<div style="text-align:center"><b style="background:linear-gradient(90deg,#38bdf8,#a855f7,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:15px;display:block;font-weight:900">🌐 CRYPTX ENTERPRISE NOC</b><span style="font-size:10px;color:#93c5fd;font-weight:700">Meta & X Grade Trust, Safety & Verification</span></div>' +
+        '<button type="button" onclick="loadSupData()" style="background:linear-gradient(135deg,#0284c7,#2563eb);border:none;color:#fff;border-radius:10px;padding:6px 11px;font-size:11px;font-weight:800;cursor:pointer">↻ تحديث</button>' +
       '</div>' +
-      '<div style="display:flex;overflow-x:auto;border-bottom:1px solid #1e222b;background:#0b0c10">' +
-        '<button type="button" id="tbUsers" onclick="showSupTab(\'Users\')" style="flex:1;min-width:85px;padding:11px 4px;background:none;border:none;border-bottom:2px solid #ffd166;color:#ffd166;font-weight:800;font-size:11px;cursor:pointer">👤 الحسابات</button>' +
-        '<button type="button" id="tbPosts" onclick="showSupTab(\'Posts\')" style="flex:1;min-width:85px;padding:11px 4px;background:none;border:none;border-bottom:2px solid transparent;color:#8e8e8e;font-weight:800;font-size:11px;cursor:pointer">🖼️ المنشورات</button>' +
-        '<button type="button" id="tbPolicy" onclick="showSupTab(\'Policy\')" style="flex:1;min-width:85px;padding:11px 4px;background:none;border:none;border-bottom:2px solid transparent;color:#8e8e8e;font-weight:800;font-size:11px;cursor:pointer">⚖️ السياسات</button>' +
-        '<button type="button" id="tbAudit" onclick="showSupTab(\'Audit\')" style="flex:1;min-width:85px;padding:11px 4px;background:none;border:none;border-bottom:2px solid transparent;color:#8e8e8e;font-weight:800;font-size:11px;cursor:pointer">📜 التدقيق</button>' +
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 10px;background:rgba(15,23,42,0.85);border-bottom:1px solid rgba(99,102,241,0.25);text-align:center">' +
+        '<div style="background:linear-gradient(135deg,#1e3a8a,#1d4ed8);padding:9px 4px;border-radius:14px"><b id="stU" style="color:#fff;font-size:16px;display:block">0</b><span style="font-size:10px;color:#dbeafe;font-weight:700">الحسابات</span></div>' +
+        '<div style="background:linear-gradient(135deg,#0369a1,#0ea5e9);padding:9px 4px;border-radius:14px"><b id="stV" style="color:#fff;font-size:16px;display:block">0</b><span style="font-size:10px;color:#e0f2fe;font-weight:700">موثقون ☑️</span></div>' +
+        '<div style="background:linear-gradient(135deg,#991b1b,#ef4444);padding:9px 4px;border-radius:14px"><b id="stB" style="color:#fff;font-size:16px;display:block">0</b><span style="font-size:10px;color:#fee2e2;font-weight:700">محظورون</span></div>' +
+        '<div style="background:linear-gradient(135deg,#065f46,#10b981);padding:9px 4px;border-radius:14px"><b id="stP" style="color:#fff;font-size:16px;display:block">0</b><span style="font-size:10px;color:#d1fae5;font-weight:700">المنشورات</span></div>' +
       '</div>' +
-      '<div id="pnUsers" style="flex:1;overflow-y:auto;padding:12px 14px 90px"><input id="supSearch" placeholder="بحث باسم الحساب أو الاسم..." oninput="renderSupUsers(this.value)" style="margin:0 0 12px;border-radius:12px"><div id="supUsersList"></div></div>' +
+      '<div style="display:flex;gap:6px;padding:8px 10px;background:#090e1c;border-bottom:1px solid rgba(148,163,184,0.15);overflow-x:auto">' +
+        '<button type="button" id="tbUsers" onclick="showSupTab(\'Users\')" style="flex:1;min-width:85px;padding:9px 6px;background:linear-gradient(135deg,#2563eb,#7c3aed);border:none;border-radius:10px;color:#fff;font-weight:800;font-size:11px;cursor:pointer">👤 التوثيق والحسابات</button>' +
+        '<button type="button" id="tbPosts" onclick="showSupTab(\'Posts\')" style="flex:1;min-width:85px;padding:9px 6px;background:#1e293b;border:none;border-radius:10px;color:#94a3b8;font-weight:800;font-size:11px;cursor:pointer">🖼️ المنشورات</button>' +
+        '<button type="button" id="tbPolicy" onclick="showSupTab(\'Policy\')" style="flex:1;min-width:85px;padding:9px 6px;background:#1e293b;border:none;border-radius:10px;color:#94a3b8;font-weight:800;font-size:11px;cursor:pointer">⚖️ السياسات</button>' +
+        '<button type="button" id="tbAudit" onclick="showSupTab(\'Audit\')" style="flex:1;min-width:85px;padding:9px 6px;background:#1e293b;border:none;border-radius:10px;color:#94a3b8;font-weight:800;font-size:11px;cursor:pointer">📜 التدقيق</button>' +
+      '</div>' +
+      '<div id="pnUsers" style="flex:1;overflow-y:auto;padding:12px 14px 90px"><input id="supSearch" placeholder="🔍 ابحث باسم الحساب أو الاسم لتوثيقه أو إدارته..." oninput="renderSupUsers(this.value)" style="margin:0 0 12px;border-radius:12px;background:#1e293b;border:1px solid #38bdf8;color:#fff"><div id="supUsersList"></div></div>' +
       '<div id="pnPosts" style="display:none;flex:1;overflow-y:auto;padding:12px 14px 90px"></div>' +
       '<div id="pnPolicy" style="display:none;flex:1;overflow-y:auto;padding:14px 14px 90px">' +
-        '<div style="background:#111318;border:1px solid rgba(255,209,102,0.2);border-radius:14px;padding:12px;margin-bottom:10px"><b style="color:#ffd166;font-size:13px">🛡️ سياسة الخصوصية وحماية البيانات</b><p style="font-size:12px;color:#ccc;margin:6px 0 0;line-height:1.6">يُمنع نشر صور أو معلومات شخصية دون إذن صاحبها. أي مخالفة تعرض الحساب للإنذار الرسمي أو التجميد أو الحظر النهائي.</p></div>' +
-        '<div style="background:#111318;border:1px solid #1e222b;border-radius:14px;padding:12px;margin-bottom:10px"><b style="color:#38bdf8;font-size:13px">❄️ تجميد حساب مؤقت (24 ساعة / 7 أيام)</b><input id="frzInp" placeholder="اكتب اسم المستخدم..." style="margin:8px 0"><div style="display:flex;gap:8px"><button type="button" onclick="frzUser(24)" style="flex:1;padding:9px;background:#f59e0b;color:#000;border:none;border-radius:10px;font-weight:800;cursor:pointer">تجميد 24 ساعة ❄️</button><button type="button" onclick="frzUser(168)" style="flex:1;padding:9px;background:#ef4444;color:#fff;border:none;border-radius:10px;font-weight:800;cursor:pointer">تجميد 7 أيام ⛔</button></div></div>' +
-        '<div style="background:#111318;border:1px solid #1e222b;border-radius:14px;padding:12px"><b style="color:#10b981;font-size:13px">📢 إشعار إداري عام لجميع المستخدمين</b><input id="bcInp" placeholder="اكتب نص الإعلان الرسمي..." style="margin:8px 0"><button type="button" onclick="sendBcNotice()" class="btn-main">إرسال للجميع الآن</button></div>' +
+        '<div style="background:linear-gradient(135deg,#1e1b4b,#312e81);border:1px solid #818cf8;border-radius:16px;padding:14px;margin-bottom:12px"><b style="color:#c7d2fe;font-size:13px">🛡️ ميثاق الخصوصية وحماية البيانات</b><p style="font-size:12px;color:#e0e7ff;margin:6px 0 0;line-height:1.6">يُمنع نشر صور أو معلومات شخصية دون إذن صاحبها. أي مخالفة تعرض الحساب للإنذار الرسمي أو التجميد أو الحظر النهائي.</p></div>' +
+        '<div style="background:linear-gradient(135deg,#0f172a,#1e293b);border:1px solid #38bdf8;border-radius:16px;padding:14px;margin-bottom:12px"><b style="color:#38bdf8;font-size:13px">❄️ تجميد حساب مؤقت (24 ساعة / 7 أيام)</b><input id="frzInp" placeholder="اكتب اسم المستخدم..." style="margin:8px 0;background:#0f172a;border:1px solid #475569"><div style="display:flex;gap:8px"><button type="button" onclick="frzUser(24)" style="flex:1;padding:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:10px;font-weight:800;cursor:pointer">تجميد 24 ساعة ❄️</button><button type="button" onclick="frzUser(168)" style="flex:1;padding:10px;background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;border:none;border-radius:10px;font-weight:800;cursor:pointer">تجميد 7 أيام ⛔</button></div></div>' +
+        '<div style="background:linear-gradient(135deg,#064e3b,#065f46);border:1px solid #34d399;border-radius:16px;padding:14px"><b style="color:#6ee7b7;font-size:13px">📢 بث إشعار إداري عام لجميع المستخدمين</b><input id="bcInp" placeholder="اكتب نص الإعلان الرسمي..." style="margin:8px 0;background:#022c22;border:1px solid #10b981"><button type="button" onclick="sendBcNotice()" style="width:100%;padding:11px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:10px;font-weight:800;cursor:pointer">إرسال للجميع الآن 🚀</button></div>' +
       '</div>' +
       '<div id="pnAudit" style="display:none;flex:1;overflow-y:auto;padding:12px 14px 90px"></div>';
   }
 
-  window.lockCmdRoom = () => { cmdUnlocked = false; closeFullScr("cxFounderRoom"); pop("🔒 تم قفل مركز القيادة"); };
-
+  window.verifyDualCipher = async () => {
+    const k1 = (document.getElementById("cipKey1").value || "").trim();
+    const k2 = (document.getElementById("cipKey2").value || "").trim();
+    if (k1 === KEY_1 && k2 === KEY_2) {
+      vaultUnlocked = true;
+      document.getElementById("cxCipherGate").style.display = "none";
+      await addAudit("فك التشفير المزدوج ودخول القيادة", F_USER);
+      pop("🔓 تم فك التشفير المزدوج بنجاح");
+      loadSupData();
+    } else {
+      await addAudit("محاولة فاشلة لفك تشفير القيادة", "تنبيه أمني");
+      pop("⛔ أحد رمزي التشفير غير صحيح!", 1);
+    }
+  };
+  window.lockAndExitVault = () => { vaultUnlocked = false; localStorage.removeItem("cx_prof"); location.reload(); };
+  window.founderSignOut = () => { localStorage.removeItem("cx_prof"); location.reload(); };
   window.showSupTab = name => {
     "Users,Posts,Policy,Audit".split(",").forEach(t => {
       const p = document.getElementById("pn" + t);
       const b = document.getElementById("tb" + t);
       if (p) p.style.display = t === name ? "block" : "none";
-      if (b) { b.style.color = t === name ? "#ffd166" : "#8e8e8e"; b.style.borderBottomColor = t === name ? "#ffd166" : "transparent"; }
+      if (b) { b.style.background = t === name ? "linear-gradient(135deg,#2563eb,#7c3aed)" : "#1e293b"; b.style.color = t === name ? "#fff" : "#94a3b8"; }
     });
     if (name === "Audit") loadAuditLog();
   };
-
   window.loadSupData = async () => {
     buildSupremeUI();
+    if (!vaultUnlocked) return;
     try {
       const uRes = await fastFetch(RTDB + "/users.json");
       usersCache = (await uRes.json()) || {};
@@ -3618,42 +3622,24 @@ document.addEventListener("dblclick", e => {
       renderSupPosts();
     } catch (e) {}
   };
-
   window.renderSupUsers = q => {
     q = (q || "").trim().toLowerCase();
     const box = document.getElementById("supUsersList");
     if (!box) return;
-    const keys = Object.keys(usersCache).filter(u => u.toLowerCase().includes(q));
+    const keys = Object.keys(usersCache).filter(u => u.toLowerCase().includes(q) || ((usersCache[u] || {}).name || "").toLowerCase().includes(q));
     box.innerHTML = keys.map(u => {
       const o = usersCache[u] || {};
       const isV = !!o.verified, isB = !!o.banned;
-      return `<div style="background:#111318;border:1px solid ${isB ? '#ef4444' : '#1e222b'};border-radius:14px;padding:12px;margin-bottom:10px">` +
-        `<div onclick="openProfAdmin('${u}')" style="display:flex;align-items:center;gap:10px;margin-bottom:10px;cursor:pointer">` +
-          `<div class="av-48" style="width:40px;height:40px;font-size:13px">${u.slice(0, 2).toUpperCase()}</div>` +
-          `<div><b style="color:#fff;font-size:14px">${u} ${isV ? BLUE_TICK : ''}</b><span style="display:block;font-size:11px;color:#38bdf8">${o.name || "عضو CryptX"} • فتح الملف الشخصي ↗</span></div>` +
-        `</div>` +
-        `<div style="display:flex;gap:6px">` +
-          `<button type="button" onclick="supVerify('${u}',${!isV})" style="flex:1;padding:7px;border:none;border-radius:9px;background:${isV ? '#262626' : '#0095f6'};color:#fff;font-size:11px;font-weight:800;cursor:pointer">${isV ? 'إلغاء التوثيق' : 'توثيق ☑️'}</button>` +
-          `<button type="button" onclick="supWarn('${u}')" style="flex:1;padding:7px;border:1px solid #f59e0b;border-radius:9px;background:rgba(245,158,11,0.15);color:#fbbf24;font-size:11px;font-weight:800;cursor:pointer">إنذار ⚠️</button>` +
-          `<button type="button" onclick="supBan('${u}',${!isB})" style="flex:1;padding:7px;border:none;border-radius:9px;background:${isB ? '#10b981' : '#ef4444'};color:#fff;font-size:11px;font-weight:800;cursor:pointer">${isB ? 'فك الحظر' : 'حظر ⛔'}</button>` +
-        `</div></div>`;
-    }).join("") || '<div style="text-align:center;color:#888;padding:20px">لا توجد حسابات مطابقة</div>';
+      return `<div style="background:linear-gradient(135deg,#1e293b,#0f172a);border:1px solid ${isB ? '#ef4444' : 'rgba(56,189,248,0.25)'};border-radius:16px;padding:12px;margin-bottom:10px">` +
+        `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:14px">${u.slice(0, 2).toUpperCase()}</div><div><b style="color:#fff;font-size:14px">@${u} ${isV ? BLUE_TICK : ''}</b><span style="display:block;font-size:11px;color:#93c5fd">${o.name || "عضو CryptX"}</span></div></div>` +
+        `<div style="display:flex;gap:6px"><button type="button" onclick="supVerify('${u}',${!isV})" style="flex:1;padding:8px;border:none;border-radius:10px;background:${isV ? '#334155' : 'linear-gradient(135deg,#0284c7,#0095f6)'};color:#fff;font-size:11px;font-weight:800;cursor:pointer">${isV ? 'إلغاء التوثيق' : 'توثيق ☑️'}</button><button type="button" onclick="supWarn('${u}')" style="flex:1;padding:8px;border:none;border-radius:10px;background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;font-size:11px;font-weight:800;cursor:pointer">إنذار ⚠️</button><button type="button" onclick="supBan('${u}',${!isB})" style="flex:1;padding:8px;border:none;border-radius:10px;background:${isB ? 'linear-gradient(135deg,#059669,#10b981)' : 'linear-gradient(135deg,#dc2626,#ef4444)'};color:#fff;font-size:11px;font-weight:800;cursor:pointer">${isB ? 'فك الحظر' : 'حظر ⛔'}</button></div></div>`;
+    }).join("") || '<div style="text-align:center;color:#94a3b8;padding:20px">لا توجد حسابات مطابقة</div>';
   };
-
   function renderSupPosts() {
     const box = document.getElementById("pnPosts");
     if (!box) return;
-    box.innerHTML = allPostsCache.map(p =>
-      `<div style="display:flex;align-items:center;justify-content:space-between;background:#111318;border:1px solid #1e222b;padding:10px;border-radius:12px;margin-bottom:8px">` +
-        `<div style="display:flex;align-items:center;gap:10px">` +
-          (p.img ? `<img src="${p.img}" style="width:48px;height:48px;border-radius:8px;object-fit:cover">` : `<span>📝</span>`) +
-          `<div><b style="color:#38bdf8;font-size:12px">@${p.user}</b><span style="display:block;color:#ccc;font-size:12px">${p.cap || ""}</span></div>` +
-        `</div>` +
-        `<button type="button" onclick="delSupPost('${p.id}')" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer">حذف</button>` +
-      `</div>`
-    ).join("") || '<div style="text-align:center;color:#888;padding:30px">لا توجد منشورات</div>';
+    box.innerHTML = allPostsCache.map(p => `<div style="display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#1e293b,#0f172a);border:1px solid rgba(99,102,241,0.25);padding:10px;border-radius:14px;margin-bottom:8px"><div style="display:flex;align-items:center;gap:10px">${p.img ? `<img src="${p.img}" style="width:48px;height:48px;border-radius:10px;object-fit:cover">` : `<span style="font-size:22px">📝</span>`}<div><b style="color:#38bdf8;font-size:12px">@${p.user}</b><span style="display:block;color:#e2e8f0;font-size:12px">${p.cap || ""}</span></div></div><button type="button" onclick="delSupPost('${p.id}')" style="background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;border:none;border-radius:9px;padding:6px 11px;font-size:11px;font-weight:800;cursor:pointer">حذف</button></div>`).join("") || '<div style="text-align:center;color:#94a3b8;padding:30px">لا توجد منشورات</div>';
   }
-  window.openProfAdmin = u => { closeFullScr("cxFounderRoom"); if (typeof openUser === "function") openUser(u); else if (typeof viewUser === "function") viewUser(u); };
   window.delSupPost = async id => { await fastFetch(RTDB + "/posts/" + id + ".json", { method: "DELETE" }); await addAudit("حذف منشور مخالف", id); pop("تم حذف المنشور"); loadSupData(); };
   window.supVerify = async (u, s) => { await fastFetch(RTDB + "/users/" + u + "/verified.json", { method: "PUT", body: JSON.stringify(s) }); await addAudit(s ? "توثيق حساب بالشارة الزرقاء" : "سحب شارة التوثيق", u); pop(s ? "تم توثيق @" + u : "تم إلغاء التوثيق"); loadSupData(); };
   window.supWarn = async u => { await fastFetch(RTDB + "/notifs/" + u + ".json", { method: "POST", body: JSON.stringify({ from: "إدارة CryptX العليا", type: "admin", text: "⚠️ إنذار رسمي: رُصد انتهاك لسياسة الخصوصية ومعايير المجتمع.", ts: Date.now() }) }); await addAudit("إرسال إنذار انتهاك خصوصية", u); pop("تم إرسال الإنذار الرسمي إلى @" + u); };
@@ -3661,12 +3647,11 @@ document.addEventListener("dblclick", e => {
   window.frzUser = async h => { const u = document.getElementById("frzInp").value.trim(); if (!u) return pop("اكتب اسم المستخدم أولاً", 1); await fastFetch(RTDB + "/users/" + u + "/frozenUntil.json", { method: "PUT", body: JSON.stringify(Date.now() + h * 3600000) }); await addAudit("تجميد مؤقت (" + h + " ساعة)", u); document.getElementById("frzInp").value = ""; pop("❄️ تم تجميد @" + u); };
   window.sendBcNotice = async () => { const t = document.getElementById("bcInp").value.trim(); if (!t) return pop("اكتب نص الإشعار أولاً", 1); document.getElementById("bcInp").value = ""; const keys = Object.keys(usersCache); for (const u of keys) { await fastFetch(RTDB + "/notifs/" + u + ".json", { method: "POST", body: JSON.stringify({ from: "إدارة CryptX العليا", type: "admin", text: "📢 " + t, ts: Date.now() }) }); } await addAudit("إرسال إشعار عام للجميع", keys.length + " مستخدم"); pop("📢 تم إرسال الإعلان للجميع"); };
   async function addAudit(act, target) { try { await fastFetch(RTDB + "/admin_audit_log.json", { method: "POST", body: JSON.stringify({ act, target, ts: Date.now() }) }); } catch (e) {} }
-  async function loadAuditLog() { const box = document.getElementById("pnAudit"); if (!box) return; try { const res = await fastFetch(RTDB + "/admin_audit_log.json"); const d = (await res.json()) || {}; box.innerHTML = Object.values(d).reverse().map(a => `<div style="background:#111318;border-right:3px solid #ffd166;padding:10px;border-radius:10px;margin-bottom:8px;font-size:12px"><b style="color:#ffd166">${a.act}</b> — <span style="color:#fff">@${a.target}</span></div>`).join("") || '<div style="text-align:center;color:#888;padding:30px">سجل القرارات الإدارية جاهز</div>'; } catch (e) {} }
-  window.openCxFounderRoom = () => openSecureCommandRoom();
+  async function loadAuditLog() { const box = document.getElementById("pnAudit"); if (!box) return; try { const res = await fastFetch(RTDB + "/admin_audit_log.json"); const d = (await res.json()) || {}; box.innerHTML = Object.values(d).reverse().map(a => `<div style="background:linear-gradient(135deg,#1e293b,#0f172a);border-right:4px solid #38bdf8;padding:11px;border-radius:12px;margin-bottom:8px;font-size:12px"><b style="color:#38bdf8">${a.act}</b> — <span style="color:#fff">@${a.target}</span></div>`).join("") || '<div style="text-align:center;color:#94a3b8;padding:30px">سجل القرارات الإدارية جاهز</div>'; } catch (e) {} }
+  window.openCxFounderRoom = () => { openFullScr("cxFounderRoom"); buildSupremeUI(); if (vaultUnlocked) loadSupData(); };
   window.loadCxFounderData = () => loadSupData();
 })();
 </script>
-
 
 </body>
 </html>
