@@ -1640,6 +1640,287 @@ async function publishProStory(audience) {
     homeHdr.innerHTML = '<button type="button" class="icon-btn" onclick="document.getElementById(\'addChoiceModal\').style.display=\'flex\'" title="إنشاء"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button><b style="font-size:21px;letter-spacing:-0.5px;font-weight:800;background:linear-gradient(90deg,#fff,#0095f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent">CryptX</b><button type="button" class="icon-btn" onclick="openNotifications()" title="الإشعارات"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>';
   }
 })();
+/* === الدفعة 1: استوديو الكاميرا الحقيقية والمعرض الموحد === */
+(function installCryptXRealStudio() {
+  ["addChoiceModal", "postModal", "storyAddModal", "proStoryScr"].forEach(id => {
+    const oldEl = document.getElementById(id);
+    if (oldEl) oldEl.remove();
+  });
+
+  const studio = document.createElement("div");
+  studio.id = "cxRealStudio";
+  studio.className = "full-scr";
+  studio.style.cssText = "z-index:995;background:#000;flex-direction:column;overflow:hidden";
+  studio.innerHTML =
+    '<div id="cxCamStage" style="position:relative;flex:1;background:#0a0a0a;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between">' +
+      '<video id="cxRealVideo" autoplay playsinline muted style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video>' +
+      '<img id="cxCapturedImg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:none">' +
+      '<video id="cxCapturedVid" playsinline loop muted style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:none"></video>' +
+      '<div id="cxTxtOverlay" style="display:none;position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.68);color:#fff;padding:10px 18px;border-radius:14px;font-size:20px;font-weight:700;text-align:center;max-width:85%;touch-action:none;user-select:none;z-index:12"></div>' +
+      '<div style="position:relative;z-index:15;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:linear-gradient(180deg,rgba(0,0,0,.65),transparent)">' +
+        '<button type="button" onclick="closeCxStudio()" style="width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.45);border:none;color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;cursor:pointer">✕</button>' +
+        '<button type="button" onclick="openCxInlineInput(\'music\')" id="cxMusicPill" style="background:rgba(24,24,24,.82);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.15);color:#fff;padding:7px 16px;border-radius:20px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;cursor:pointer"><span>🎵</span><span id="cxMusicText">إضافة صوت</span></button>' +
+        '<button type="button" onclick="flipCxCamera()" style="width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.45);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer" title="قلب الكاميرا"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4"/><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/></svg></button>' +
+      '</div>' +
+      '<div style="position:absolute;left:14px;top:76px;z-index:15;display:flex;flex-direction:column;gap:12px">' +
+        '<button type="button" onclick="openCxInlineInput(\'text\')" style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.18);color:#fff;font-weight:800;font-size:14px;cursor:pointer">Aa</button>' +
+        '<button type="button" onclick="cycleCxFilter()" style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:16px;cursor:pointer">✨</button>' +
+        '<button type="button" onclick="setCxTextBgMode()" style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:13px;font-weight:700;cursor:pointer">نص</button>' +
+        '<button type="button" onclick="resetCxCapture()" id="cxRetakeBtn" style="display:none;width:40px;height:40px;border-radius:50%;background:rgba(237,73,86,.85);border:none;color:#fff;font-size:15px;cursor:pointer" title="إعادة التصوير">↺</button>' +
+      '</div>' +
+      '<div id="cxInlineBox" style="display:none;position:absolute;inset:0;z-index:30;background:rgba(0,0,0,.8);flex-direction:column;align-items:center;justify-content:center;padding:20px">' +
+        '<b id="cxInlineTitle" style="font-size:15px;margin-bottom:12px">إضافة نص</b>' +
+        '<input id="cxInlineInp" placeholder="اكتب هنا..." style="max-width:320px;text-align:center;font-size:16px;background:#1a1a1a;border:1px solid #333;border-radius:14px;padding:12px">' +
+        '<div style="display:flex;gap:10px;margin-top:12px">' +
+          '<button type="button" class="btn b-blue" style="width:auto;padding:9px 26px;margin:0;border-radius:20px" onclick="saveCxInlineInput()">تأكيد</button>' +
+          '<button type="button" class="btn b-dark" style="width:auto;padding:9px 20px;margin:0;border-radius:20px" onclick="document.getElementById(\'cxInlineBox\').style.display=\'none\'">إلغاء</button>' +
+        '</div>' +
+      '</div>' +
+      '<div id="cxCaptureControls" style="position:relative;z-index:15;padding:12px 16px 22px;background:linear-gradient(0deg,rgba(0,0,0,.85),transparent);display:flex;flex-direction:column;align-items:center;gap:14px">' +
+        '<div style="display:flex;gap:18px;font-size:13px;font-weight:700;color:#aaa">' +
+          '<span onclick="selectCxMode(this,\'text\')" style="cursor:pointer">نص</span>' +
+          '<span onclick="selectCxMode(this,\'photo\')" style="background:#fff;color:#000;padding:3px 12px;border-radius:14px;cursor:pointer">صورة</span>' +
+          '<span onclick="selectCxMode(this,\'video\')" style="cursor:pointer">فيديو 15ث</span>' +
+          '<span onclick="selectCxMode(this,\'post\')" style="cursor:pointer">منشور</span>' +
+        '</div>' +
+        '<div style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:0 18px">' +
+          '<button type="button" onclick="document.getElementById(\'cxStudioGalleryInp\').click()" style="width:46px;height:46px;border-radius:12px;background:#1c1c1c;border:2px solid #fff;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer" title="اختيار من المعرض"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>' +
+          '<button type="button" id="cxShutterBtn" onclick="triggerCxShutter()" style="width:74px;height:74px;border-radius:50%;background:#fff;border:5px solid rgba(255,255,255,.35);cursor:pointer;transition:transform 0.15s"></button>' +
+          '<button type="button" onclick="initCxCamera()" style="width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.14);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer" title="تشغيل الكاميرا"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></button>' +
+        '</div>' +
+      '</div>' +
+      '<div id="cxPostCaptureBar" style="display:none;position:relative;z-index:15;padding:12px 14px 20px;background:#000;flex-direction:column;gap:10px">' +
+        '<input id="cxCaptionInp" placeholder="إضافة شرح توضيحي..." style="margin:0;border-radius:20px;background:#181818;border:1px solid #2c2c2c;padding:10px 16px;font-size:13px">' +
+        '<div style="display:flex;gap:10px">' +
+          '<button type="button" onclick="publishFromCxStudio(\'story\')" style="flex:1;background:#fff;color:#000;border:none;border-radius:24px;padding:12px;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer"><span>قصة</span><span style="background:#0095f6;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px">24h</span></button>' +
+          '<button type="button" onclick="publishFromCxStudio(\'post\')" style="flex:1;background:#0095f6;color:#fff;border:none;border-radius:24px;padding:12px;font-size:14px;font-weight:800;cursor:pointer">نشر كمنشور</button>' +
+        '</div>' +
+      '</div>' +
+      '<input type="file" id="cxStudioGalleryInp" accept="image/*,video/*" style="display:none" onchange="handleCxGalleryPick(this)">' +
+    '</div>';
+  document.body.appendChild(studio);
+
+  const txtEl = document.getElementById("cxTxtOverlay");
+  let isDrag = false;
+  txtEl.addEventListener("pointerdown", () => { isDrag = true; });
+  window.addEventListener("pointermove", e => {
+    if (!isDrag) return;
+    const r = document.getElementById("cxCamStage").getBoundingClientRect();
+    txtEl.style.left = Math.max(40, Math.min(r.width - 40, e.clientX - r.left)) + "px";
+    txtEl.style.top = Math.max(50, Math.min(r.height - 80, e.clientY - r.top)) + "px";
+  });
+  window.addEventListener("pointerup", () => { isDrag = false; });
+
+  document.addEventListener("click", e => {
+    const target = e.target.closest("button, .st-item");
+    if (!target) return;
+    const isPlusNav = target.classList.contains("nav-btn") && !target.innerHTML.includes("M12 2.1") && !target.querySelector("polygon") && !target.querySelector("circle") && !target.querySelector(".nav-av") && target.closest(".b-nav");
+    const isTopPlus = target.closest(".hdr") && target.getAttribute("title") === "إنشاء";
+    const isMyStoryAdd = target.classList.contains("st-item") && target.innerText.includes("قصتك") && !(prof.stories || []).some(s => Date.now() - s.ts < 86400000);
+    if (isPlusNav || isTopPlus || isMyStoryAdd) {
+      e.stopImmediatePropagation();
+      openCxRealStudio();
+    }
+  }, true);
+})();
+/* === الدفعة 2: وظائف الكاميرا + شاشة البحث وسجل البحث القابل للحذف === */
+let cxStream = null, cxFacing = "environment", cxMediaData = "", cxMediaKind = "image", cxFilterIndex = 0, cxInlineType = "text", cxRecorder = null, cxRecChunks = [];
+const cxFiltersList = ["none", "contrast(1.2) saturate(1.35)", "grayscale(1)", "sepia(0.5) contrast(1.15)", "brightness(1.12) saturate(1.4)"];
+
+function openCxRealStudio() {
+  cxMediaData = ""; cxMediaKind = "image"; cxFilterIndex = 0;
+  document.getElementById("cxCapturedImg").style.display = "none";
+  document.getElementById("cxCapturedVid").style.display = "none";
+  document.getElementById("cxRetakeBtn").style.display = "none";
+  document.getElementById("cxPostCaptureBar").style.display = "none";
+  document.getElementById("cxCaptureControls").style.display = "flex";
+  document.getElementById("cxTxtOverlay").style.display = "none";
+  document.getElementById("cxTxtOverlay").innerText = "";
+  document.getElementById("cxMusicText").innerText = "إضافة صوت";
+  document.getElementById("cxCaptionInp").value = "";
+  openFullScr("cxRealStudio");
+  initCxCamera();
+}
+function closeCxStudio() {
+  stopCxCamera();
+  document.getElementById("cxCapturedVid").pause();
+  closeFullScr("cxRealStudio");
+}
+async function initCxCamera() {
+  stopCxCamera();
+  try {
+    cxStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: cxFacing }, audio: false });
+    const v = document.getElementById("cxRealVideo"); v.srcObject = cxStream; v.style.display = "block";
+  } catch (e) {}
+}
+function stopCxCamera() {
+  if (cxStream) { cxStream.getTracks().forEach(t => t.stop()); cxStream = null; }
+  const v = document.getElementById("cxRealVideo"); if (v) v.srcObject = null;
+}
+function flipCxCamera() {
+  cxFacing = cxFacing === "environment" ? "user" : "environment";
+  initCxCamera();
+}
+function selectCxMode(el, mode) {
+  el.parentElement.querySelectorAll("span").forEach(s => { s.style.background = "transparent"; s.style.color = "#aaa"; s.style.padding = "0"; });
+  el.style.background = "#fff"; el.style.color = "#000"; el.style.padding = "3px 12px"; el.style.borderRadius = "14px";
+  const sh = document.getElementById("cxShutterBtn");
+  sh.style.background = mode === "video" ? "#ed4956" : "#fff";
+  if (mode === "text") setCxTextBgMode();
+  else if (mode === "post") document.getElementById("cxStudioGalleryInp").click();
+}
+function triggerCxShutter() {
+  const v = document.getElementById("cxRealVideo"), sh = document.getElementById("cxShutterBtn");
+  if (sh.style.background === "rgb(237, 73, 86)") {
+    if (!cxRecorder || cxRecorder.state === "inactive") {
+      if (!cxStream) return document.getElementById("cxStudioGalleryInp").click();
+      cxRecChunks = []; cxRecorder = new MediaRecorder(cxStream);
+      cxRecorder.ondataavailable = e => { if (e.data.size > 0) cxRecChunks.push(e.data); };
+      cxRecorder.onstop = () => {
+        const blob = new Blob(cxRecChunks, { type: "video/webm" }), r = new FileReader();
+        r.onload = ev => { cxMediaData = ev.target.result; cxMediaKind = "video"; showCxPreview(); };
+        r.readAsDataURL(blob);
+      };
+      cxRecorder.start(); sh.style.transform = "scale(0.82)"; pop("جاري تسجيل الفيديو... اضغط للإيقاف");
+    } else { cxRecorder.stop(); sh.style.transform = "scale(1)"; }
+    return;
+  }
+  if (!v || !v.videoWidth) return document.getElementById("cxStudioGalleryInp").click();
+  const c = document.createElement("canvas"); c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext("2d").drawImage(v, 0, 0);
+  cxMediaData = c.toDataURL("image/jpeg", 0.88); cxMediaKind = "image"; showCxPreview();
+}
+function setCxTextBgMode() {
+  const c = document.createElement("canvas"); c.width = 720; c.height = 1280;
+  const ctx = c.getContext("2d"), g = ctx.createLinearGradient(0, 0, 720, 1280);
+  g.addColorStop(0, "#0f2027"); g.addColorStop(0.5, "#203a43"); g.addColorStop(1, "#2c5364");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 720, 1280);
+  cxMediaData = c.toDataURL("image/jpeg", 0.9); cxMediaKind = "image"; showCxPreview(); openCxInlineInput("text");
+}
+function handleCxGalleryPick(inp) {
+  const f = inp.files && inp.files; if (!f) return;
+  if (f.size > 6 * 1024 * 1024) return pop("الملف كبير، اختر ملفاً أصغر من 6 ميجا", 1);
+  cxMediaKind = f.type.startsWith("video") ? "video" : "image";
+  const r = new FileReader(); r.onload = e => { cxMediaData = e.target.result; showCxPreview(); }; r.readAsDataURL(f);
+}
+function showCxPreview() {
+  stopCxCamera();
+  document.getElementById("cxRealVideo").style.display = "none";
+  document.getElementById("cxCaptureControls").style.display = "none";
+  document.getElementById("cxPostCaptureBar").style.display = "flex";
+  document.getElementById("cxRetakeBtn").style.display = "block";
+  const im = document.getElementById("cxCapturedImg"), vd = document.getElementById("cxCapturedVid");
+  if (cxMediaKind === "video") { im.style.display = "none"; vd.src = cxMediaData; vd.style.display = "block"; vd.play().catch(()=>{}); }
+  else { vd.pause(); vd.style.display = "none"; im.src = cxMediaData; im.style.display = "block"; }
+}
+function resetCxCapture() {
+  cxMediaData = ""; document.getElementById("cxCapturedImg").style.display = "none";
+  document.getElementById("cxCapturedVid").pause(); document.getElementById("cxCapturedVid").style.display = "none";
+  document.getElementById("cxRetakeBtn").style.display = "none"; document.getElementById("cxPostCaptureBar").style.display = "none";
+  document.getElementById("cxCaptureControls").style.display = "flex"; initCxCamera();
+}
+function openCxInlineInput(type) {
+  cxInlineType = type; const box = document.getElementById("cxInlineBox"), inp = document.getElementById("cxInlineInp");
+  document.getElementById("cxInlineTitle").innerText = type === "music" ? "إضافة مقطع صوتي" : "إضافة نص";
+  inp.placeholder = type === "music" ? "اسم الأغنية أو الصوت..." : "اكتب النص هنا...";
+  inp.value = type === "music" ? (document.getElementById("cxMusicText").innerText === "إضافة صوت" ? "" : document.getElementById("cxMusicText").innerText) : document.getElementById("cxTxtOverlay").innerText;
+  box.style.display = "flex"; inp.focus();
+}
+function saveCxInlineInput() {
+  const val = document.getElementById("cxInlineInp").value.trim(); document.getElementById("cxInlineBox").style.display = "none";
+  if (cxInlineType === "music") document.getElementById("cxMusicText").innerText = val || "إضافة صوت";
+  else {
+    const ov = document.getElementById("cxTxtOverlay");
+    if (val) { ov.innerText = val; ov.style.display = "block"; } else { ov.innerText = ""; ov.style.display = "none"; }
+  }
+}
+function cycleCxFilter() {
+  cxFilterIndex = (cxFilterIndex + 1) % cxFiltersList.length; const f = cxFiltersList[cxFilterIndex];
+  document.getElementById("cxCapturedImg").style.filter = f; document.getElementById("cxCapturedVid").style.filter = f; document.getElementById("cxRealVideo").style.filter = f; pop("تم تغيير الفلتر");
+}
+async function publishFromCxStudio(dest) {
+  if (!cxMediaData) return pop("التقط صورة أو اختر من المعرض أولاً", 1);
+  let finalData = cxMediaData;
+  if (cxMediaKind === "image" && cxFilterIndex > 0) {
+    try {
+      const im = document.getElementById("cxCapturedImg"), c = document.createElement("canvas");
+      c.width = im.naturalWidth || 720; c.height = im.naturalHeight || 1280;
+      const ctx = c.getContext("2d"); ctx.filter = cxFiltersList[cxFilterIndex]; ctx.drawImage(im, 0, 0, c.width, c.height);
+      finalData = c.toDataURL("image/jpeg", 0.88);
+    } catch (e) {}
+  }
+  const ovTxt = document.getElementById("cxTxtOverlay").style.display === "block" ? document.getElementById("cxTxtOverlay").innerText : "";
+  const musTxt = document.getElementById("cxMusicText").innerText !== "إضافة صوت" ? "🎵 " + document.getElementById("cxMusicText").innerText : "";
+  const capTxt = document.getElementById("cxCaptionInp").value.trim();
+  const fullCaption = [ovTxt, musTxt, capTxt].filter(Boolean).join(" • ");
+  closeCxStudio(); tab(1);
+  startUploadProgress(async () => {
+    const me = await getUserData(prof.user), now = Date.now();
+    if (dest === "story") {
+      me.stories = (me.stories || []).filter(s => now - s.ts < 86400000);
+      me.stories.push({ type: cxMediaKind, src: finalData, cap: fullCaption, ts: now, views: [] });
+    } else {
+      me.posts = me.posts || [];
+      me.posts.push({ img: finalData, cap: fullCaption, likes: [], comments: [], ts: now });
+    }
+    await setUserData(prof.user, me); prof = { ...me, user: prof.user }; localStorage.setItem("cx_prof", JSON.stringify(prof));
+    loadFeed(); pop(dest === "story" ? "تمت مشاركة قصتك لمدة 24 ساعة" : "تم نشر منشورك بنجاح");
+  });
+}
+
+/* === شاشة البحث وسجل البحث القابل للحذف بزر ✕ === */
+(function installCryptXSearchEngine() {
+  const searchTab = document.getElementById("s4"); if (!searchTab) return;
+  const style = document.createElement("style");
+  style.textContent = `.cx-srch-hdr{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #1f1f1f;background:#000;position:sticky;top:0;z-index:20}.cx-srch-pill{flex:1;display:flex;align-items:center;background:#1a1a1a;border:1px solid #2b2b2b;border-radius:22px;padding:6px 12px;gap:8px}.cx-srch-pill input{flex:1;background:transparent!important;border:none!important;margin:0!important;padding:4px 0!important;color:#fff!important;font-size:14px!important;outline:none!important}.cx-hist-item{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid #141414;cursor:pointer}.cx-sug-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer}`;
+  document.head.appendChild(style);
+
+  window.saveCxSearchTerm = q => { q = (q || "").trim(); if (!q) return; let h = JSON.parse(localStorage.getItem("cx_search_hist") || "[]"); h = [q, ...h.filter(x => x !== q)].slice(0, 8); localStorage.setItem("cx_search_hist", JSON.stringify(h)); renderCxSearchHome(); };
+  window.delCxSearchTerm = (e, q) => { e.stopPropagation(); let h = JSON.parse(localStorage.getItem("cx_search_hist") || "[]"); localStorage.setItem("cx_search_hist", JSON.stringify(h.filter(x => x !== q))); renderCxSearchHome(); };
+  window.clearAllCxHistory = () => { localStorage.removeItem("cx_search_hist"); renderCxSearchHome(); };
+  window.applyCxSearchQuery = q => { const inp = document.getElementById("cxMainSearchInp"); if (!inp) return; inp.value = q; document.getElementById("cxClearSrchBtn").style.display = q ? "inline-block" : "none"; runCxLiveSearch(q); };
+
+  window.renderCxSearchHome = async () => {
+    const box = document.getElementById("cxSearchBody"); if (!box) return;
+    const hist = JSON.parse(localStorage.getItem("cx_search_hist") || "[]");
+    let html = "";
+    if (hist.length) {
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 6px"><b style="font-size:13px;color:#8e8e8e">عمليات البحث الأخيرة</b><span onclick="clearAllCxHistory()" style="font-size:12px;color:#0095f6;cursor:pointer">مسح الكل</span></div>';
+      hist.forEach(item => {
+        const s = item.replace(/'/g, "\\'");
+        html += `<div class="cx-hist-item" onclick="applyCxSearchQuery('${s}')"><div style="display:flex;align-items:center;gap:10px;color:#eaeaea;font-size:14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8e8e8e" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg><span>${item}</span></div><button type="button" onclick="delCxSearchTerm(event,'${s}')" style="background:none;border:none;color:#8e8e8e;font-size:15px;padding:4px 8px;cursor:pointer">✕</button></div>`;
+      });
+    }
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:16px 16px 8px"><b style="font-size:15px">قد يعجبك</b><span onclick="renderCxSearchHome()" style="font-size:12px;color:#8e8e8e;cursor:pointer">↻ تحديث</span></div>';
+    try {
+      const res = await fastFetch(RTDB + "/users.json"), users = (await res.json()) || {};
+      const keys = Object.keys(users).filter(u => u !== prof.user).sort(() => 0.5 - Math.random()).slice(0, 6);
+      keys.forEach((u, idx) => {
+        const uObj = users[u] || {}, dot = idx < 2 ? "#ed4956" : "#8e8e8e", col = idx < 2 ? "#ff6b81" : "#eaeaea";
+        html += `<div class="cx-sug-item" onclick="saveCxSearchTerm('${u}');openUserProfile('${u}')"><span style="width:7px;height:7px;border-radius:50%;background:${dot};flex-shrink:0"></span><span style="font-size:14px;font-weight:${idx<2?'700':'500'};color:${col}">${uObj.name || u} <span style="color:#8e8e8e;font-size:12px">(@${u})</span></span></div>`;
+      });
+    } catch (e) {}
+    box.innerHTML = html;
+  };
+
+  window.runCxLiveSearch = async q => {
+    q = (q || "").trim().toLowerCase(); const box = document.getElementById("cxSearchBody");
+    document.getElementById("cxClearSrchBtn").style.display = q ? "inline-block" : "none";
+    if (!q) return renderCxSearchHome();
+    try {
+      const res = await fastFetch(RTDB + "/users.json"), users = (await res.json()) || {};
+      const matches = Object.keys(users).filter(u => u.toLowerCase().includes(q) || (users[u].name || "").toLowerCase().includes(q));
+      if (!matches.length) { box.innerHTML = '<div style="text-align:center;padding:30px;color:#8e8e8e;font-size:14px">لا توجد نتائج مطابقة</div>'; return; }
+      box.innerHTML = matches.map(u => {
+        const uObj = users[u] || {}, av = uObj.av ? `<img src="${uObj.av}" style="width:44px;height:44px;border-radius:50%;object-fit:cover">` : `<div class="av-48" style="width:44px;height:44px">${u.toUpperCase()}</div>`;
+        return `<div class="row-item" onclick="saveCxSearchTerm('${u}');openUserProfile('${u}')"><div style="display:flex;align-items:center;gap:12px">${av}<div><b style="display:block;font-size:14px">${u}</b><span style="font-size:12px;color:#8e8e8e">${uObj.name || ""}</span></div></div><span style="color:#0095f6;font-size:12px;font-weight:700">عرض</span></div>`;
+      }).join("");
+    } catch (e) {}
+  };
+
+  searchTab.innerHTML = '<div class="cx-srch-hdr"><button type="button" class="icon-btn" onclick="tab(1)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg></button><div class="cx-srch-pill"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#8e8e8e" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="cxMainSearchInp" placeholder="ابحث عن أشخاص أو مواضيع..." oninput="runCxLiveSearch(this.value)" onkeydown="if(event.key===\'Enter\'){saveCxSearchTerm(this.value);runCxLiveSearch(this.value);}"><span id="cxClearSrchBtn" onclick="applyCxSearchQuery(\'\')" style="display:none;color:#8e8e8e;font-size:14px;cursor:pointer;padding:0 4px">✕</span></div><button type="button" onclick="const v=document.getElementById(\'cxMainSearchInp\').value;saveCxSearchTerm(v);runCxLiveSearch(v);" style="background:none;border:none;color:#ff4d6d;font-weight:700;font-size:14px;cursor:pointer">بحث</button></div><div id="cxSearchBody" style="flex:1;overflow-y:auto"></div>';
+  renderCxSearchHome();
+})();
 
 </script>
 </body>
