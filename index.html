@@ -3855,9 +3855,9 @@ document.addEventListener("dblclick", e => {
 })();
 </script>
 <script>
-window.addEventListener("error", function(e) {
-  alert("الخطأ في السطر رقم: " + e.lineno + "\nالسبب: " + e.message);
-}, true);
+window.onerror = function(msg, src, line, col) {
+  alert("خطأ في السطر: " + line + " عمود: " + col + "\n" + msg);
+};
 </script>
 </body>
 </html>
