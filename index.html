@@ -1270,6 +1270,376 @@ setInterval(async () => {
     }
   } catch (e) {}
 }, 2000);
+/* === الجزء 1: المحادثات + المتابعون + شاشة المنشور الجديد === */
+setInterval(() => {
+  const bNav = document.querySelector(".b-nav");
+  const room = document.getElementById("roomBox");
+  const anyFull = Array.from(document.querySelectorAll(".full-scr")).some(el => el.style.display === "flex");
+  const hideNav = (room && room.style.display === "flex") || anyFull;
+  if (bNav) bNav.style.display = hideNav ? "none" : "flex";
+  if (room && room.style.display === "flex") {
+    room.style.position = "fixed";
+    room.style.inset = "0";
+    room.style.height = "100dvh";
+    room.style.zIndex = "920";
+  }
+}, 200);
+
+document.addEventListener("click", e => {
+  const statEl = e.target.closest(".p-stats div");
+  if (statEl) {
+    const txt = statEl.innerText || "";
+    const vp = document.getElementById("vpScr");
+    const curViewed = (vp && vp.style.display === "flex" && document.getElementById("vpUser"))
+      ? document.getElementById("vpUser").innerText.trim()
+      : prof.user;
+    if (txt.includes("المتابعون")) { e.stopImmediatePropagation(); openFollowList("followers", curViewed); }
+    else if (txt.includes("متابعة")) { e.stopImmediatePropagation(); openFollowList("following", curViewed); }
+  }
+  const btn = e.target.closest("button");
+  const vp = document.getElementById("vpScr");
+  if (btn && btn.innerText.trim() === "مراسلة" && vp && vp.style.display === "flex") {
+    e.stopImmediatePropagation();
+    const targetU = document.getElementById("vpUser").innerText.trim();
+    closeFullScr("vpScr");
+    tab(2);
+    setTimeout(() => {
+      if (typeof openRoom === "function") openRoom(targetU);
+      else if (typeof startChatWith === "function") startChatWith(targetU);
+    }, 80);
+  }
+}, true);
+
+document.addEventListener("click", async e => {
+  const msgEl = e.target.closest("#chatBox .msg");
+  if (!msgEl || e.target.tagName === "BUTTON") return;
+  const box = document.getElementById("chatBox");
+  const idx = Array.from(box.querySelectorAll(".msg")).indexOf(msgEl);
+  if (idx === -1 || !curPeer) return;
+  const rid = [prof.user, curPeer].sort().join("_");
+  try {
+    const res = await fastFetch(RTDB + "/chats/" + rid + ".json");
+    const data = await res.json();
+    if (!data) return;
+    const keys = Object.keys(data);
+    const key = keys[idx];
+    const mObj = data[key];
+    if (!key || !mObj) return;
+    openMsgOptions(key, mObj.c || "رسالة", mObj.s === prof.user);
+  } catch (err) {}
+});
+
+(function buildNativePublisher() {
+  const pubScr = document.createElement("div");
+  pubScr.id = "proPublishScr";
+  pubScr.className = "full-scr";
+  pubScr.style.cssText = "z-index:970;background:#000;flex-direction:column";
+  pubScr.innerHTML =
+    '<div class="hdr"><button type="button" class="icon-btn" onclick="closeFullScr(\'proPublishScr\')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button><b style="font-size:16px">منشور جديد</b><span style="width:24px"></span></div>' +
+    '<div style="flex:1;overflow-y:auto;padding:16px">' +
+      '<div style="display:flex;justify-content:center;margin-bottom:16px">' +
+        '<img id="proPubPreview" style="max-height:250px;border-radius:14px;object-fit:contain;display:none;border:1px solid #262626">' +
+        '<div id="proPubEmpty" onclick="document.getElementById(\'proPubFile\').click()" style="width:100%;height:170px;border:1.5px dashed #333;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#8e8e8e;cursor:pointer;background:#0a0a0a">' +
+          '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0095f6" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
+          '<span style="font-size:13px;color:#ccc">اختيار صورة من المعرض</span>' +
+        '</div>' +
+        '<input type="file" id="proPubFile" accept="image/*" style="display:none" onchange="previewProPubFile(this)">' +
+      '</div>' +
+      '<textarea id="proPubCap" rows="3" placeholder="إضافة شرح توضيحي..." style="background:transparent;border:none;border-bottom:1px solid #262626;border-radius:0;padding:8px 4px;font-size:14px;margin-bottom:14px;resize:none"></textarea>' +
+      '<div style="display:flex;gap:8px;margin-bottom:16px">' +
+        '<button type="button" onclick="toggleProField(\'proPollBox\')" style="background:#161616;color:#fff;border:1px solid #262626;border-radius:10px;padding:8px 14px;font-size:12px;cursor:pointer">استطلاع رأي</button>' +
+        '<button type="button" onclick="document.getElementById(\'proPubFile\').click()" style="background:#161616;color:#fff;border:1px solid #262626;border-radius:10px;padding:8px 14px;font-size:12px;cursor:pointer">تغيير الصورة</button>' +
+      '</div>' +
+      '<div id="proPollBox" style="display:none;background:#111;padding:12px;border-radius:12px;margin-bottom:12px;border:1px solid #262626">' +
+        '<input id="proPollQ" placeholder="سؤال الاستطلاع..." style="margin-bottom:8px">' +
+        '<div style="display:flex;gap:8px"><input id="proPollO1" placeholder="الخيار الأول" style="margin:0"><input id="proPollO2" placeholder="الخيار الثاني" style="margin:0"></div>' +
+      '</div>' +
+      '<div class="set-row" style="padding:13px 4px" onclick="toggleProField(\'proMusicBox\')"><span>إضافة مقطع صوتي</span><span id="proMusicLbl" style="color:#8e8e8e;font-size:12px">اختياري ◂</span></div>' +
+      '<div id="proMusicBox" style="display:none;padding:6px 0 10px"><input id="proMusicInp" placeholder="اسم المقطع الصوتي أو الفنان..." oninput="document.getElementById(\'proMusicLbl\').innerText=this.value||\'اختياري ◂\'"></div>' +
+      '<div class="set-row" style="padding:13px 4px" onclick="toggleProField(\'proTagBox\')"><span>إشارة إلى الأشخاص</span><span id="proTagLbl" style="color:#8e8e8e;font-size:12px">اختياري ◂</span></div>' +
+      '<div id="proTagBox" style="display:none;padding:6px 0 10px"><input id="proTagInp" placeholder="@اسم_المستخدم..." oninput="document.getElementById(\'proTagLbl\').innerText=this.value||\'اختياري ◂\'"></div>' +
+      '<div class="set-row" style="padding:13px 4px" onclick="toggleProField(\'proLocBox\')"><span>إضافة موقع</span><span id="proLocLbl" style="color:#8e8e8e;font-size:12px">اختياري ◂</span></div>' +
+      '<div id="proLocBox" style="display:none;padding:6px 0 10px"><input id="proLocInp" placeholder="اسم المدينة أو المكان..." oninput="document.getElementById(\'proLocLbl\').innerText=this.value||\'اختياري ◂\'"></div>' +
+      '<div class="set-row" style="padding:14px 4px;border-bottom:none"><div><span style="display:block">تسمية محتوى ذكاء اصطناعي</span><span style="font-size:11px;color:#8e8e8e">إظهار شارة توضح أن المحتوى مُنشأ بالذكاء الاصطناعي</span></div><input type="checkbox" id="proAiCheck" style="width:20px;height:20px;margin:0;accent-color:#0095f6"></div>' +
+    '</div>' +
+    '<div style="padding:12px 16px;border-top:1px solid #262626;background:#000"><button type="button" class="btn b-blue" style="margin:0;border-radius:12px;padding:12px;font-size:15px" onclick="submitProPost()">مشاركة</button></div>';
+  document.body.appendChild(pubScr);
+
+  document.querySelectorAll("#addChoiceModal button").forEach(b => {
+    if (b.innerText.includes("منشور جديد")) {
+      b.onclick = () => { document.getElementById("addChoiceModal").style.display = "none"; openProPublisher(); };
+    }
+  });
+})();
+
+let proPubImgData = "";
+function openProPublisher() {
+  proPubImgData = "";
+  document.getElementById("proPubPreview").style.display = "none";
+  document.getElementById("proPubEmpty").style.display = "flex";
+  document.getElementById("proPubCap").value = "";
+  document.getElementById("proPollQ").value = "";
+  document.getElementById("proMusicInp").value = "";
+  document.getElementById("proTagInp").value = "";
+  document.getElementById("proLocInp").value = "";
+  document.getElementById("proAiCheck").checked = false;
+  openFullScr("proPublishScr");
+}
+function toggleProField(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = el.style.display === "none" ? "block" : "none";
+}
+function previewProPubFile(inp) {
+  const f = inp.files && inp.files;
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = e => {
+    proPubImgData = e.target.result;
+    const im = document.getElementById("proPubPreview");
+    im.src = proPubImgData;
+    im.style.display = "block";
+    document.getElementById("proPubEmpty").style.display = "none";
+  };
+  r.readAsDataURL(f);
+}
+async function submitProPost() {
+  let cap = document.getElementById("proPubCap").value.trim();
+  const music = document.getElementById("proMusicInp").value.trim();
+  const tag = document.getElementById("proTagInp").value.trim();
+  const loc = document.getElementById("proLocInp").value.trim();
+  const pollQ = document.getElementById("proPollQ").value.trim();
+  const isAi = document.getElementById("proAiCheck").checked;
+  if (!proPubImgData && !cap) return pop("أضف صورة أو شرحاً توضيحياً أولاً", 1);
+
+  const extras = [];
+  if (loc) extras.push("الموقع: " + loc);
+  if (music) extras.push("صوت: " + music);
+  if (tag) extras.push("مع " + tag);
+  if (pollQ) extras.push("استطلاع: " + pollQ + " (" + (document.getElementById("proPollO1").value || "نعم") + " / " + (document.getElementById("proPollO2").value || "لا") + ")");
+  if (isAi) extras.push("مُنشأ بالذكاء الاصطناعي");
+  if (extras.length) cap = (cap ? cap + "\n" : "") + extras.join(" • ");
+
+  closeFullScr("proPublishScr");
+  tab(1);
+  startUploadProgress(async () => {
+    const me = await getUserData(prof.user);
+    me.posts = me.posts || [];
+    me.posts.push({ img: proPubImgData, cap, likes: [], comments: [], ts: Date.now() });
+    await setUserData(prof.user, me);
+    prof = { ...me, user: prof.user }; localStorage.setItem("cx_prof", JSON.stringify(prof));
+    loadFeed();
+    pop("تمت مشاركة منشورك بنجاح");
+  });
+}
+/* === الجزء 2: محرّر القصص الأصلي + الكبسولة العائمة السفلية === */
+(function buildNativeStoryStudio() {
+  const stScr = document.createElement("div");
+  stScr.id = "proStoryScr";
+  stScr.className = "full-scr";
+  stScr.style.cssText = "z-index:980;background:#000;flex-direction:column";
+  stScr.innerHTML =
+    '<div id="stPickView" style="display:flex;flex-direction:column;height:100%">' +
+      '<div class="hdr"><button type="button" class="icon-btn" onclick="stopLiveCam();closeFullScr(\'proStoryScr\')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button><b style="font-size:16px">إضافة إلى القصة</b><span style="width:24px"></span></div>' +
+      '<div style="display:flex;gap:8px;padding:12px 14px">' +
+        '<button type="button" onclick="startLiveCamera()" style="flex:1;background:#141414;color:#fff;border:1px solid #262626;border-radius:12px;padding:12px 6px;font-size:12px;font-weight:700;cursor:pointer">الكاميرا المباشرة</button>' +
+        '<button type="button" onclick="openStoryTextBg()" style="flex:1;background:#141414;color:#fff;border:1px solid #262626;border-radius:12px;padding:12px 6px;font-size:12px;font-weight:700;cursor:pointer">خلفية نصية</button>' +
+        '<button type="button" onclick="document.getElementById(\'proStoryMediaInp\').click()" style="flex:1;background:#141414;color:#fff;border:1px solid #262626;border-radius:12px;padding:12px 6px;font-size:12px;font-weight:700;cursor:pointer">الاستوديو</button>' +
+      '</div>' +
+      '<div id="stCamWrap" style="flex:1;margin:4px 14px 16px;border-radius:18px;overflow:hidden;position:relative;background:#0d0d0d;border:1px solid #222;display:flex;flex-direction:column;align-items:center;justify-content:center">' +
+        '<video id="liveCamVid" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;display:none"></video>' +
+        '<button type="button" id="snapCamBtn" onclick="captureLivePhoto()" style="display:none;position:absolute;bottom:22px;width:68px;height:68px;border-radius:50%;background:#fff;border:5px solid rgba(255,255,255,.4);cursor:pointer"></button>' +
+        '<div id="stGalleryPrompt" onclick="document.getElementById(\'proStoryMediaInp\').click()" style="text-align:center;padding:24px;cursor:pointer">' +
+          '<svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#0095f6" stroke-width="1.6" style="margin-bottom:10px"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
+          '<b style="display:block;font-size:15px;margin-bottom:4px">اختر صورة أو فيديو قصير</b>' +
+          '<span style="font-size:12px;color:#8e8e8e">أو افتح الكاميرا المباشرة لالتقاط لحظتك الآن</span>' +
+        '</div>' +
+      '</div>' +
+      '<input type="file" id="proStoryMediaInp" accept="image/*,video/*" style="display:none" onchange="handleProStoryMedia(this)">' +
+    '</div>' +
+    '<div id="stEditView" style="display:none;flex-direction:column;height:100%">' +
+      '<div id="stCanvas" style="flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#111;border-radius:18px;margin:6px">' +
+        '<img id="stEditImg" style="max-width:100%;max-height:100%;object-fit:contain;display:none">' +
+        '<video id="stEditVid" playsinline loop muted style="max-width:100%;max-height:100%;object-fit:contain;display:none"></video>' +
+        '<div id="stDraggableTxt" style="position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);padding:10px 18px;border-radius:12px;background:rgba(0,0,0,.68);color:#fff;font-size:20px;font-weight:700;text-align:center;max-width:85%;display:none;touch-action:none;user-select:none;cursor:move"></div>' +
+        '<div id="stOverlayMusic" style="position:absolute;top:62px;background:rgba(18,18,18,.88);border:1px solid #333;padding:6px 14px;border-radius:20px;font-size:12px;display:none"><span id="stMusicName"></span></div>' +
+        '<button type="button" onclick="backToStoryPick()" style="position:absolute;top:12px;right:12px;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:18px;cursor:pointer">→</button>' +
+        '<div style="position:absolute;top:12px;left:12px;display:flex;flex-direction:column;gap:10px">' +
+          '<button type="button" onclick="openInlineStoryTool(\'text\')" style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.18);color:#fff;font-weight:800;font-size:14px;cursor:pointer">Aa</button>' +
+          '<button type="button" onclick="openInlineStoryTool(\'sticker\')" style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:14px;cursor:pointer">ملصق</button>' +
+          '<button type="button" onclick="openInlineStoryTool(\'music\')" style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:14px;cursor:pointer">صوت</button>' +
+          '<button type="button" onclick="cycleStoryFilter()" style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:14px;cursor:pointer">فلتر</button>' +
+        '</div>' +
+        '<div id="stInlineToolBar" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,.78);flex-direction:column;align-items:center;justify-content:center;padding:20px;z-index:20">' +
+          '<b id="stToolTitle" style="font-size:15px;margin-bottom:12px">إضافة نص</b>' +
+          '<input id="stToolInput" placeholder="اكتب هنا..." style="max-width:320px;text-align:center;font-size:16px;background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:12px">' +
+          '<div id="stQuickStickers" style="display:none;gap:14px;font-size:28px;margin:10px 0">' +
+            '<span style="cursor:pointer" onclick="applyQuickSticker(\'🔥\')">🔥</span><span style="cursor:pointer" onclick="applyQuickSticker(\'❤️\')">❤️</span><span style="cursor:pointer" onclick="applyQuickSticker(\'😍\')">😍</span><span style="cursor:pointer" onclick="applyQuickSticker(\'👏\')">👏</span><span style="cursor:pointer" onclick="applyQuickSticker(\'✨\')">✨</span>' +
+          '</div>' +
+          '<div style="display:flex;gap:10px;margin-top:10px">' +
+            '<button type="button" class="btn b-blue" style="width:auto;padding:8px 24px;margin:0" onclick="confirmInlineStoryTool()">تم</button>' +
+            '<button type="button" class="btn b-dark" style="width:auto;padding:8px 20px;margin:0" onclick="document.getElementById(\'stInlineToolBar\').style.display=\'none\'">إلغاء</button>' +
+          '</div>' +
+        '</div>' +
+        '<div style="position:absolute;bottom:14px;left:14px;right:14px">' +
+          '<input id="stEditCap" placeholder="إضافة شرح توضيحي..." style="margin:0;border-radius:22px;background:rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.22);color:#fff;padding:10px 16px;font-size:13px">' +
+        '</div>' +
+      '</div>' +
+      '<div style="padding:10px 14px 16px;display:flex;align-items:center;gap:8px;background:#000">' +
+        '<button type="button" onclick="publishProStory(\'all\')" style="flex:1;background:#161616;border:1px solid #262626;color:#fff;border-radius:24px;padding:11px 12px;font-size:12px;font-weight:700;cursor:pointer">قصتك</button>' +
+        '<button type="button" onclick="publishProStory(\'close\')" style="flex:1;background:#161616;border:1px solid #262626;color:#fff;border-radius:24px;padding:11px 12px;font-size:12px;font-weight:700;cursor:pointer"><span style="color:#2ecc71;margin-left:4px">★</span>الأصدقاء المقربون</button>' +
+        '<button type="button" onclick="publishProStory(\'all\')" style="width:44px;height:44px;border-radius:50%;background:#0095f6;border:none;color:#fff;font-size:20px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer">‹</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(stScr);
+
+  const dragEl = document.getElementById("stDraggableTxt");
+  let dragging = false;
+  dragEl.addEventListener("pointerdown", () => { dragging = true; });
+  window.addEventListener("pointermove", e => {
+    if (!dragging) return;
+    const rect = document.getElementById("stCanvas").getBoundingClientRect();
+    dragEl.style.left = Math.max(40, Math.min(rect.width - 40, e.clientX - rect.left)) + "px";
+    dragEl.style.top = Math.max(40, Math.min(rect.height - 60, e.clientY - rect.top)) + "px";
+  });
+  window.addEventListener("pointerup", () => { dragging = false; });
+
+  document.querySelectorAll("#addChoiceModal button").forEach(b => {
+    if (b.innerText.includes("قصتك")) {
+      b.onclick = () => { document.getElementById("addChoiceModal").style.display = "none"; openProStoryStudio(); };
+    }
+  });
+})();
+
+let proStoryData = "", proStoryType = "image", proStoryFilterIdx = 0, activeStoryTool = "text", liveCamStream = null;
+const proStoryFilters = ["none", "contrast(1.2) saturate(1.3)", "grayscale(1)", "sepia(0.55) contrast(1.1)", "brightness(1.12) saturate(1.4)"];
+
+function openProStoryStudio() {
+  proStoryData = ""; proStoryType = "image"; proStoryFilterIdx = 0; stopLiveCam();
+  document.getElementById("stPickView").style.display = "flex";
+  document.getElementById("stEditView").style.display = "none";
+  document.getElementById("stDraggableTxt").style.display = "none";
+  document.getElementById("stDraggableTxt").innerText = "";
+  document.getElementById("stOverlayMusic").style.display = "none";
+  document.getElementById("stEditCap").value = "";
+  openFullScr("proStoryScr");
+}
+async function startLiveCamera() {
+  try {
+    liveCamStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+    const v = document.getElementById("liveCamVid"); v.srcObject = liveCamStream; v.style.display = "block";
+    document.getElementById("snapCamBtn").style.display = "block"; document.getElementById("stGalleryPrompt").style.display = "none";
+  } catch (e) { document.getElementById("proStoryMediaInp").click(); }
+}
+function stopLiveCam() {
+  if (liveCamStream) { liveCamStream.getTracks().forEach(t => t.stop()); liveCamStream = null; }
+  const v = document.getElementById("liveCamVid"); if (v) { v.srcObject = null; v.style.display = "none"; }
+  const btn = document.getElementById("snapCamBtn"); if (btn) btn.style.display = "none";
+  const gp = document.getElementById("stGalleryPrompt"); if (gp) gp.style.display = "block";
+}
+function captureLivePhoto() {
+  const v = document.getElementById("liveCamVid"); if (!v || !v.videoWidth) return;
+  const c = document.createElement("canvas"); c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext("2d").drawImage(v, 0, 0);
+  proStoryData = c.toDataURL("image/jpeg", 0.85); proStoryType = "image"; stopLiveCam(); showStoryEditor();
+}
+function openStoryTextBg() {
+  proStoryType = "text";
+  const c = document.createElement("canvas"); c.width = 720; c.height = 1280;
+  const ctx = c.getContext("2d"), g = ctx.createLinearGradient(0, 0, 720, 1280);
+  g.addColorStop(0, "#0b192c"); g.addColorStop(0.5, "#1e3e62"); g.addColorStop(1, "#000000");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 720, 1280);
+  proStoryData = c.toDataURL("image/jpeg", 0.9); showStoryEditor(); openInlineStoryTool("text");
+}
+function handleProStoryMedia(inp) {
+  const f = inp.files && inp.files; if (!f) return;
+  if (f.size > 6 * 1024 * 1024) return pop("حجم الملف كبير، اختر ملفاً أصغر من 6 ميجا", 1);
+  proStoryType = f.type.startsWith("video") ? "video" : "image";
+  const r = new FileReader(); r.onload = e => { proStoryData = e.target.result; stopLiveCam(); showStoryEditor(); }; r.readAsDataURL(f);
+}
+function showStoryEditor() {
+  document.getElementById("stPickView").style.display = "none"; document.getElementById("stEditView").style.display = "flex";
+  const im = document.getElementById("stEditImg"), vd = document.getElementById("stEditVid");
+  im.style.filter = "none"; vd.style.filter = "none";
+  if (proStoryType === "video") { im.style.display = "none"; vd.src = proStoryData; vd.style.display = "block"; vd.play().catch(()=>{}); }
+  else { vd.pause(); vd.style.display = "none"; im.src = proStoryData; im.style.display = "block"; }
+}
+function backToStoryPick() {
+  document.getElementById("stEditVid").pause(); document.getElementById("stEditView").style.display = "none"; document.getElementById("stPickView").style.display = "flex";
+}
+function openInlineStoryTool(kind) {
+  activeStoryTool = kind;
+  const bar = document.getElementById("stInlineToolBar"), title = document.getElementById("stToolTitle"), inp = document.getElementById("stToolInput"), stickers = document.getElementById("stQuickStickers");
+  stickers.style.display = kind === "sticker" ? "flex" : "none"; inp.style.display = kind === "sticker" ? "none" : "block";
+  if (kind === "text") { title.innerText = "إضافة نص على القصة"; inp.placeholder = "اكتب النص هنا..."; inp.value = document.getElementById("stDraggableTxt").innerText; }
+  else if (kind === "music") { title.innerText = "إضافة مقطع صوتي"; inp.placeholder = "اسم الأغنية أو الفنان..."; inp.value = document.getElementById("stMusicName").innerText; }
+  else { title.innerText = "اختر ملصقاً تفاعلياً"; }
+  bar.style.display = "flex"; if (kind !== "sticker") inp.focus();
+}
+function applyQuickSticker(em) {
+  const el = document.getElementById("stDraggableTxt");
+  el.innerText = (el.style.display === "block" && el.innerText ? el.innerText + " " : "") + em;
+  el.style.display = "block"; document.getElementById("stInlineToolBar").style.display = "none";
+}
+function confirmInlineStoryTool() {
+  const val = document.getElementById("stToolInput").value.trim(); document.getElementById("stInlineToolBar").style.display = "none";
+  if (activeStoryTool === "text") {
+    const el = document.getElementById("stDraggableTxt");
+    if (val) { el.innerText = val; el.style.display = "block"; } else { el.innerText = ""; el.style.display = "none"; }
+  } else if (activeStoryTool === "music") {
+    const mBox = document.getElementById("stOverlayMusic");
+    if (val) { document.getElementById("stMusicName").innerText = "صوت: " + val; mBox.style.display = "block"; } else mBox.style.display = "none";
+  }
+}
+function cycleStoryFilter() {
+  proStoryFilterIdx = (proStoryFilterIdx + 1) % proStoryFilters.length;
+  const f = proStoryFilters[proStoryFilterIdx];
+  document.getElementById("stEditImg").style.filter = f; document.getElementById("stEditVid").style.filter = f; pop("تم تطبيق الفلتر");
+}
+async function publishProStory(audience) {
+  if (!proStoryData) return pop("اختر صورة أو فيديو أولاً", 1);
+  let finalSrc = proStoryData;
+  if (proStoryType !== "video" && proStoryFilterIdx > 0) {
+    try {
+      const im = document.getElementById("stEditImg"), c = document.createElement("canvas");
+      c.width = im.naturalWidth || 720; c.height = im.naturalHeight || 1280;
+      const ctx = c.getContext("2d"); ctx.filter = proStoryFilters[proStoryFilterIdx]; ctx.drawImage(im, 0, 0, c.width, c.height);
+      finalSrc = c.toDataURL("image/jpeg", 0.85);
+    } catch (e) {}
+  }
+  const ovTxt = document.getElementById("stDraggableTxt").style.display === "block" ? document.getElementById("stDraggableTxt").innerText : "";
+  const ovMus = document.getElementById("stOverlayMusic").style.display === "block" ? document.getElementById("stMusicName").innerText : "";
+  const capInp = document.getElementById("stEditCap").value.trim();
+  const fullCap = [ovTxt, ovMus, capInp, audience === "close" ? "الأصدقاء المقربون" : ""].filter(Boolean).join(" • ");
+  document.getElementById("stEditVid").pause(); closeFullScr("proStoryScr"); tab(1);
+  startUploadProgress(async () => {
+    const me = await getUserData(prof.user), now = Date.now();
+    me.stories = (me.stories || []).filter(s => now - s.ts < 86400000);
+    me.stories.push({ type: proStoryType === "video" ? "video" : "image", src: finalSrc, cap: fullCap, audience, ts: now, views: [] });
+    await setUserData(prof.user, me); prof = { ...me, user: prof.user }; localStorage.setItem("cx_prof", JSON.stringify(prof));
+    loadFeed(); pop(audience === "close" ? "تمت المشاركة مع الأصدقاء المقربين" : "تمت إضافة القصة لمدة 24 ساعة");
+  });
+}
+
+(function installCryptXModernNav() {
+  const style = document.createElement("style");
+  style.textContent = `.b-nav{position:fixed!important;bottom:12px!important;left:50%!important;transform:translateX(-50%)!important;width:calc(100% - 24px)!important;max-width:456px!important;height:58px!important;background:rgba(18,18,18,0.92)!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important;border:1px solid rgba(255,255,255,0.09)!important;border-radius:32px!important;padding:6px 10px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;box-shadow:0 10px 30px rgba(0,0,0,0.65)!important;z-index:900!important}.b-nav .nav-btn{flex:1!important;height:44px!important;border-radius:24px!important;display:flex!important;align-items:center!important;justify-content:center!important;color:#a8a8a8!important;transition:all 0.2s ease!important}.b-nav .nav-btn.on{background:#262626!important;color:#ffffff!important}.b-nav .nav-av{width:28px!important;height:28px!important;border-radius:50%!important;border:1.8px solid transparent!important}.b-nav .nav-btn.on .nav-av{border-color:#ffffff!important}.scr{padding-bottom:84px!important}`;
+  document.head.appendChild(style);
+  const bNav = document.querySelector(".b-nav");
+  if (bNav) {
+    const btns = bNav.querySelectorAll(".nav-btn");
+    if (btns.length >= 5) {
+      btns.innerHTML = '<svg width="23" height="23" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.1L2 10.5h3v10.4h5v-6.4h4v6.4h5V10.5h3L12 2.1z"/></svg>';
+      btns.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><polygon points="10 8.5 16 12 10 15.5 10 8.5" fill="currentColor" stroke="none"/></svg>';
+      btns.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
+      btns.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7.5"/><line x1="20.5" y1="20.5" x2="16.35" y2="16.35"/></svg>';
+    }
+  }
+  const homeHdr = document.querySelector("#s1 .hdr");
+  if (homeHdr) {
+    homeHdr.style.justifyContent = "space-between";
+    homeHdr.innerHTML = '<button type="button" class="icon-btn" onclick="document.getElementById(\'addChoiceModal\').style.display=\'flex\'" title="إنشاء"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button><b style="font-size:21px;letter-spacing:-0.5px;font-weight:800;background:linear-gradient(90deg,#fff,#0095f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent">CryptX</b><button type="button" class="icon-btn" onclick="openNotifications()" title="الإشعارات"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>';
+  }
+})();
 
 </script>
 </body>
